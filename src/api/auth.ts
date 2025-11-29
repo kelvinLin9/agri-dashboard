@@ -15,41 +15,53 @@ export const authApi = {
    * 註冊新用戶
    */
   register: async (data: RegisterDto): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/auth/register', data)
-    return response.data
+    const response = await apiClient.post<{ data: AuthResponse }>('/auth/register', data)
+    const authData = response.data.data
+
+    // 儲存 token
+    if (authData.accessToken) {
+      localStorage.setItem('access_token', authData.accessToken)
+      localStorage.setItem('refresh_token', authData.refreshToken)
+      localStorage.setItem('user', JSON.stringify(authData.user))
+    }
+    return authData
   },
 
   /**
    * 用戶登入
    */
   login: async (data: LoginDto): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/auth/login', data)
+    const response = await apiClient.post<{ data: AuthResponse }>('/auth/login', data)
+    // 後端使用 ResponseTransformInterceptor 包裝響應為 { data: {...} }
+    const authData = response.data.data
+
     // 儲存 token
-    if (response.data.accessToken) {
-      localStorage.setItem('access_token', response.data.accessToken)
-      localStorage.setItem('refresh_token', response.data.refreshToken)
-      localStorage.setItem('user', JSON.stringify(response.data.user))
+    if (authData.accessToken) {
+      localStorage.setItem('access_token', authData.accessToken)
+      localStorage.setItem('refresh_token', authData.refreshToken)
+      localStorage.setItem('user', JSON.stringify(authData.user))
     }
-    return response.data
+    return authData
   },
 
   /**
    * 獲取當前用戶資訊
    */
   getProfile: async (): Promise<User> => {
-    const response = await apiClient.get<User>('/auth/profile')
-    return response.data
+    const response = await apiClient.get<{ data: User }>('/auth/profile')
+    return response.data.data
   },
 
   /**
    * 刷新 Token
    */
   refreshToken: async (refreshToken: string): Promise<{ accessToken: string }> => {
-    const response = await apiClient.post('/auth/refresh', { refreshToken })
-    if (response.data.accessToken) {
-      localStorage.setItem('access_token', response.data.accessToken)
+    const response = await apiClient.post<{ data: { accessToken: string } }>('/auth/refresh', { refreshToken })
+    const tokenData = response.data.data
+    if (tokenData.accessToken) {
+      localStorage.setItem('access_token', tokenData.accessToken)
     }
-    return response.data
+    return tokenData
   },
 
   /**

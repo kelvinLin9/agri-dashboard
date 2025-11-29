@@ -8,8 +8,13 @@
  * import { authApi } from '@/api/auth'
  */
 
+// 導出所有類型
 export * from './types'
+
+// 導出 apiClient
 export { default as apiClient, buildQueryString } from './apiClient'
+
+// 導出所有 API 服務
 export { authApi } from './auth'
 export { productsApi } from './products'
 export { categoriesApi } from './categories'
@@ -17,3 +22,4 @@ export { ordersApi } from './orders'
 export { membersApi } from './members'
 export { notificationsApi } from './notifications'
 export { uploadApi } from './upload'
+

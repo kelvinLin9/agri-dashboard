@@ -40,16 +40,26 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('../pages/login.vue'),
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('../pages/register.vue'),
+    },
   ],
 })
 
 // 全域路由守衛
 // TODO: 實作路由守衛
 // router.beforeEach(async (to, from, next) => {
-  // const token = localStorage.getItem('token')
-  // if (!token && to.name !== 'login') {
-  //   return next({ name: 'login' })
-  // }
-  // next()
+// const token = localStorage.getItem('token')
+// if (!token && to.name !== 'login') {
+//   return next({ name: 'login' })
+// }
+// next()
 // })
 export default router

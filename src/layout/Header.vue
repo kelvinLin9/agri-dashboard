@@ -11,13 +11,25 @@
     />
 
     <template #right>
-      <UButton
-        color="neutral"
-        variant="ghost"
-        @click="handleLogout"
-      >
-        登出
-      </UButton>
+      <div class="flex items-center gap-2">
+        <!-- Dark Mode Toggle -->
+        <UButton
+          :icon="colorMode.value === 'dark' ? 'i-heroicons-moon' : 'i-heroicons-sun'"
+          color="neutral"
+          variant="ghost"
+          @click="toggleColorMode"
+          :aria-label="colorMode.value === 'dark' ? '切換到淺色模式' : '切換到深色模式'"
+        />
+        
+        <!-- Logout Button -->
+        <UButton
+          color="neutral"
+          variant="ghost"
+          @click="handleLogout"
+        >
+          登出
+        </UButton>
+      </div>
     </template>
   </UHeader>
 </template>
@@ -45,6 +57,13 @@ const navItems = computed<NavigationMenuItem[]>(() =>
     active: route.name === item.routeName,
   })),
 )
+
+// ========== 深色模式 ==========
+const colorMode = useColorMode()
+
+const toggleColorMode = () => {
+  colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
+}
 
 // ========== 登出功能 ==========
 const handleLogout = () => {

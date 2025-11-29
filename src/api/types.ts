@@ -272,17 +272,18 @@ export interface Member {
   level: MemberLevel
   points: number
   totalSpent: number
-  totalOrders: number
-  status: 'active' | 'inactive'
+  orderCount: number
   newsletterSubscribed: boolean
+  preferredLanguage?: string
+  notes?: string
   createdAt: string
   updatedAt: string
+  deletedAt?: string | null
   user?: User
 }
 
 export interface MemberQueryParams extends SearchableQueryParams {
   level?: MemberLevel
-  status?: 'active' | 'inactive'
 }
 
 export interface CreateMemberDto {

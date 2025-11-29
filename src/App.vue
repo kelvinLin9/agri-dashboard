@@ -4,7 +4,7 @@
     <UContainer>
       <RouterView />
     </UContainer>
-    <LoadingOverlay :is-open="isLoading" />
+    <!-- <LoadingOverlay :is-open="isLoading" /> -->
   </UApp>
 </template>
 

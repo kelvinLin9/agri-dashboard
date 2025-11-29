@@ -17,48 +17,48 @@ export const membersApi = {
    */
   getAll: async (params?: MemberQueryParams): Promise<PaginatedResponse<Member>> => {
     const queryString = params ? buildQueryString(params) : ''
-    const response = await apiClient.get<PaginatedResponse<Member>>(`/members${queryString}`)
-    return response.data
+    const response = await apiClient.get<{ data: PaginatedResponse<Member> }>(`/members${queryString}`)
+    return response.data.data
   },
 
   /**
    * 查詢我的會員資料
    */
-  getMyProfile: async (): Promise<ApiResponse<Member>> => {
-    const response = await apiClient.get<ApiResponse<Member>>('/members/my-profile')
-    return response.data
+  getMyProfile: async (): Promise<Member> => {
+    const response = await apiClient.get<{ data: Member }>('/members/my-profile')
+    return response.data.data
   },
 
   /**
    * 根據 ID 查詢會員
    */
-  getById: async (id: string): Promise<ApiResponse<Member>> => {
-    const response = await apiClient.get<ApiResponse<Member>>(`/members/${id}`)
-    return response.data
+  getById: async (id: string): Promise<Member> => {
+    const response = await apiClient.get<{ data: Member }>(`/members/${id}`)
+    return response.data.data
   },
 
   /**
    * 建立會員資料
    */
-  create: async (data: CreateMemberDto): Promise<ApiResponse<Member>> => {
-    const response = await apiClient.post<ApiResponse<Member>>('/members', data)
-    return response.data
+  create: async (data: CreateMemberDto): Promise<Member> => {
+    const response = await apiClient.post<{ data: Member }>('/members', data)
+    return response.data.data
   },
 
   /**
    * 更新會員資料
    */
-  update: async (id: string, data: UpdateMemberDto): Promise<ApiResponse<Member>> => {
-    const response = await apiClient.put<ApiResponse<Member>>(`/members/${id}`, data)
-    return response.data
+  update: async (id: string, data: UpdateMemberDto): Promise<Member> => {
+    const response = await apiClient.put<{ data: Member }>(`/members/${id}`, data)
+    return response.data.data
   },
 
   /**
    * 更新我的會員資料
    */
-  updateMyProfile: async (data: UpdateMemberDto): Promise<ApiResponse<Member>> => {
-    const response = await apiClient.put<ApiResponse<Member>>('/members/my-profile', data)
-    return response.data
+  updateMyProfile: async (data: UpdateMemberDto): Promise<Member> => {
+    const response = await apiClient.put<{ data: Member }>('/members/my-profile', data)
+    return response.data.data
   },
 
   /**

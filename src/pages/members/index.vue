@@ -140,10 +140,10 @@
           筆，共 {{ pagination.total }} 筆
         </div>
         <UPagination
-          v-model="pagination.page"
-          :page-count="pagination.limit"
+          v-model:page="pagination.page"
+          :items-per-page="pagination.limit"
           :total="pagination.total"
-          @update:model-value="fetchMembers"
+          @update:page="fetchMembers"
         />
       </div>
     </UCard>

@@ -12,8 +12,16 @@ export default defineConfig({
     ui({
       autoImport: {
         imports: ['vue', 'vue-router', '@vueuse/core'],
-        dts: 'auto-imports.d.ts',
-        dirs: ['./src/utils/**', './src/stores/**', './src/api/**'],
+        // dts: 'auto-imports.d.ts',
+        // dirs: ['./src/utils/**', './src/stores/**', './src/api/**'],
+      },
+      ui: {
+        container: {
+          base: 'w-full max-w-(--ui-container-2xl) mx-auto'
+        },
+        main: {
+          base: 'min-h-[calc(100vh-var(--ui-header-height))]'
+        },
       },
     }),
   ],

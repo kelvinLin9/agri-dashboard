@@ -17,50 +17,50 @@ export const productsApi = {
    */
   getAll: async (params?: ProductQueryParams): Promise<PaginatedResponse<Product>> => {
     const queryString = params ? buildQueryString(params) : ''
-    const response = await apiClient.get<PaginatedResponse<Product>>(`/products${queryString}`)
-    return response.data
+    const response = await apiClient.get<{ data: PaginatedResponse<Product> }>(`/products${queryString}`)
+    return response.data.data
   },
 
   /**
    * 根據 ID 查詢產品
    */
-  getById: async (id: string): Promise<ApiResponse<Product>> => {
-    const response = await apiClient.get<ApiResponse<Product>>(`/products/${id}`)
-    return response.data
+  getById: async (id: string): Promise<Product> => {
+    const response = await apiClient.get<{ data: Product }>(`/products/${id}`)
+    return response.data.data
   },
 
   /**
    * 根據 Slug 查詢產品
    */
-  getBySlug: async (slug: string): Promise<ApiResponse<Product>> => {
-    const response = await apiClient.get<ApiResponse<Product>>(`/products/slug/${slug}`)
-    return response.data
+  getBySlug: async (slug: string): Promise<Product> => {
+    const response = await apiClient.get<{ data: Product }>(`/products/slug/${slug}`)
+    return response.data.data
   },
 
   /**
    * 建立產品
    */
-  create: async (data: CreateProductDto): Promise<ApiResponse<Product>> => {
-    const response = await apiClient.post<ApiResponse<Product>>('/products', data)
-    return response.data
+  create: async (data: CreateProductDto): Promise<Product> => {
+    const response = await apiClient.post<{ data: Product }>('/products', data)
+    return response.data.data
   },
 
   /**
    * 更新產品
    */
-  update: async (id: string, data: UpdateProductDto): Promise<ApiResponse<Product>> => {
-    const response = await apiClient.put<ApiResponse<Product>>(`/products/${id}`, data)
-    return response.data
+  update: async (id: string, data: UpdateProductDto): Promise<Product> => {
+    const response = await apiClient.put<{ data: Product }>(`/products/${id}`, data)
+    return response.data.data
   },
 
   /**
    * 更新產品庫存
    */
-  updateStock: async (id: string, quantity: number): Promise<ApiResponse<Product>> => {
-    const response = await apiClient.put<ApiResponse<Product>>(`/products/${id}/stock`, {
+  updateStock: async (id: string, quantity: number): Promise<Product> => {
+    const response = await apiClient.put<{ data: Product }>(`/products/${id}/stock`, {
       quantity,
     })
-    return response.data
+    return response.data.data
   },
 
   /**

@@ -184,8 +184,12 @@ const formatRelativeTime = (dateString: string) => {
 }
 
 // 生命週期：載入時獲取通知
-onMounted(async () => {
-  await notificationStore.fetchNotifications()
+onMounted(() => {
+  // 只有在有 token 時才獲取通知，避免在登入/回調頁面觸發 401
+  const token = localStorage.getItem('access_token')
+  if (token) {
+    notificationStore.fetchNotifications()
+  }
 })
 
 // 監聽新通知（觸發動畫）

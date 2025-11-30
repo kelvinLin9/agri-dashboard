@@ -1,6 +1,6 @@
 <template>
   <UApp>
-    <Header />
+    <Header v-if="route.meta.layout !== 'blank'" />
     <UContainer>
       <RouterView />
     </UContainer>
@@ -10,12 +10,14 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import Header from './layout/Header.vue'
 import LoadingOverlay from './components/LoadingOverlay.vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { useNotificationStore } from '@/stores/notification'
 
 // 初始化通知功能
+const route = useRoute()
 const { connect, disconnect, requestDesktopPermission } = useNotifications()
 const notificationStore = useNotificationStore()
 

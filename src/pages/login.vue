@@ -205,35 +205,10 @@ const handleLogin = async () => {
   }
 }
 
-const handleGoogleLogin = async () => {
-  isGoogleLoading.value = true
-  errorMessage.value = ''
-
-  try {
-    // Google OAuth 登入流程
-    // 方式 1: 使用 Google OAuth2 popup
-    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-    
-    if (!googleClientId) {
-      throw new Error('Google Client ID 未設定')
-    }
-
-    // 創建 Google OAuth 登入 URL
-    const redirectUri = `${window.location.origin}/auth/google/callback`
-    const scope = 'email profile'
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`
-
-    // 方式 1: 在當前視窗跳轉
-    window.location.href = googleAuthUrl
-
-    // 方式 2: 使用 popup (可選)
-    // const popup = window.open(googleAuthUrl, 'google-login', 'width=500,height=600')
-    // 監聽 popup 關閉事件，處理回調
-  } catch (error: any) {
-    console.error('Google 登入失敗:', error)
-    errorMessage.value = error.message || 'Google 登入失敗'
-    isGoogleLoading.value = false
-  }
+const handleGoogleLogin = () => {
+  // 直接重定向到後端的 Google OAuth 端點
+  const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+  window.location.href = `${backendUrl}/api/auth/google`
 }
 
 // 清除錯誤訊息當用戶開始輸入

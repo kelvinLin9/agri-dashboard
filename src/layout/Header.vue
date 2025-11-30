@@ -40,6 +40,7 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import NotificationBell from '@/components/NotificationBell.vue'
+import { authApi } from '@/api'
 
 // ========== 路由 ==========
 const route = useRoute()
@@ -71,9 +72,28 @@ const toggleColorMode = () => {
 }
 
 // ========== 登出功能 ==========
-const handleLogout = () => {
-  // TODO: 實作登出邏輯
-  console.log('登出')
+const router = useRouter()
+
+const handleLogout = async () => {
+  try {
+    // 調用後端登出 API
+    await authApi.logout()
+    
+    // 清除所有本地存儲（防止遺漏）
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    localStorage.removeItem('user')
+    
+    // 跳轉到登入頁面
+    router.push('/login')
+  } catch (error) {
+    console.error('登出失敗:', error)
+    // 即使 API 調用失敗，也清除本地數據並跳轉
+    localStorage.clear()
+    router.push('/login')
+  }
 }
 </script>
 

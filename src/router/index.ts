@@ -55,6 +55,12 @@ const router = createRouter({
       name: 'register',
       component: () => import('../pages/register.vue'),
     },
+    {
+      path: '/auth/callback',
+      name: 'auth-callback',
+      component: () => import('../pages/auth/callback.vue'),
+      meta: { layout: 'blank' },
+    },
   ],
 })
 

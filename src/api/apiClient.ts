@@ -3,6 +3,13 @@ import type { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axio
 import { openLoading, closeLoading } from '@/utils/loading'
 import type { ApiError } from './types'
 
+// 擴充 AxiosRequestConfig 類型以包含 _retry 屬性
+declare module 'axios' {
+  export interface InternalAxiosRequestConfig {
+    _retry?: boolean
+  }
+}
+
 // 創建 axios 實例
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
@@ -28,6 +35,21 @@ const hideLoading = () => {
     loadingCount = 0
     closeLoading()
   }
+}
+
+// Refresh Token 相關變數與函數
+let isRefreshing = false
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (error: any) => void }> = []
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token!)
+    }
+  })
+  failedQueue = []
 }
 
 // 請求攔截器
@@ -72,35 +94,79 @@ apiClient.interceptors.response.use(
 
       // 401 Unauthorized - Token 過期或無效
       if (status === 401) {
-        // 嘗試刷新 token
+        const originalRequest = error.config
+
+        // 如果是刷新 token 的請求本身失敗，則直接登出
+        if (originalRequest?.url?.includes('/auth/refresh')) {
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          localStorage.removeItem('user')
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login'
+          }
+          return Promise.reject(error)
+        }
+
+        // 如果正在刷新，則將請求加入隊列
+        if (isRefreshing) {
+          return new Promise<string>((resolve, reject) => {
+            failedQueue.push({ resolve, reject })
+          }).then(token => {
+            if (originalRequest) {
+              originalRequest.headers.Authorization = `Bearer ${token}`
+              return apiClient(originalRequest)
+            }
+          }).catch(err => {
+            return Promise.reject(err)
+          })
+        }
+
         const refreshToken = localStorage.getItem('refresh_token')
 
-        if (refreshToken && !error.config?.url?.includes('/auth/refresh')) {
+        if (refreshToken && originalRequest && !originalRequest._retry) {
+          originalRequest._retry = true
+          isRefreshing = true
+
           try {
             // 刷新 token
             const response = await axios.post(
               `${apiClient.defaults.baseURL}/auth/refresh`,
-              { refreshToken },
+              { refreshToken }
             )
 
-            const { accessToken } = response.data
+            // 後端回應結構: { data: { accessToken: '...' } }
+            // 注意：這裡使用 axios 直接請求，可能不會經過 ResponseTransformInterceptor，視後端實作而定
+            // 為了保險，檢查多層結構
+            const responseData = response.data
+            const accessToken = responseData.data?.accessToken || responseData.accessToken
+
+            if (!accessToken) {
+              throw new Error('No access token received')
+            }
+
             localStorage.setItem('access_token', accessToken)
 
-            // 重試原請求
-            if (error.config) {
-              error.config.headers.Authorization = `Bearer ${accessToken}`
-              return apiClient.request(error.config)
-            }
+            // 處理隊列中的請求
+            processQueue(null, accessToken)
+
+            // 重試當前請求
+            originalRequest.headers.Authorization = `Bearer ${accessToken}`
+            return apiClient(originalRequest)
+
           } catch (refreshError) {
-            // 刷新失敗，清除 token 並跳轉登入
+            // 刷新失敗，清除隊列並登出
+            processQueue(refreshError, null)
+
             localStorage.removeItem('access_token')
             localStorage.removeItem('refresh_token')
             localStorage.removeItem('user')
 
-            // 重定向到登入頁
             if (window.location.pathname !== '/login') {
               window.location.href = '/login'
             }
+            return Promise.reject(refreshError)
+          } finally {
+            isRefreshing = false
           }
         } else {
           // 沒有 refresh token，直接清除並跳轉
@@ -117,7 +183,6 @@ apiClient.interceptors.response.use(
       // 403 Forbidden - 無權限
       if (status === 403) {
         console.error('無權限訪問:', data.message)
-        // TODO: 顯示無權限提示
       }
 
       // 404 Not Found

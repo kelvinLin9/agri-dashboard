@@ -9,6 +9,11 @@ const router = createRouter({
       component: () => import('../pages/index.vue'),
       children: [
         {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: () => import('../pages/dashboard/index.vue'),
+        },
+        {
           path: 'members',
           name: 'members',
           component: () => import('../pages/members/index.vue'),

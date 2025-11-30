@@ -29,10 +29,13 @@ export interface PaginationMeta {
   totalPages: number
 }
 
-// 分頁響應格式
+// 分頁響應格式（實際後端回應結構）
 export interface PaginatedResponse<T> {
   data: T[]
-  meta: PaginationMeta
+  total: number
+  page: number
+  limit: number
+  totalPages: number
 }
 
 // 標準 API 響應

@@ -1,18 +1,23 @@
 <template>
-  <UPopover :popper="{ placement: 'bottom-end' }">
+  <UPopover v-model:open="isOpen">
     <UButton
-      icon="i-heroicons-bell"
       color="neutral"
       variant="ghost"
       size="lg"
-      :class="{ 'animate-bounce': hasNewNotification }"
     >
-      <UBadge v-if="unreadCount > 0" color="error" size="sm" class="absolute -top-1 -right-1">
-        {{ unreadCount > 99 ? '99+' : unreadCount }}
-      </UBadge>
+      <UChip
+        :show="unreadCount > 0"
+        :text="unreadCount > 99 ? '99+' : unreadCount"
+        color="error"
+        size="2xl"
+        position="top-right"
+        inset
+      >
+        <UIcon name="i-heroicons-bell" class="w-6 h-6" />
+      </UChip>
     </UButton>
 
-    <template #panel>
+    <template #content>
       <UCard class="w-96 max-h-[500px] flex flex-col">
         <!-- Header -->
         <template #header>
@@ -94,7 +99,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useNotificationStore } from '@/stores/notification'
 import type { Notification } from '@/api/types'
 
@@ -102,6 +108,7 @@ const notificationStore = useNotificationStore()
 const router = useRouter()
 
 // 數據
+const isOpen = ref(false)
 const hasNewNotification = ref(false)
 
 // 計算屬性
@@ -175,6 +182,11 @@ const formatRelativeTime = (dateString: string) => {
   
   return date.toLocaleDateString('zh-TW')
 }
+
+// 生命週期：載入時獲取通知
+onMounted(async () => {
+  await notificationStore.fetchNotifications()
+})
 
 // 監聽新通知（觸發動畫）
 watch(() => notificationStore.notifications.length, (newLen, oldLen) => {

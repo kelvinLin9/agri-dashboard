@@ -6,12 +6,20 @@
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">通知中心</h1>
         <p class="text-gray-500 dark:text-gray-400 mt-1">查看和管理系統通知</p>
       </div>
-      <UButton
-        v-if="notificationStore.unreadCount > 0"
-        label="全部標為已讀"
-        icon="i-heroicons-check-circle"
-        @click="handleMarkAllRead"
-      />
+      <div class="flex gap-2">
+        <UButton
+          label="建立通知"
+          icon="i-heroicons-plus"
+          color="primary"
+          @click="isCreateModalOpen = true"
+        />
+        <UButton
+          v-if="notificationStore.unreadCount > 0"
+          label="全部標為已讀"
+          icon="i-heroicons-check-circle"
+          @click="handleMarkAllRead"
+        />
+      </div>
     </div>
 
     <!-- Stats Cards -->
@@ -134,6 +142,107 @@
         />
       </div>
     </UCard>
+
+    <!-- Create Notification Modal -->
+    <UModal v-model:open="isCreateModalOpen" title="建立新通知">
+      <template #content>
+        <UCard>
+          <template #header>
+            <h3 class="text-lg font-semibold">建立新通知</h3>
+          </template>
+
+          <div class="space-y-4">
+            <!-- Current User Info -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div class="flex items-center gap-2 mb-2">
+                <UIcon name="i-heroicons-user-circle" class="w-5 h-5 text-blue-600" />
+                <span class="text-sm font-medium text-blue-900 dark:text-blue-100">發送給當前用戶</span>
+              </div>
+              <div class="text-sm text-blue-800 dark:text-blue-200">
+                <p><span class="font-semibold">帳號：</span>{{ currentUser?.username || '未登入' }}</p>
+                <p><span class="font-semibold">Email：</span>{{ currentUser?.email || '-' }}</p>
+                <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  <UIcon name="i-heroicons-information-circle" class="w-4 h-4 inline" />
+                  通知將發送給你自己以便測試
+                </p>
+              </div>
+            </div>
+
+            <!-- Type -->
+            <UFormField label="通知類型" required>
+              <USelectMenu
+                v-model="createForm.type"
+                :items="typeOptions.filter(opt => opt.value)"
+                value-key="value"
+                placeholder="選擇通知類型"
+              />
+            </UFormField>
+
+            <!-- Channel -->
+            <UFormField label="發送渠道" required>
+              <USelectMenu
+                v-model="createForm.channel"
+                :items="channelOptions"
+                value-key="value"
+                placeholder="選擇發送渠道"
+              />
+            </UFormField>
+
+            <!-- Title -->
+            <UFormField label="標題" required>
+              <UInput 
+                v-model="createForm.title" 
+                placeholder="輸入通知標題"
+              />
+            </UFormField>
+
+            <!-- Content -->
+            <UFormField label="內容" required>
+              <UTextarea 
+                v-model="createForm.content" 
+                placeholder="輸入通知內容"
+                :rows="4"
+              />
+            </UFormField>
+
+            <!-- Action URL -->
+            <UFormField label="操作連結（選填）">
+              <UInput 
+                v-model="createForm.actionUrl" 
+                placeholder="https://example.com/action"
+              />
+            </UFormField>
+
+            <!-- Priority -->
+            <UFormField label="優先級">
+              <USelectMenu
+                v-model="createForm.priority"
+                :items="priorityOptions"
+                value-key="value"
+                placeholder="選擇優先級"
+              />
+            </UFormField>
+          </div>
+
+          <template #footer>
+            <div class="flex justify-end gap-2">
+              <UButton 
+                label="取消" 
+                color="neutral" 
+                variant="ghost"
+                @click="isCreateModalOpen = false"
+              />
+              <UButton 
+                label="建立" 
+                color="primary"
+                :loading="isCreating"
+                @click="handleCreateNotification"
+              />
+            </div>
+          </template>
+        </UCard>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -141,18 +250,54 @@
 import { ref, computed, onMounted, watch, h, resolveComponent } from 'vue'
 import { useNotificationStore } from '@/stores/notification'
 import { useNotifications } from '@/composables/useNotifications'
-import type { NotificationType, NotificationStatus } from '@/api/types'
+import { notificationsApi } from '@/api/notifications'
+import type { NotificationType, NotificationStatus, NotificationChannel, CreateNotificationDto } from '@/api/types'
 
 const notificationStore = useNotificationStore()
 const router = useRouter()
+const toast = useToast()
 
 // 數據
 const page = ref(1)
 const selectedType = ref<NotificationType | null>(null)
 const selectedStatus = ref<NotificationStatus | null>(null)
 
+// Create notification modal
+const isCreateModalOpen = ref(false)
+const isCreating = ref(false)
+const createForm = ref<{
+  userId: string
+  type: NotificationType | null
+  channel: NotificationChannel | null
+  title: string
+  content: string
+  actionUrl: string
+  priority: number
+}>({
+  userId: '',
+  type: null,
+  channel: null,
+  title: '',
+  content: '',
+  actionUrl: '',
+  priority: 0,
+})
+
 // 計算屬性 - 從 Store 讀取連線狀態
 const isConnected = computed(() => notificationStore.isConnected)
+
+// 計算屬性 - 獲取當前用戶
+const currentUser = computed(() => {
+  const userStr = localStorage.getItem('user')
+  if (userStr) {
+    try {
+      return JSON.parse(userStr)
+    } catch {
+      return null
+    }
+  }
+  return null
+})
 
 // 計算屬性
 const hasActiveFilters = computed(() => {
@@ -178,6 +323,20 @@ const statusOptions = [
   { value: 'delivered', label: '已送達' },
   { value: 'read', label: '已讀' },
   { value: 'failed', label: '失敗' },
+]
+
+const channelOptions = [
+  { value: 'websocket', label: 'WebSocket' },
+  { value: 'email', label: '電子郵件' },
+  { value: 'sms', label: '簡訊' },
+  { value: 'in_app', label: '應用內' },
+]
+
+const priorityOptions = [
+  { value: 0, label: '低' },
+  { value: 1, label: '中' },
+  { value: 2, label: '高' },
+  { value: 3, label: '緊急' },
 ]
 
 // Table 列定義
@@ -300,14 +459,87 @@ const clearFilters = () => {
 const handleMarkAllRead = async () => {
   await notificationStore.markAllAsRead()
   notificationStore.fetchNotifications()
+  notificationStore.fetchUnreadCount()
 }
 
 const handleMarkAsRead = async (id: string) => {
   await notificationStore.markAsRead(id)
+  // 未讀數量已在 store 中更新
 }
 
 const handleDelete = async (id: string) => {
   await notificationStore.deleteNotification(id)
+}
+
+const handleCreateNotification = async () => {
+  // Validate user is logged in
+  if (!currentUser.value || !currentUser.value.id) {
+    toast.add({
+      title: '錯誤',
+      description: '無法獲取當前用戶資訊，請重新登入',
+      color: 'error',
+    })
+    return
+  }
+
+  // Validate required fields (除了 userId，因為自動填入)
+  if (!createForm.value.type || !createForm.value.channel || !createForm.value.title || !createForm.value.content) {
+    toast.add({
+      title: '錯誤',
+      description: '請填寫所有必填欄位',
+      color: 'error',
+    })
+    return
+  }
+
+  isCreating.value = true
+  try {
+    const dto: CreateNotificationDto = {
+      userId: currentUser.value.id, // 使用當前用戶 ID
+      type: createForm.value.type,
+      channel: createForm.value.channel,
+      title: createForm.value.title,
+      content: createForm.value.content,
+      priority: createForm.value.priority,
+    }
+
+    if (createForm.value.actionUrl) {
+      dto.actionUrl = createForm.value.actionUrl
+    }
+
+    await notificationsApi.create(dto)
+
+    toast.add({
+      title: '成功',
+      description: '通知建立成功！',
+      color: 'success',
+    })
+
+    // Reset form and close modal
+    createForm.value = {
+      userId: '', // 保留空值，因為會自動從 currentUser 取得
+      type: null,
+      channel: null,
+      title: '',
+      content: '',
+      actionUrl: '',
+      priority: 0,
+    }
+    isCreateModalOpen.value = false
+
+    // Refresh notifications list and unread count
+    notificationStore.fetchNotifications()
+    notificationStore.fetchUnreadCount()
+  } catch (error: any) {
+    console.error('建立通知失敗:', error)
+    toast.add({
+      title: '錯誤',
+      description: error.response?.data?.message || '建立通知失敗',
+      color: 'error',
+    })
+  } finally {
+    isCreating.value = false
+  }
 }
 
 // Helper 函數

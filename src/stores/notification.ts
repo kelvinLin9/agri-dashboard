@@ -39,9 +39,12 @@ export const useNotificationStore = defineStore('notification', () => {
       if (filters.value.status) params.status = filters.value.status
 
       const response = await notificationsApi.getAll(params)
-      const paginatedData = response.data as { data?: Notification[], meta?: { total?: number } } || {}
+
+      // 後端使用 ResponseTransformInterceptor 包裝
+      // 實際結構: response.data = { data: Notification[], total: number, ... }
+      const paginatedData = response.data as unknown as { data: Notification[], total: number, page: number, limit: number, totalPages: number }
       notifications.value = Array.isArray(paginatedData.data) ? paginatedData.data : []
-      pagination.value.total = paginatedData.meta?.total || 0
+      pagination.value.total = paginatedData.total || 0
     } catch (error) {
       console.error('獲取通知失敗:', error)
       notifications.value = []
@@ -54,7 +57,10 @@ export const useNotificationStore = defineStore('notification', () => {
   const fetchUnreadCount = async () => {
     try {
       const response = await notificationsApi.getUnreadCount()
-      unreadCount.value = response.count || 0
+
+      // 處理可能的嵌套結構
+      const data = (response as any).data || response
+      unreadCount.value = data.count || 0
     } catch (error) {
       console.error('獲取未讀數量失敗:', error)
     }

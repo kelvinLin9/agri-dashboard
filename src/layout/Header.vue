@@ -46,6 +46,7 @@ const route = useRoute()
 
 // ========== 導航選單配置 ==========
 const navigationConfig: Array<{ label: string; routeName: string }> = [
+  { label: 'Dashboard', routeName: 'dashboard' },
   { label: '會員資料', routeName: 'members' },
   { label: '訂單資料', routeName: 'orders' },
   { label: '產品維護', routeName: 'products' },

@@ -82,12 +82,11 @@ export const useNotifications = () => {
 
   // 顯示 Toast 通知
   const showNotificationToast = (notification: Notification) => {
-    const router = useRouter()
-
     const actions = notification.actionUrl ? [{
       label: '查看',
-      onClick: () => {
-        router.push(notification.actionUrl!)
+      click: () => {
+        // 使用 window.location 導航，避免 useRouter 在非 setup 中調用的問題
+        window.location.href = notification.actionUrl!
         notificationStore.markAsRead(notification.id)
       }
     }] : undefined
@@ -104,7 +103,6 @@ export const useNotifications = () => {
   // 顯示桌面通知
   const showDesktopNotification = (notification: Notification) => {
     if ('Notification' in window && Notification.permission === 'granted') {
-      const router = useRouter()
       const desktopNotif = new Notification(notification.title, {
         body: notification.content,
         icon: '/favicon.ico',
@@ -115,7 +113,8 @@ export const useNotifications = () => {
       desktopNotif.onclick = () => {
         window.focus()
         if (notification.actionUrl) {
-          router.push(notification.actionUrl)
+          // 使用 window.location 導航
+          window.location.href = notification.actionUrl
         }
         notificationStore.markAsRead(notification.id)
         desktopNotif.close()

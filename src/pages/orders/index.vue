@@ -590,24 +590,46 @@ const completedCount = computed(() => {
 const fetchOrders = async () => {
   isLoading.value = true
   try {
-    const params: OrderQueryParams = {
-      page: page.value,
-      limit: limit.value,
-      sortBy: 'createdAt',
-      sortOrder: SortOrder.DESC,
-    }
+    const userStr = localStorage.getItem('user')
+    const user = userStr ? JSON.parse(userStr) : null
+    const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
 
-    if (search.value) params.search = search.value
-    if (selectedStatus.value) params.status = selectedStatus.value
-    if (selectedPaymentMethod.value) params.paymentMethod = selectedPaymentMethod.value
-    if (selectedShippingMethod.value) params.shippingMethod = selectedShippingMethod.value
-
-    const response = await ordersApi.getAll(params)
+    let response
     
-    // API 回應結構: { data: { data: Order[], meta: {...} } }
-    const paginatedData = response.data || {}
-    orders.value = Array.isArray(paginatedData.data) ? paginatedData.data : []
-    total.value = paginatedData.meta?.total || 0
+    if (isAdmin) {
+      const params: OrderQueryParams = {
+        page: page.value,
+        limit: limit.value,
+        sortBy: 'createdAt',
+        sortOrder: SortOrder.DESC,
+      }
+
+      if (search.value) params.search = search.value
+      if (selectedStatus.value) params.status = selectedStatus.value
+      if (selectedPaymentMethod.value) params.paymentMethod = selectedPaymentMethod.value
+      if (selectedShippingMethod.value) params.shippingMethod = selectedShippingMethod.value
+
+      response = await ordersApi.getAll(params)
+    } else {
+      // 一般用戶只能看自己的訂單
+      response = await ordersApi.getMyOrders()
+    }
+    
+    // API 回應結構處理
+    // getAll 回傳 PaginatedResponse: { data: Order[], meta: {...} }
+    // getMyOrders 回傳 ApiResponse: { data: Order[] }
+    // 需要統一處理
+    
+    if (isAdmin) {
+      const paginatedData = response.data || {}
+      orders.value = Array.isArray(paginatedData.data) ? paginatedData.data : []
+      total.value = paginatedData.meta?.total || 0
+    } else {
+      // 一般用戶 API 沒有分頁結構，直接是 Order[]
+      const myOrders = Array.isArray(response) ? response : (response.data || [])
+      orders.value = myOrders
+      total.value = myOrders.length
+    }
   } catch (error: any) {
     console.error('獲取訂單失敗:', error)
     orders.value = []

@@ -67,10 +67,23 @@ onMounted(async () => {
     try {
       console.log('正在獲取用戶資料...')
       const userProfile = await authApi.getProfile()
+      
+      // 檢查權限：只有管理員可以登入後台
+      if (userProfile.role !== 'admin' && userProfile.role !== 'super_admin') {
+        console.error('權限不足：非管理員用戶')
+        throw new Error('權限不足：只有管理員可以登入後台管理系統')
+      }
+      
       localStorage.setItem('user', JSON.stringify(userProfile))
       console.log('用戶資料已獲取並存儲:', userProfile)
-    } catch (err) {
-      console.error('無法獲取用戶資料:', err)
+    } catch (err: any) {
+      console.error('無法獲取用戶資料或權限不足:', err)
+      // 如果是權限錯誤，重新拋出以便外層捕獲並顯示錯誤
+      if (err.message.includes('權限不足')) {
+        throw err
+      }
+      // 其他錯誤（如網絡問題）可能不應阻止登入，視需求而定
+      // 這裡假設獲取資料失敗不應阻止登入（除非是權限問題），但通常應該要有資料
     }
 
     // 標記成功
@@ -86,12 +99,18 @@ onMounted(async () => {
   } catch (err: any) {
     console.error('=== Google 登入回調處理失敗 ===')
     console.error('錯誤詳情:', err)
+    
+    // 清除可能已存儲的 token
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    localStorage.removeItem('user')
+    
     error.value = err.message || '處理登入資訊時發生錯誤'
     isProcessing.value = false
   }
 })
 
 const redirectToLogin = () => {
-  // router.push('/login')
+  router.push('/login')
 }
 </script>

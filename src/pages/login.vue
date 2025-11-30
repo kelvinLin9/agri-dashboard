@@ -195,6 +195,17 @@ const handleLogin = async () => {
     // 登入成功
     console.log('登入成功:', response)
     
+    // 檢查權限：只有管理員可以登入後台
+    const userRole = response.user.role
+    if (userRole !== 'admin' && userRole !== 'super_admin') {
+      // 清除 token
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
+      localStorage.removeItem('user')
+      
+      throw new Error('權限不足：只有管理員可以登入後台管理系統')
+    }
+    
     // 跳轉到首頁或儀表板
     router.push('/')
   } catch (error: any) {

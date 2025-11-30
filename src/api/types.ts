@@ -305,27 +305,77 @@ export interface UpdateMemberDto extends Partial<CreateMemberDto> {
 }
 
 // 通知相關類型
+
+// 通知類型枚舉
+export enum NotificationType {
+  SYSTEM = 'system',
+  ORDER = 'order',
+  PAYMENT = 'payment',
+  MEMBER = 'member',
+  PRODUCT = 'product',
+  PROMOTION = 'promotion',
+  REFUND = 'refund',
+}
+
+// 通知渠道
+export enum NotificationChannel {
+  WEBSOCKET = 'websocket',
+  EMAIL = 'email',
+  SMS = 'sms',
+  IN_APP = 'in_app',
+}
+
+// 通知狀態
+export enum NotificationStatus {
+  PENDING = 'pending',
+  SENT = 'sent',
+  DELIVERED = 'delivered',
+  READ = 'read',
+  FAILED = 'failed',
+}
+
 export interface Notification {
   id: string
   userId: string
-  type: string
+  type: NotificationType
+  channel: NotificationChannel
+  status: NotificationStatus
   title: string
   content: string
-  channel: 'app' | 'email' | 'sms'
-  status: 'pending' | 'sent' | 'read' | 'failed'
-  readAt?: string
+  data?: Record<string, any>
+  actionUrl?: string
+  recipientEmail?: string
+  recipientPhone?: string
   sentAt?: string
+  deliveredAt?: string
+  readAt?: string
+  failedAt?: string
+  errorMessage?: string
+  retryCount: number
+  priority: number
+  expiresAt?: string
+  isArchived: boolean
   createdAt: string
   updatedAt: string
 }
 
+export interface NotificationQueryParams extends SearchableQueryParams {
+  type?: NotificationType
+  status?: NotificationStatus
+  priority?: number
+}
+
 export interface CreateNotificationDto {
   userId: string
-  type: string
+  type: NotificationType
   title: string
   content: string
-  channel: 'app' | 'email' | 'sms'
+  channel: NotificationChannel
+  data?: Record<string, any>
+  actionUrl?: string
+  priority?: number
 }
+
 
 // 上傳相關類型
 export interface Upload {

@@ -12,6 +12,9 @@
 
     <template #right>
       <div class="flex items-center gap-2">
+        <!-- Notification Bell -->
+        <NotificationBell />
+        
         <!-- Dark Mode Toggle -->
         <UButton
           :icon="colorMode.value === 'dark' ? 'i-heroicons-moon' : 'i-heroicons-sun'"
@@ -36,6 +39,7 @@
 
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
+import NotificationBell from '@/components/NotificationBell.vue'
 
 // ========== 路由 ==========
 const route = useRoute()

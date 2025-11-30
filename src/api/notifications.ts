@@ -1,7 +1,9 @@
-import apiClient from './apiClient'
+import apiClient, { buildQueryString } from './apiClient'
 import type {
   Notification,
+  NotificationQueryParams,
   CreateNotificationDto,
+  PaginatedResponse,
   ApiResponse,
 } from './types'
 
@@ -10,18 +12,11 @@ import type {
  */
 export const notificationsApi = {
   /**
-   * 查詢所有通知（管理員）
+   * 查詢當前用戶的通知列表（支援分頁、排序、篩選）
    */
-  getAll: async (): Promise<ApiResponse<Notification[]>> => {
-    const response = await apiClient.get<ApiResponse<Notification[]>>('/notifications')
-    return response.data
-  },
-
-  /**
-   * 查詢我的通知
-   */
-  getMyNotifications: async (): Promise<ApiResponse<Notification[]>> => {
-    const response = await apiClient.get<ApiResponse<Notification[]>>('/notifications/my-notifications')
+  getAll: async (params?: NotificationQueryParams): Promise<PaginatedResponse<Notification>> => {
+    const queryString = params ? buildQueryString(params) : ''
+    const response = await apiClient.get<PaginatedResponse<Notification>>(`/notifications${queryString}`)
     return response.data
   },
 
@@ -44,15 +39,17 @@ export const notificationsApi = {
   /**
    * 標記通知為已讀
    */
-  markAsRead: async (id: string): Promise<void> => {
-    await apiClient.put(`/notifications/${id}/read`)
+  markAsRead: async (id: string): Promise<ApiResponse<Notification>> => {
+    const response = await apiClient.patch<ApiResponse<Notification>>(`/notifications/${id}/read`)
+    return response.data
   },
 
   /**
    * 標記全部已讀
    */
-  markAllAsRead: async (): Promise<void> => {
-    await apiClient.put('/notifications/mark-all-read')
+  markAllAsRead: async (): Promise<ApiResponse<{ message: string }>> => {
+    const response = await apiClient.patch<ApiResponse<{ message: string }>>('/notifications/read-all')
+    return response.data
   },
 
   /**
@@ -61,11 +58,5 @@ export const notificationsApi = {
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/notifications/${id}`)
   },
-
-  /**
-   * 清空所有已讀通知
-   */
-  clearRead: async (): Promise<void> => {
-    await apiClient.delete('/notifications/clear-read')
-  },
 }
+

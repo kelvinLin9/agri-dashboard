@@ -193,7 +193,6 @@ const handleLogin = async () => {
     })
 
     // 登入成功
-    console.log('登入成功:', response)
     
     // 檢查權限：只有管理員可以登入後台
     const userRole = response.user.role

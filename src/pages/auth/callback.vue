@@ -37,68 +37,47 @@ const error = ref('')
 
 onMounted(async () => {
   try {
-    console.log('=== Google OAuth Callback 開始處理 ===')
-    console.log('當前 URL:', window.location.href)
-    
     // 從 URL 參數中獲取 tokens
     const urlParams = new URLSearchParams(window.location.search)
     const accessToken = urlParams.get('accessToken')
     const refreshToken = urlParams.get('refreshToken')
 
-    console.log('提取的 accessToken:', accessToken ? `${accessToken.substring(0, 20)}...` : 'null')
-    console.log('提取的 refreshToken:', refreshToken ? `${refreshToken.substring(0, 20)}...` : 'null')
-
     if (!accessToken || !refreshToken) {
-      console.error('錯誤：缺少 token')
       throw new Error('缺少認證憑證')
     }
 
     // 存儲 tokens 到 localStorage（使用與 apiClient 一致的 key 名稱）
-    console.log('開始存儲 tokens...')
     localStorage.setItem('access_token', accessToken)
     localStorage.setItem('refresh_token', refreshToken)
-    console.log('Tokens 已存儲')
-    console.log('驗證存儲:', {
-      access_token: localStorage.getItem('access_token')?.substring(0, 20) + '...',
-      refresh_token: localStorage.getItem('refresh_token')?.substring(0, 20) + '...'
-    })
 
     // 獲取用戶資料
     try {
-      console.log('正在獲取用戶資料...')
       const userProfile = await authApi.getProfile()
       
       // 檢查權限：只有管理員可以登入後台
       if (userProfile.role !== 'admin' && userProfile.role !== 'super_admin') {
-        console.error('權限不足：非管理員用戶')
         throw new Error('權限不足：只有管理員可以登入後台管理系統')
       }
       
       localStorage.setItem('user', JSON.stringify(userProfile))
-      console.log('用戶資料已獲取並存儲:', userProfile)
     } catch (err: any) {
-      console.error('無法獲取用戶資料或權限不足:', err)
       // 如果是權限錯誤，重新拋出以便外層捕獲並顯示錯誤
       if (err.message.includes('權限不足')) {
         throw err
       }
-      // 其他錯誤（如網絡問題）可能不應阻止登入，視需求而定
-      // 這裡假設獲取資料失敗不應阻止登入（除非是權限問題），但通常應該要有資料
+      console.error('無法獲取用戶資料:', err)
     }
 
     // 標記成功
     success.value = true
     isProcessing.value = false
-    console.log('=== 處理完成，準備跳轉 ===')
 
     // 延遲跳轉以顯示成功訊息
     setTimeout(() => {
-      console.log('跳轉到首頁')
       router.push('/')
     }, 1500)
   } catch (err: any) {
-    console.error('=== Google 登入回調處理失敗 ===')
-    console.error('錯誤詳情:', err)
+    console.error('Google 登入失敗:', err)
     
     // 清除可能已存儲的 token
     localStorage.removeItem('access_token')

@@ -12,10 +12,10 @@ export const useNotifications = () => {
   // WebSocket 連線
   const connect = () => {
     const token = localStorage.getItem('access_token')
-    if (!token) {
-      console.warn('No access token found, cannot connect to notifications')
-      return
-    }
+    // if (!token) {
+    //   console.warn('No access token found, cannot connect to notifications')
+    //   return
+    // }
 
     const wsUrl = import.meta.env.VITE_API_URL
       ? import.meta.env.VITE_API_URL.replace('/api', '').replace('https://', 'wss://').replace('http://', 'ws://') + '/notifications'

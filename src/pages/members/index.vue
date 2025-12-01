@@ -102,13 +102,13 @@
           />
         </UBadge>
         <UBadge v-if="selectedLevel" color="info" variant="soft">
-          等級: {{ getLevelLabel(selectedLevel) }}
+          等級: {{ selectedLevel?.label }}
           <UButton
             icon="i-heroicons-x-mark"
             size="xs"
             color="neutral"
             variant="ghost"
-            @click="selectedLevel = null; fetchMembers()"
+            @click="filterLevel = undefined; fetchMembers()"
           />
         </UBadge>
         <UButton
@@ -184,7 +184,7 @@
 
             <UFormField label="性別">
               <USelectMenu
-                v-model="memberForm.gender"
+                v-model="memberFormGender"
                 :items="genderOptions"
                 placeholder="選擇性別"
               />
@@ -226,7 +226,7 @@
           <div v-if="editingMember" class="grid grid-cols-2 gap-4">
             <UFormField label="會員等級">
               <USelectMenu
-                v-model="memberForm.level"
+                v-model="memberFormLevel"
                 :items="levelOptions"
               />
             </UFormField>
@@ -461,9 +461,15 @@ const pagination = ref({
   totalPages: 0,
 })
 
-// Filters
+// Filters (internal simple values)
 const searchQuery = ref('')
-const selectedLevel = ref<MemberLevel | null>(null)
+const filterLevel = ref<MemberLevel | undefined>(undefined)
+
+// Convert simple value to SelectMenu option object
+const selectedLevel = computed({
+  get: () => levelOptions.find(opt => opt.value === filterLevel.value),
+  set: (val) => { filterLevel.value = val?.value ?? undefined }
+})
 
 // Modals
 const isModalOpen = ref(false)
@@ -488,6 +494,17 @@ const memberForm = ref({
   level: MemberLevel.BRONZE,
   points: 0,
   newsletterSubscribed: true,
+})
+
+// Computed for memberForm SelectMenus
+const memberFormGender = computed({
+  get: () => genderOptions.find(opt => opt.value === memberForm.value.gender),
+  set: (val) => { memberForm.value.gender = (val?.value as 'male' | 'female' | 'other') ?? null }
+})
+
+const memberFormLevel = computed({
+  get: () => levelOptions.find(opt => opt.value === memberForm.value.level),
+  set: (val) => { if (val?.value) memberForm.value.level = val.value }
 })
 
 // Options
@@ -655,8 +672,8 @@ const fetchMembers = async () => {
       params.search = searchQuery.value
     }
 
-    if (selectedLevel.value) {
-      params.level = selectedLevel.value
+    if (filterLevel.value) {
+      params.level = filterLevel.value
     }
 
     const result = await membersApi.getAll(params)
@@ -687,7 +704,7 @@ const debouncedSearch = (() => {
 
 const clearFilters = () => {
   searchQuery.value = ''
-  selectedLevel.value = null
+  filterLevel.value = undefined
   pagination.value.page = 1
   fetchMembers()
 }

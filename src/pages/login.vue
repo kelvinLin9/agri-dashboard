@@ -196,7 +196,7 @@ const handleLogin = async () => {
     
     // 檢查權限：只有管理員可以登入後台
     const userRole = response.user.role
-    if (userRole !== 'admin' && userRole !== 'super_admin') {
+    if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
       // 清除 token
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')

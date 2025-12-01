@@ -90,23 +90,23 @@
       <!-- Active Filters -->
       <div v-if="hasActiveFilters" class="mt-4 flex items-center gap-2">
         <UBadge v-if="selectedType" color="info" variant="soft">
-          類型: {{ getTypeLabel(selectedType) }}
+          類型: {{ selectedType?.label }}
           <UButton
             icon="i-heroicons-x-mark"
             size="xs"
             color="neutral"
             variant="ghost"
-            @click="selectedType = null; handleFilterChange()"
+            @click="filterType = undefined; handleFilterChange()"
           />
         </UBadge>
         <UBadge v-if="selectedStatus" color="info" variant="soft">
-          狀態: {{ getStatusLabel(selectedStatus) }}
+          狀態: {{ selectedStatus?.label }}
           <UButton
             icon="i-heroicons-x-mark"
             size="xs"
             color="neutral"
             variant="ghost"
-            @click="selectedStatus = null; handleFilterChange()"
+            @click="filterStatus = undefined; handleFilterChange()"
           />
         </UBadge>
         <UButton
@@ -181,9 +181,8 @@
             <!-- Channel -->
             <UFormField label="發送渠道" required>
               <USelectMenu
-                v-model="createForm.channel"
+                v-model="createFormChannel"
                 :items="channelOptions"
-                value-key="value"
                 placeholder="選擇發送渠道"
               />
             </UFormField>
@@ -257,10 +256,21 @@ const notificationStore = useNotificationStore()
 const router = useRouter()
 const toast = useToast()
 
-// 數據
+// 筛選 (internal simple values)
 const page = ref(1)
-const selectedType = ref<NotificationType | null>(null)
-const selectedStatus = ref<NotificationStatus | null>(null)
+const filterType = ref<NotificationType | undefined>(undefined)
+const filterStatus = ref<NotificationStatus | undefined>(undefined)
+
+// Convert simple values to SelectMenu option objects
+const selectedType = computed({
+  get: () => typeOptions.find(opt => opt.value === filterType.value),
+  set: (val) => { filterType.value = val?.value as NotificationType | undefined }
+})
+
+const selectedStatus = computed({
+  get: () => statusOptions.find(opt => opt.value === filterStatus.value),
+  set: (val) => { filterStatus.value = val?.value as NotificationStatus | undefined }
+})
 
 // Create notification modal
 const isCreateModalOpen = ref(false)
@@ -281,6 +291,12 @@ const createForm = ref<{
   content: '',
   actionUrl: '',
   priority: 0,
+})
+
+// Computed for createForm SelectMenus
+const createFormChannel = computed({
+  get: () => channelOptions.find(opt => opt.value === createForm.value.channel),
+  set: (val) => { createForm.value.channel = val?.value as NotificationChannel | null }
 })
 
 // 計算屬性 - 從 Store 讀取連線狀態
@@ -443,15 +459,15 @@ const columns = [
 const handleFilterChange = () => {
   page.value = 1
   notificationStore.setFilters({
-    type: selectedType.value,
-    status: selectedStatus.value,
+    type: filterType.value,
+    status: filterStatus.value,
   })
   notificationStore.fetchNotifications()
 }
 
 const clearFilters = () => {
-  selectedType.value = null
-  selectedStatus.value = null
+  filterType.value = undefined
+  filterStatus.value = undefined
   notificationStore.resetFilters()
   notificationStore.fetchNotifications()
 }

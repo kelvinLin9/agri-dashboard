@@ -77,6 +77,7 @@
         <USelectMenu
           v-model="selectedStatus"
           :items="statusOptions"
+          value-attribute="value"
           placeholder="選擇訂單狀態"
           size="lg"
           @change="handleFilterChange"
@@ -86,6 +87,7 @@
         <USelectMenu
           v-model="selectedPaymentMethod"
           :items="paymentMethodOptions"
+          value-attribute="value"
           placeholder="選擇付款方式"
           size="lg"
           @change="handleFilterChange"
@@ -95,6 +97,7 @@
         <USelectMenu
           v-model="selectedShippingMethod"
           :items="shippingMethodOptions"
+          value-attribute="value"
           placeholder="選擇配送方式"
           size="lg"
           @change="handleFilterChange"
@@ -114,33 +117,33 @@
           />
         </UBadge>
         <UBadge v-if="selectedStatus" color="info" variant="soft">
-          狀態: {{ getStatusLabel(selectedStatus) }}
+          狀態: {{ selectedStatus?.label }}
           <UButton
             icon="i-heroicons-x-mark"
             size="xs"
             color="neutral"
             variant="ghost"
-            @click="selectedStatus = null; handleFilterChange()"
+            @click="selectedStatus = undefined; handleFilterChange()"
           />
         </UBadge>
         <UBadge v-if="selectedPaymentMethod" color="info" variant="soft">
-          付款: {{ getPaymentMethodLabel(selectedPaymentMethod) }}
+          付款: {{ selectedPaymentMethod?.label }}
           <UButton
             icon="i-heroicons-x-mark"
             size="xs"
             color="neutral"
             variant="ghost"
-            @click="selectedPaymentMethod = null; handleFilterChange()"
+            @click="selectedPaymentMethod = undefined; handleFilterChange()"
           />
         </UBadge>
         <UBadge v-if="selectedShippingMethod" color="info" variant="soft">
-          配送: {{ getShippingMethodLabel(selectedShippingMethod) }}
+          配送: {{ selectedShippingMethod?.label }}
           <UButton
             icon="i-heroicons-x-mark"
             size="xs"
             color="neutral"
             variant="ghost"
-            @click="selectedShippingMethod = null; handleFilterChange()"
+            @click="selectedShippingMethod = undefined; handleFilterChange()"
           />
         </UBadge>
         <UButton
@@ -343,7 +346,7 @@
         <form @submit.prevent="saveOrder" class="space-y-4">
           <UFormField label="訂單狀態" required>
             <USelectMenu
-              v-model="orderForm.status"
+              v-model="orderFormStatus"
               :items="statusOptions"
             />
           </UFormField>
@@ -405,7 +408,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, h, resolveComponent } from 'vue'
-import { ordersApi, type Order, type OrderQueryParams, OrderStatus, SortOrder } from '@/api'
+import { ordersApi, type Order, type OrderQueryParams, OrderStatus, SortOrder, type PaginatedResponse, type ApiResponse } from '@/api'
 import { useDebounceFn } from '@vueuse/core'
 
 // Data
@@ -418,11 +421,27 @@ const page = ref(1)
 const limit = ref(10)
 const total = ref(0)
 
-// Filters
+// Filters (internal simple values)
 const search = ref('')
-const selectedStatus = ref<OrderStatus | null>(null)
-const selectedPaymentMethod = ref<string | null>(null)
-const selectedShippingMethod = ref<string | null>(null)
+const filterStatus = ref<OrderStatus | undefined>(undefined)
+const filterPaymentMethod = ref<string | undefined>(undefined)
+const filterShippingMethod = ref<string | undefined>(undefined)
+
+// Convert simple values to SelectMenu option objects
+const selectedStatus = computed({
+  get: () => statusOptions.find(opt => opt.value === filterStatus.value),
+  set: (val) => { filterStatus.value = val?.value }
+})
+
+const selectedPaymentMethod = computed({
+  get: () => paymentMethodOptions.find(opt => opt.value === filterPaymentMethod.value),
+  set: (val) => { filterPaymentMethod.value = val?.value }
+})
+
+const selectedShippingMethod = computed({
+  get: () => shippingMethodOptions.find(opt => opt.value === filterShippingMethod.value),
+  set: (val) => { filterShippingMethod.value = val?.value }
+})
 
 // Modals
 const isViewModalOpen = ref(false)
@@ -440,6 +459,12 @@ const defaultForm = {
 }
 
 const orderForm = ref({ ...defaultForm })
+
+// Computed for orderForm.status SelectMenu
+const orderFormStatus = computed({
+  get: () => statusOptions.find(opt => opt.value === orderForm.value.status),
+  set: (val) => { if (val) orderForm.value.status = val.value }
+})
 
 // Options
 const statusOptions = [
@@ -605,9 +630,9 @@ const fetchOrders = async () => {
       }
 
       if (search.value) params.search = search.value
-      if (selectedStatus.value) params.status = selectedStatus.value
-      if (selectedPaymentMethod.value) params.paymentMethod = selectedPaymentMethod.value
-      if (selectedShippingMethod.value) params.shippingMethod = selectedShippingMethod.value
+      if (filterStatus.value) params.status = filterStatus.value
+      if (filterPaymentMethod.value) params.paymentMethod = filterPaymentMethod.value
+      if (filterShippingMethod.value) params.shippingMethod = filterShippingMethod.value
 
       response = await ordersApi.getAll(params)
     } else {
@@ -621,12 +646,14 @@ const fetchOrders = async () => {
     // 需要統一處理
     
     if (isAdmin) {
-      const paginatedData = response.data || {}
+      // Admin API returns PaginatedResponse<Order>
+      const paginatedData = response as PaginatedResponse<Order>
       orders.value = Array.isArray(paginatedData.data) ? paginatedData.data : []
-      total.value = paginatedData.meta?.total || 0
+      total.value = paginatedData.meta?.total || paginatedData.total || 0
     } else {
-      // 一般用戶 API 沒有分頁結構，直接是 Order[]
-      const myOrders = Array.isArray(response) ? response : (response.data || [])
+      // User API returns ApiResponse<Order[]>
+      const apiResponse = response as ApiResponse<Order[]>
+      const myOrders = Array.isArray(apiResponse.data) ? apiResponse.data : []
       orders.value = myOrders
       total.value = myOrders.length
     }
@@ -685,9 +712,9 @@ const debouncedSearch = useDebounceFn(() => {
 
 const clearFilters = () => {
   search.value = ''
-  selectedStatus.value = null
-  selectedPaymentMethod.value = null
-  selectedShippingMethod.value = null
+  filterStatus.value = undefined
+  filterPaymentMethod.value = undefined
+  filterShippingMethod.value = undefined
   handleFilterChange()
 }
 

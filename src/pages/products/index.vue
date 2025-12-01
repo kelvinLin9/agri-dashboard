@@ -111,23 +111,23 @@
           />
         </UBadge>
         <UBadge v-if="selectedCategory" color="info" variant="soft">
-          分類: {{ getCategoryLabel(selectedCategory) }}
+          分類: {{ selectedCategory?.label }}
           <UButton
             icon="i-heroicons-x-mark"
             size="xs"
             color="neutral"
             variant="ghost"
-            @click="selectedCategory = null; handleFilterChange()"
+            @click="filterCategory = undefined; handleFilterChange()"
           />
         </UBadge>
         <UBadge v-if="selectedStatus" color="info" variant="soft">
-          狀態: {{ getStatusLabel(selectedStatus) }}
+          狀態: {{ selectedStatus?.label }}
           <UButton
             icon="i-heroicons-x-mark"
             size="xs"
             color="neutral"
             variant="ghost"
-            @click="selectedStatus = null; handleFilterChange()"
+            @click="filterStatus = undefined; handleFilterChange()"
           />
         </UBadge>
         <UButton
@@ -180,8 +180,8 @@
         <form @submit.prevent="saveProduct" class="space-y-4">
           <div class="h-[60vh] overflow-y-auto p-1">
             <UTabs :items="tabItems" class="w-full">
-              <!-- Basic Info Tab -->
-              <template #item="{ item }">
+              <template #default="{ item }">
+                <!-- Basic Info Tab -->
                 <div v-if="item.key === 'basic'" class="space-y-4 mt-4">
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <UFormField label="產品名稱" required>
@@ -328,9 +328,9 @@
 
         <div class="space-y-6">
           <!-- Product Image -->
-          <div v-if="viewingProduct.mainImage">
+          <div v-if="viewingProduct.imageUrl">
             <img
-              :src="viewingProduct.mainImage"
+              :src="viewingProduct.imageUrl"
               :alt="viewingProduct.name"
               class="w-full h-64 object-cover rounded-lg"
             />
@@ -505,10 +505,21 @@ const page = ref(1)
 const limit = ref(10)
 const total = ref(0)
 
-// Filters
+// Filters (internal simple values)
 const search = ref('')
-const selectedCategory = ref<string | null>(null)
-const selectedStatus = ref<string | null>(null)
+const filterCategory = ref<string | undefined>(undefined)
+const filterStatus = ref<string | undefined>(undefined)
+
+// Convert simple values to SelectMenu option objects
+const selectedCategory = computed({
+  get: () => categoryOptions.value.find(opt => opt.value === filterCategory.value),
+  set: (val) => { filterCategory.value = val?.value ?? undefined }
+})
+
+const selectedStatus = computed({
+  get: () => statusOptions.find(opt => opt.value === filterStatus.value),
+  set: (val) => { filterStatus.value = val?.value ?? undefined }
+})
 
 // Modals
 const isModalOpen = ref(false)
@@ -731,8 +742,8 @@ const fetchProducts = async () => {
     }
 
     if (search.value) params.search = search.value
-    if (selectedCategory.value) params.categoryId = selectedCategory.value
-    if (selectedStatus.value) params.status = selectedStatus.value
+    if (filterCategory.value) params.categoryId = filterCategory.value
+    if (filterStatus.value) params.status = filterStatus.value
 
     const response = await productsApi.getAll(params)
     products.value = response.data
@@ -757,8 +768,8 @@ const handleFilterChange = () => {
 
 const clearFilters = () => {
   search.value = ''
-  selectedCategory.value = null
-  selectedStatus.value = null
+  filterCategory.value = undefined
+  filterStatus.value = undefined
   page.value = 1
   fetchProducts()
 }

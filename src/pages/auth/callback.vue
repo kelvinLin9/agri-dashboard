@@ -55,7 +55,7 @@ onMounted(async () => {
       const userProfile = await authApi.getProfile()
       
       // 檢查權限：只有管理員可以登入後台
-      if (userProfile.role !== 'admin' && userProfile.role !== 'super_admin') {
+      if (userProfile.role !== 'ADMIN' && userProfile.role !== 'SUPER_ADMIN') {
         throw new Error('權限不足：只有管理員可以登入後台管理系統')
       }
       

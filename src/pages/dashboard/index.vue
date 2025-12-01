@@ -106,6 +106,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ordersApi } from '@/api/orders'
+import { SortOrder } from '@/api/types'
 import LineChart from '@/components/charts/LineChart.vue'
 
 interface Order {
@@ -131,6 +132,7 @@ const combinedChartData = computed(() => {
 
   orders.value.forEach((order) => {
     const date = new Date(order.createdAt).toISOString().split('T')[0]
+    if (!date) return  // 安全檢查
     
     if (!groupedData[date]) {
       groupedData[date] = { amount: 0, count: 0 }
@@ -151,7 +153,7 @@ const combinedChartData = computed(() => {
     series: [
       {
         name: '銷售金額',
-        data: sortedDates.map(date => Number(groupedData[date].amount.toFixed(2))),
+        data: sortedDates.map(date => Number(groupedData[date]?.amount.toFixed(2) ?? 0)),
         color: '#67C23A',
         smooth: true,
         showArea: true,
@@ -159,7 +161,7 @@ const combinedChartData = computed(() => {
       },
       {
         name: '訂單數量',
-        data: sortedDates.map(date => groupedData[date].count),
+        data: sortedDates.map(date => groupedData[date]?.count ?? 0),
         color: '#409EFF',
         smooth: true,
         showArea: false,
@@ -206,11 +208,11 @@ async function fetchOrders() {
       page: 1,
       limit: 100, // 後端限制最大為 100
       sortBy: 'createdAt',
-      sortOrder: 'DESC', // 改為降序，獲取最新的訂單
+      sortOrder: SortOrder.DESC, // 使用枚舉
     })
 
-    // API 回應結構: { data: { data: Order[], meta: {...} } }
-    const paginatedData = response.data || {}
+    // API 回應結構: Pag inatedResponse<Order>
+    const paginatedData = response || {}
     const allOrders = Array.isArray(paginatedData.data) ? paginatedData.data : []
 
     console.log('所有訂單數量:', allOrders.length)

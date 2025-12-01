@@ -17,11 +17,11 @@
         
         <!-- Dark Mode Toggle -->
         <UButton
-          :icon="colorMode.value === 'dark' ? 'i-heroicons-moon' : 'i-heroicons-sun'"
+          :icon="isDark ? 'i-heroicons-moon' : 'i-heroicons-sun'"
           color="neutral"
           variant="ghost"
           @click="toggleColorMode"
-          :aria-label="colorMode.value === 'dark' ? '切換到淺色模式' : '切換到深色模式'"
+          :aria-label="isDark ? '切換到淺色模式' : '切換到深色模式'"
         />
         
         <!-- Logout Button -->
@@ -66,6 +66,7 @@ const navItems = computed<NavigationMenuItem[]>(() =>
 
 // ========== 深色模式 ==========
 const colorMode = useColorMode()
+const isDark = computed(() => colorMode.value === 'dark')
 
 const toggleColorMode = () => {
   colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'

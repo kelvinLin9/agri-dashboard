@@ -36,6 +36,7 @@ export interface PaginatedResponse<T> {
   page: number
   limit: number
   totalPages: number
+  meta: PaginationMeta  // 為了兼容性添加 meta 別名
 }
 
 // 標準 API 響應
@@ -246,10 +247,10 @@ export interface CreateOrderDto {
 
 export interface UpdateOrderDto {
   status?: OrderStatus
-  trackingNumber?: string
+  trackingNumber?: string | null
   shippingFee?: number
   discountAmount?: number
-  adminNote?: string
+  adminNote?: string | null
 }
 
 // 會員相關類型
@@ -293,7 +294,7 @@ export interface CreateMemberDto {
   realName?: string
   phone?: string
   birthday?: string
-  gender?: 'male' | 'female' | 'other'
+  gender?: 'male' | 'female' | 'other' | null
   postalCode?: string
   city?: string
   district?: string

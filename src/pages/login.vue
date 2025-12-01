@@ -217,8 +217,8 @@ const handleLogin = async () => {
 
 const handleGoogleLogin = () => {
   // 直接重定向到後端的 Google OAuth 端點
-  const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
-  window.location.href = `${backendUrl}/api/auth/google`
+  const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+  window.location.href = `${backendUrl}/auth/google`
 }
 
 // 清除錯誤訊息當用戶開始輸入

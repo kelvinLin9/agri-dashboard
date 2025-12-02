@@ -108,7 +108,7 @@ router.beforeEach(async (to, from, next) => {
       const userData = JSON.parse(user)
 
       // 檢查是否為管理員
-      if (userData.role !== 'ADMIN' && userData.role !== 'SUPER_ADMIN') {
+      if (userData.role !== 'admin' && userData.role !== 'super_admin') {
         // 清除 token
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
@@ -128,7 +128,7 @@ router.beforeEach(async (to, from, next) => {
       const userProfile = await authApi.getProfile()
 
       // 檢查權限
-      if (userProfile.role !== 'ADMIN' && userProfile.role !== 'SUPER_ADMIN') {
+      if (userProfile.role !== 'admin' && userProfile.role !== 'super_admin') {
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
         localStorage.removeItem('user')

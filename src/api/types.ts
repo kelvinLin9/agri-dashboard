@@ -60,8 +60,8 @@ export interface User {
   username: string
   email: string
   nickname?: string
-  role: 'USER' | 'ADMIN' | 'SUPER_ADMIN'
-  status: 'active' | 'inactive' | 'suspended'
+  role: 'super_admin' | 'admin' | 'operator' | 'customer_service'
+  status: 'active' | 'inactive' | 'locked'
   createdAt: string
   updatedAt: string
 }

@@ -65,7 +65,7 @@ onMounted(async () => {
     localStorage.setItem('refresh_token', authData.refreshToken)
 
     // 檢查權限：只有管理員可以登入後台
-    if (authData.user.role !== 'ADMIN' && authData.user.role !== 'SUPER_ADMIN') {
+    if (authData.user.role !== 'admin' && authData.user.role !== 'super_admin') {
       // 清除 token
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')

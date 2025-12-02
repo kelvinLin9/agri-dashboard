@@ -17,15 +17,27 @@ export const useNotifications = () => {
       return
     }
 
-    const wsUrl = import.meta.env.VITE_API_URL
-      ? import.meta.env.VITE_API_URL.replace('/api', '').replace('https://', 'wss://').replace('http://', 'ws://') + '/notifications'
-      : 'https://agri-backend-660672910950.europe-west1.run.app/api/notifications'
+    // 構建 WebSocket URL
+    let wsUrl: string
+    if (import.meta.env.VITE_API_URL) {
+      // 從 API URL 轉換為 WebSocket URL
+      const apiUrl = import.meta.env.VITE_API_URL
+      wsUrl = apiUrl
+        .replace('https://', 'wss://')
+        .replace('http://', 'ws://')
+        .replace('/api', '') + '/notifications'
+    } else {
+      // Fallback URL
+      wsUrl = 'wss://agri-backend-660672910950.europe-west1.run.app/notifications'
+    }
+
     console.log('🔧 [useNotifications] WebSocket URL:', wsUrl)
-    console.log('🔧 [useNotifications] Access Token:', token)
+    console.log('🔧 [useNotifications] Access Token:', token?.substring(0, 20) + '...')
     console.log('🔧 [useNotifications] Environment Variables:', {
       VITE_API_URL: import.meta.env.VITE_API_URL,
-      mode: import.meta.env.mode,
+      mode: import.meta.env.MODE,
     })
+
 
     // 建立 WebSocket 連線
     socket.value = io(wsUrl, {

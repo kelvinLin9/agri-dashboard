@@ -17,17 +17,17 @@ export default defineConfig({
       },
       ui: {
         container: {
-          base: 'w-full max-w-(--ui-container-2xl) mx-auto'
+          base: 'w-full max-w-(--ui-container-2xl) mx-auto',
         },
         main: {
-          base: 'min-h-[calc(100vh-var(--ui-header-height))]'
+          base: 'min-h-[calc(100vh-var(--ui-header-height))]',
         },
       },
     }),
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
 })

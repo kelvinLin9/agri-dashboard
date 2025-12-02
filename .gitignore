@@ -39,4 +39,12 @@ __screenshots__/
 auto-imports.d.ts
 components.d.ts
 
+# 環境變數
+# 忽略本地環境變數檔案（包含敏感資訊）
 .env
+.env.local
+.env.*.local
+
+# 不要忽略這些檔案（範例和生產環境設定）
+!.env.example
+!.env.production

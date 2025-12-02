@@ -9,16 +9,21 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy source code
+# Copy source code (包含 .env.production 作為預設值)
 COPY . .
 
 # Build arguments for environment variables
+# 注意：ARG 如果沒有透過 --build-arg 傳入，會是 undefined
+# 如果透過 --set-build-env-vars 傳入空值，會是空字串
 ARG VITE_API_URL
 ARG VITE_GOOGLE_CLIENT_ID
 
 # Set environment variables for build
-ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+# 使用 ENV 指令設定環境變數（Vite 會在 build 時讀取）
+# 注意：如果 ARG 是空字串，ENV 也會是空字串，這會覆蓋 .env.production
+# 因此部署腳本必須確保不會傳入空值
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 
 # Build the application
 RUN npm run build

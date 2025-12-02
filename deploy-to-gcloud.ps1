@@ -22,7 +22,7 @@ $REGION = "europe-west1"
 
 # 環境變數
 $VITE_API_URL = "https://agri-backend-660672910950.europe-west1.run.app/api"
-$VITE_GOOGLE_CLIENT_ID = ""  # 請填入你的 Google Client ID
+$VITE_GOOGLE_CLIENT_ID = "660672910950-a4tdqj33tt75q0lahnhm00l6oj9m7kvo.apps.googleusercontent.com"  # 請填入你的 Google Client ID
 
 # ===== 檢查必要工具 =====
 Write-ColorOutput Cyan "`n[1/5] 檢查 Google Cloud CLI..."
@@ -35,18 +35,28 @@ Write-ColorOutput Green "✓ Google Cloud CLI 已安裝"
 
 # ===== 檢查環境變數 =====
 Write-ColorOutput Cyan "`n[2/5] 檢查環境變數..."
+
+# 檢查 VITE_API_URL
+if ([string]::IsNullOrEmpty($VITE_API_URL)) {
+    Write-ColorOutput Red "❌ VITE_API_URL 未設定"
+    Write-ColorOutput Yellow "請編輯此腳本並設定 VITE_API_URL"
+    exit 1
+}
+
+# 檢查 VITE_GOOGLE_CLIENT_ID（允許為空，但會警告）
 if ([string]::IsNullOrEmpty($VITE_GOOGLE_CLIENT_ID)) {
     Write-ColorOutput Yellow "⚠️  VITE_GOOGLE_CLIENT_ID 未設定"
     Write-ColorOutput Yellow "請編輯此腳本並設定 VITE_GOOGLE_CLIENT_ID"
+    Write-ColorOutput Yellow "否則 Google OAuth 登入功能將無法使用"
     $continue = Read-Host "是否繼續部署？(y/N)"
     if ($continue -ne "y") {
         exit 1
     }
 }
 
-Write-ColorOutput Green "API URL: $VITE_API_URL"
+Write-ColorOutput Green "✓ API URL: $VITE_API_URL"
 if (-not [string]::IsNullOrEmpty($VITE_GOOGLE_CLIENT_ID)) {
-    Write-ColorOutput Green "Google Client ID: $VITE_GOOGLE_CLIENT_ID"
+    Write-ColorOutput Green "✓ Google Client ID: $VITE_GOOGLE_CLIENT_ID"
 }
 
 # ===== 設定專案 =====
@@ -65,6 +75,13 @@ Write-ColorOutput Green "✓ Dockerfile 存在"
 Write-ColorOutput Cyan "`n[5/5] 部署到 Cloud Run..."
 
 # 建構部署指令
+# 注意：只傳入非空的環境變數，避免空字串覆蓋 .env.production 的預設值
+$buildEnvVars = "VITE_API_URL=$VITE_API_URL"
+
+if (-not [string]::IsNullOrEmpty($VITE_GOOGLE_CLIENT_ID)) {
+    $buildEnvVars += ",VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID"
+}
+
 $deployCmd = "gcloud run deploy $SERVICE_NAME " +
     "--source . " +
     "--platform managed " +
@@ -75,13 +92,7 @@ $deployCmd = "gcloud run deploy $SERVICE_NAME " +
     "--cpu 1 " +
     "--min-instances 0 " +
     "--max-instances 10 " +
-    "--set-build-env-vars=""VITE_API_URL=$VITE_API_URL"
-
-if (-not [string]::IsNullOrEmpty($VITE_GOOGLE_CLIENT_ID)) {
-    $deployCmd += ",VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID"
-}
-
-$deployCmd += """"
+    "--set-build-env-vars=""$buildEnvVars"""
 
 Write-ColorOutput Yellow "執行命令: $deployCmd"
 Write-Host ""

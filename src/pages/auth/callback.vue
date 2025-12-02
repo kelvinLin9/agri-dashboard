@@ -29,6 +29,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '@/api'
+import apiClient from '@/api/apiClient'
 
 const router = useRouter()
 const isProcessing = ref(true)
@@ -37,36 +38,43 @@ const error = ref('')
 
 onMounted(async () => {
   try {
-    // 從 URL 參數中獲取 tokens
+    // 從 URL 參數中獲取 authorization code（而不是直接獲取 token）
     const urlParams = new URLSearchParams(window.location.search)
-    const accessToken = urlParams.get('accessToken')
-    const refreshToken = urlParams.get('refreshToken')
+    const code = urlParams.get('code')
 
-    if (!accessToken || !refreshToken) {
+    if (!code) {
       throw new Error('缺少認證憑證')
     }
 
-    // 存儲 tokens 到 localStorage（使用與 apiClient 一致的 key 名稱）
-    localStorage.setItem('access_token', accessToken)
-    localStorage.setItem('refresh_token', refreshToken)
+    // 用 authorization code 換取 token
+    // 這個請求是 POST，不會在 URL 中暴露敏感資訊
+    const response = await apiClient.post<{ data: {
+      accessToken: string
+      refreshToken: string
+      user: any
+    } }>('/auth/oauth/token', { code })
+    
+    const authData = response.data.data
 
-    // 獲取用戶資料
-    try {
-      const userProfile = await authApi.getProfile()
-      
-      // 檢查權限：只有管理員可以登入後台
-      if (userProfile.role !== 'ADMIN' && userProfile.role !== 'SUPER_ADMIN') {
-        throw new Error('權限不足：只有管理員可以登入後台管理系統')
-      }
-      
-      localStorage.setItem('user', JSON.stringify(userProfile))
-    } catch (err: any) {
-      // 如果是權限錯誤，重新拋出以便外層捕獲並顯示錯誤
-      if (err.message.includes('權限不足')) {
-        throw err
-      }
-      console.error('無法獲取用戶資料:', err)
+    if (!authData.accessToken || !authData.refreshToken) {
+      throw new Error('無法獲取認證憑證')
     }
+
+    // 存儲 tokens 到 localStorage
+    localStorage.setItem('access_token', authData.accessToken)
+    localStorage.setItem('refresh_token', authData.refreshToken)
+
+    // 檢查權限：只有管理員可以登入後台
+    if (authData.user.role !== 'ADMIN' && authData.user.role !== 'SUPER_ADMIN') {
+      // 清除 token
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
+      localStorage.removeItem('user')
+      
+      throw new Error('權限不足：只有管理員可以登入後台管理系統')
+    }
+    
+    localStorage.setItem('user', JSON.stringify(authData.user))
 
     // 標記成功
     success.value = true

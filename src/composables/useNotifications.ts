@@ -12,14 +12,14 @@ export const useNotifications = () => {
   // WebSocket 連線
   const connect = () => {
     const token = localStorage.getItem('access_token')
-    // if (!token) {
-    //   console.warn('No access token found, cannot connect to notifications')
-    //   return
-    // }
+    if (!token) {
+      console.warn('No access token found, cannot connect to notifications')
+      return
+    }
 
     const wsUrl = import.meta.env.VITE_API_URL
       ? import.meta.env.VITE_API_URL.replace('/api', '').replace('https://', 'wss://').replace('http://', 'ws://') + '/notifications'
-      : 'http://localhost:3000/notifications'
+      : 'https://agri-backend-660672910950.europe-west1.run.app/api/notifications'
     console.log('🔧 [useNotifications] WebSocket URL:', wsUrl)
     console.log('🔧 [useNotifications] Access Token:', token)
     console.log('🔧 [useNotifications] Environment Variables:', {

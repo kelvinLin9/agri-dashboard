@@ -8,6 +8,9 @@
     
     <!-- PWA 安裝提示 -->
     <PwaInstallPrompt />
+    
+    <!-- 推送通知訂閱提示 -->
+    <PushNotificationPrompt />
   </UApp>
 </template>
 
@@ -17,6 +20,7 @@ import { useRoute } from 'vue-router'
 import Header from './layout/Header.vue'
 import LoadingOverlay from './components/LoadingOverlay.vue'
 import PwaInstallPrompt from './components/PwaInstallPrompt.vue'
+import PushNotificationPrompt from './components/PushNotificationPrompt.vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { useNotificationStore } from '@/stores/notification'
 

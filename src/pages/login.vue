@@ -307,9 +307,13 @@ const handleLogin = async () => {
 }
 
 const handleGoogleLogin = () => {
-  // 直接重定向到後端的 Google OAuth 端點
+  // 获取当前前端的 origin（协议 + 域名 + 端口）
+  const currentOrigin = window.location.origin
+  
+  // 重定向到後端的 Google OAuth 端點，并传递前端 origin
   const backendUrl = import.meta.env.VITE_API_URL || 'https://agri-backend-660672910950.europe-west1.run.app/api'
-  window.location.href = `${backendUrl}/auth/google`
+  const redirectUri = encodeURIComponent(currentOrigin)
+  window.location.href = `${backendUrl}/auth/google?redirect_uri=${redirectUri}`
 }
 
 // 清除錯誤訊息當用戶開始輸入

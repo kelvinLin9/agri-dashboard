@@ -152,20 +152,45 @@
           </template>
 
           <div class="space-y-4">
-            <!-- Current User Info -->
-            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <!-- Send Mode Selection -->
+            <UFormField label="發送模式" required>
+              <div class="flex gap-4">
+                <URadioGroup v-model="sendMode" :options="sendModeOptions" />
+              </div>
+            </UFormField>
+
+            <!-- User Selection (only for single mode) -->
+            <UFormField v-if="sendMode === 'single'" label="接收用戶" required>
+              <USelectMenu
+                v-model="selectedUser"
+                :items="userOptions"
+                :search-attributes="['label', 'email']"
+                searchable
+                placeholder="選擇接收用戶"
+                value-key="value"
+              >
+                <template #label>
+                  <span v-if="selectedUser">{{ selectedUser.label }}</span>
+                  <span v-else class="text-gray-400">選擇接收用戶</span>
+                </template>
+                <template #option="{ option }">
+                  <div class="flex flex-col">
+                    <span class="font-medium">{{ option.label }}</span>
+                    <span class="text-xs text-gray-500">{{ option.email }}</span>
+                  </div>
+                </template>
+              </USelectMenu>
+            </UFormField>
+
+            <!-- Broadcast Info -->
+            <div v-if="sendMode === 'broadcast'" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
               <div class="flex items-center gap-2 mb-2">
-                <UIcon name="i-heroicons-user-circle" class="w-5 h-5 text-blue-600" />
-                <span class="text-sm font-medium text-blue-900 dark:text-blue-100">發送給當前用戶</span>
+                <UIcon name="i-heroicons-megaphone" class="w-5 h-5 text-green-600" />
+                <span class="text-sm font-medium text-green-900 dark:text-green-100">廣播給所有會員</span>
               </div>
-              <div class="text-sm text-blue-800 dark:text-blue-200">
-                <p><span class="font-semibold">帳號：</span>{{ currentUser?.username || '未登入' }}</p>
-                <p><span class="font-semibold">Email：</span>{{ currentUser?.email || '-' }}</p>
-                <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  <UIcon name="i-heroicons-information-circle" class="w-4 h-4 inline" />
-                  通知將發送給你自己以便測試
-                </p>
-              </div>
+              <p class="text-sm text-green-800 dark:text-green-200">
+                通知將發送給所有會員（{{ userOptions.length }} 人）
+              </p>
             </div>
 
             <!-- Type -->
@@ -293,6 +318,13 @@ const createForm = ref<{
   priority: 0,
 })
 
+// 發送模式
+const sendMode = ref<'single' | 'broadcast'>('broadcast')
+const sendModeOptions = [
+  { value: 'single', label: '發送給單個用戶' },
+  { value: 'broadcast', label: '廣播給所有會員' }
+]
+
 // Computed for createForm SelectMenus
 const createFormChannel = computed({
   get: () => channelOptions.find(opt => opt.value === createForm.value.channel),
@@ -314,6 +346,41 @@ const currentUser = computed(() => {
   }
   return null
 })
+
+// 用戶選項
+const userOptions = ref<Array<{ value: string; label: string; email: string }>>([])
+const selectedUser = computed({
+  get: () => userOptions.value.find(u => u.value === createForm.value.userId),
+  set: (val) => { createForm.value.userId = val?.value || '' }
+})
+
+// 載入用戶列表
+const loadUsers = async () => {
+  try {
+    // 獲取所有用戶（可以調用會員 API 或專門的用戶 API）
+    const response = await fetch('/api/members', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+      }
+    })
+    const data = await response.json()
+    
+    if (data.data && data.data.data) {
+      userOptions.value = data.data.data.map((member: any) => ({
+        value: member.userId,
+        label: member.user?.username || member.name,
+        email: member.user?.email || member.contactEmail || ''
+      }))
+    }
+  } catch (error) {
+    console.error('載入用戶列表失敗:', error)
+    toast.add({
+      title: '警告',
+      description: '無法載入用戶列表，請手動輸入用戶ID',
+      color: 'warning'
+    })
+  }
+}
 
 // 計算屬性
 const hasActiveFilters = computed(() => {
@@ -488,17 +555,20 @@ const handleDelete = async (id: string) => {
 }
 
 const handleCreateNotification = async () => {
-  // Validate user is logged in
-  if (!currentUser.value || !currentUser.value.id) {
-    toast.add({
-      title: '錯誤',
-      description: '無法獲取當前用戶資訊，請重新登入',
-      color: 'error',
-    })
-    return
+  // Validate based on send mode
+  if (sendMode.value === 'single') {
+    // 單個用戶模式：需要選擇用戶
+    if (!createForm.value.userId) {
+      toast.add({
+        title: '錯誤',
+        description: '請選擇接收用戶',
+        color: 'error',
+      })
+      return
+    }
   }
 
-  // Validate required fields (除了 userId，因為自動填入)
+  // Validate required fields
   if (!createForm.value.type || !createForm.value.channel || !createForm.value.title || !createForm.value.content) {
     toast.add({
       title: '錯誤',
@@ -510,26 +580,50 @@ const handleCreateNotification = async () => {
 
   isCreating.value = true
   try {
-    const dto: CreateNotificationDto = {
-      userId: currentUser.value.id, // 使用當前用戶 ID
-      type: createForm.value.type,
-      channel: createForm.value.channel,
-      title: createForm.value.title,
-      content: createForm.value.content,
-      priority: createForm.value.priority,
+    if (sendMode.value === 'broadcast') {
+      // 廣播模式：使用 broadcast API
+      await notificationsApi.broadcast({
+        templateCode: 'custom',  // 使用自定義模板或直接創建
+        variables: {
+          title: createForm.value.title,
+          content: createForm.value.content
+        },
+        data: {
+          type: createForm.value.type,
+          channel: createForm.value.channel,
+          actionUrl: createForm.value.actionUrl,
+          priority: createForm.value.priority,
+        }
+      })
+
+      toast.add({
+        title: '成功',
+        description: `廣播通知已發送給 ${userOptions.value.length} 位會員！`,
+        color: 'success',
+      })
+    } else {
+      // 單個用戶模式：使用 create API
+      const dto: CreateNotificationDto = {
+        userId: createForm.value.userId,
+        type: createForm.value.type,
+        channel: createForm.value.channel,
+        title: createForm.value.title,
+        content: createForm.value.content,
+        priority: createForm.value.priority,
+      }
+
+      if (createForm.value.actionUrl) {
+        dto.actionUrl = createForm.value.actionUrl
+      }
+
+      await notificationsApi.create(dto)
+
+      toast.add({
+        title: '成功',
+        description: '通知已發送！',
+        color: 'success',
+      })
     }
-
-    if (createForm.value.actionUrl) {
-      dto.actionUrl = createForm.value.actionUrl
-    }
-
-    await notificationsApi.create(dto)
-
-    toast.add({
-      title: '成功',
-      description: '通知建立成功！',
-      color: 'success',
-    })
 
     // Reset form and close modal
     createForm.value = {
@@ -656,5 +750,14 @@ watch(page, () => {
 onMounted(() => {
   notificationStore.fetchNotifications()
   notificationStore.fetchUnreadCount()
+  loadUsers() // 載入用戶列表
+})
+
+// 監聽彈窗開啟，重置表單
+watch(isCreateModalOpen, (newVal) => {
+  if (newVal) {
+    // 彈窗開啟時重載用戶列表
+    loadUsers()
+  }
 })
 </script>

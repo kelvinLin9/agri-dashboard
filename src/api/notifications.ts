@@ -58,5 +58,17 @@ export const notificationsApi = {
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/notifications/${id}`)
   },
+
+  /**
+   * 廣播通知給所有會員（管理員）
+   */
+  broadcast: async (data: {
+    templateCode: string
+    variables?: Record<string, any>
+    data?: Record<string, any>
+  }): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post<ApiResponse<any>>('/notifications/broadcast', data)
+    return response.data
+  },
 }
 

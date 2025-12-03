@@ -4,7 +4,7 @@
     <UContainer>
       <RouterView />
     </UContainer>
-    <!-- <LoadingOverlay :is-open="isLoading" /> -->
+    <LoadingOverlay :is-open="isLoading" />
     
     <!-- PWA 安裝提示 -->
     <PwaInstallPrompt />
@@ -23,6 +23,7 @@ import PwaInstallPrompt from './components/PwaInstallPrompt.vue'
 import PushNotificationPrompt from './components/PushNotificationPrompt.vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { useNotificationStore } from '@/stores/notification'
+import { isLoading } from '@/utils/loading'
 
 // 初始化通知功能
 const route = useRoute()

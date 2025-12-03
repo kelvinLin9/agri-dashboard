@@ -1,26 +1,33 @@
 <template>
-  <UModal
-    :open="isOpen"
-    :dismissible="false"
-    :close="false"
-  >
-    <template #default>
-      <div class="flex flex-col items-center justify-center gap-4 p-8 min-h-[200px]">
-        <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" />
-        <p v-if="text" class="text-sm text-gray-600">{{ text }}</p>
-      </div>
-    </template>
-  </UModal>
+  <div v-if="isOpen">
+    <!-- 頂部進度條 -->
+    <div class="fixed top-0 left-0 right-0 z-[60]">
+      <UProgress 
+        :value="100"
+        animation="carousel"
+        size="xs"
+        color="primary"
+      />
+    </div>
+    
+    <!-- 可選的半透明背景遮罩 -->
+    <div 
+      v-if="showBackdrop"
+      class="fixed inset-0 z-50 bg-gray-900/10 dark:bg-gray-900/30 backdrop-blur-[2px] transition-opacity"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
 interface Props {
   isOpen: boolean
   text?: string
+  showBackdrop?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
   text: 'Loading...',
+  showBackdrop: false,
 })
 </script>
 

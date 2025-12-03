@@ -26,6 +26,9 @@ export default defineConfig({
       },
     }),
     VitePWA({
+      strategies: 'injectManifest', // 使用自定義 Service Worker
+      srcDir: 'src',
+      filename: 'sw.ts',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
@@ -59,38 +62,12 @@ export default defineConfig({
           }
         ]
       },
-      workbox: {
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/agri-backend.*\.run\.app\/api\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 // 1 小時
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            urlPattern: /\.(png|jpg|jpeg|svg|gif|webp)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'image-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 天
-              }
-            }
-          }
-        ]
       },
       devOptions: {
-        enabled: true // 開發環境啟用 PWA
+        enabled: true, // 開發環境啟用 PWA
+        type: 'module'
       }
     })
   ],

@@ -55,10 +55,19 @@ const {
 
 const showPrompt = ref(false)
 
-onMounted(() => {
+onMounted(async () => {
+  // 等待一下讓 composable 完成初始化
+  await new Promise(resolve => setTimeout(resolve, 500))
+  
   // 檢查是否需要顯示提示
   const hasPrompted = localStorage.getItem('push-notification-prompted')
   const notificationPermission = Notification?.permission
+  
+  console.log('[PushPrompt] 檢查顯示條件:')
+  console.log('  - 瀏覽器支援:', isSupported.value)
+  console.log('  - 已訂閱:', isSubscribed.value)
+  console.log('  - 通知權限:', notificationPermission)
+  console.log('  - 已提示過:', hasPrompted)
   
   // 如果：
   // 1. 從未提示過
@@ -72,9 +81,13 @@ onMounted(() => {
     !isSubscribed.value &&
     notificationPermission !== 'denied'
   ) {
+    console.log('[PushPrompt] ✅ 將在 5 秒後顯示提示')
     setTimeout(() => {
       showPrompt.value = true
+      console.log('[PushPrompt] 📢 顯示推送通知提示')
     }, 5000) // 5 秒後顯示，給用戶時間先看到 PWA 安裝提示
+  } else {
+    console.log('[PushPrompt] ⏭️  不顯示提示')
   }
 })
 

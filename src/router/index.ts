@@ -58,7 +58,7 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: () => import('../pages/login.vue'),
-      meta: { 
+      meta: {
         requiresAuth: false,
         layout: 'blank'
       },
@@ -67,7 +67,7 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: () => import('../pages/register.vue'),
-      meta: { 
+      meta: {
         requiresAuth: false,
         layout: 'blank'
       },
@@ -76,7 +76,16 @@ const router = createRouter({
       path: '/auth/callback',
       name: 'auth-callback',
       component: () => import('../pages/auth/callback.vue'),
-      meta: { 
+      meta: {
+        requiresAuth: false,
+        layout: 'blank'
+      },
+    },
+    {
+      path: '/debug',
+      name: 'debug',
+      component: () => import('../pages/debug.vue'),
+      meta: {
         requiresAuth: false,
         layout: 'blank'
       },

@@ -41,11 +41,20 @@ self.addEventListener('push', (event: PushEvent) => {
       body: data.body || '',
       icon: data.icon || '/icon-192x192.png',
       badge: data.badge || '/icon-192x192.png',
-      vibrate: data.vibrate || [200, 100, 200],
       data: data.data || { url: '/' },
       tag: data.tag || 'notification',
       requireInteraction: data.priority >= 2, // 高優先級通知需要用戶交互
-      actions: data.actions || [],
+    }
+
+    // 添加非標準屬性 (vibrate, actions)
+    if (data.vibrate) {
+      (options as any).vibrate = data.vibrate
+    } else {
+      (options as any).vibrate = [200, 100, 200]
+    }
+
+    if (data.actions) {
+      (options as any).actions = data.actions
     }
 
     event.waitUntil(
@@ -95,9 +104,12 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
       }
 
       // 如果有任何窗口打開,導航到目標 URL
-      if (clientList.length > 0 && 'navigate' in clientList[0]) {
-        console.log('[SW] Navigating existing window')
-        return clientList[0].navigate(fullUrl).then(client => client?.focus())
+      if (clientList.length > 0) {
+        const firstClient = clientList[0]
+        if (firstClient && 'navigate' in firstClient && typeof firstClient.navigate === 'function') {
+          console.log('[SW] Navigating existing window')
+          return firstClient.navigate(fullUrl).then(client => client?.focus())
+        }
       }
 
       // 否則打開新窗口

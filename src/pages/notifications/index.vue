@@ -181,22 +181,14 @@
             <!-- User Selection (only for single mode) -->
             <UFormField v-if="sendMode === 'single'" label="接收用戶" required>
               <USelectMenu
-                v-model="selectedUser"
+                v-model="createForm.userId"
                 :items="userOptions"
-                :search-attributes="['label', 'email']"
+                value-key="value"
                 searchable
                 placeholder="選擇接收用戶"
-                value-key="value"
               >
-                <template #label>
-                  <span v-if="selectedUser">{{ selectedUser.label }}</span>
-                  <span v-else class="text-gray-400">選擇接收用戶</span>
-                </template>
-                <template #option="{ option }">
-                  <div class="flex flex-col">
-                    <span class="font-medium">{{ option.label }}</span>
-                    <span class="text-xs text-gray-500">{{ option.email }}</span>
-                  </div>
+                <template #leading>
+                  <UIcon name="i-heroicons-user" class="w-5 h-5" />
                 </template>
               </USelectMenu>
             </UFormField>
@@ -367,16 +359,11 @@ const currentUser = computed(() => {
 })
 
 // 用戶選項
-const userOptions = ref<Array<{ value: string; label: string; email: string }>>([])
-const selectedUser = computed({
-  get: () => userOptions.value.find(u => u.value === createForm.value.userId),
-  set: (val) => { createForm.value.userId = val?.value || '' }
-})
+const userOptions = ref<Array<{ value: string; label: string }>>([])
 
 // 載入用戶列表
 const loadUsers = async () => {
   try {
-    // 獲取所有用戶（可以調用會員 API 或專門的用戶 API）
     const response = await fetch('/api/members', {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -387,19 +374,14 @@ const loadUsers = async () => {
     if (data.data && data.data.data) {
       userOptions.value = data.data.data.map((member: any) => ({
         value: member.userId,
-        label: member.user?.username || member.name,
-        email: member.user?.email || member.contactEmail || ''
+        label: `${member.user?.username || member.name} (${member.user?.email || member.contactEmail || ''})`,
       }))
     }
   } catch (error) {
     console.error('載入用戶列表失敗:', error)
-    toast.add({
-      title: '警告',
-      description: '無法載入用戶列表，請手動輸入用戶ID',
-      color: 'warning'
-    })
   }
 }
+
 
 // 計算屬性
 const hasActiveFilters = computed(() => {

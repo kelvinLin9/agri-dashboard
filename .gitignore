@@ -48,3 +48,10 @@ components.d.ts
 # 不要忽略這些檔案（範例和生產環境設定）
 !.env.example
 !.env.production
+
+# PWA
+# vite-plugin-pwa 開發環境生成的 Service Worker 檔案
+dev-dist/
+
+# 生產環境 PWA 檔案（會在 build 時生成到 dist/ 中）
+# dist/ 已經在上面被忽略，所以不需要額外規則

@@ -5,6 +5,9 @@
       <RouterView />
     </UContainer>
     <!-- <LoadingOverlay :is-open="isLoading" /> -->
+    
+    <!-- PWA 安裝提示 -->
+    <PwaInstallPrompt />
   </UApp>
 </template>
 
@@ -13,6 +16,7 @@ import { onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Header from './layout/Header.vue'
 import LoadingOverlay from './components/LoadingOverlay.vue'
+import PwaInstallPrompt from './components/PwaInstallPrompt.vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { useNotificationStore } from '@/stores/notification'
 

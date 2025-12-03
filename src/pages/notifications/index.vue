@@ -154,8 +154,27 @@
           <div class="space-y-4">
             <!-- Send Mode Selection -->
             <UFormField label="發送模式" required>
-              <div class="flex gap-4">
-                <URadioGroup v-model="sendMode" :options="sendModeOptions" />
+              <div class="flex gap-2">
+                <UButton
+                  :color="sendMode === 'broadcast' ? 'primary' : 'neutral'"
+                  :variant="sendMode === 'broadcast' ? 'solid' : 'outline'"
+                  @click="sendMode = 'broadcast'"
+                >
+                  <template #leading>
+                    <UIcon name="i-heroicons-megaphone" />
+                  </template>
+                  廣播給所有會員
+                </UButton>
+                <UButton
+                  :color="sendMode === 'single' ? 'primary' : 'neutral'"
+                  :variant="sendMode === 'single' ? 'solid' : 'outline'"
+                  @click="sendMode = 'single'"
+                >
+                  <template #leading>
+                    <UIcon name="i-heroicons-user" />
+                  </template>
+                  發送給單個用戶
+                </UButton>
               </div>
             </UFormField>
 

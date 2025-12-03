@@ -13,7 +13,7 @@
         position="top-right"
         inset
       >
-        <UIcon name="i-heroicons-bell" class="w-6 h-6" />
+        <UIcon name="i-heroicons-bell" class="w-5 h-5" />
       </UChip>
     </UButton>
 

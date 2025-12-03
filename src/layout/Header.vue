@@ -24,16 +24,18 @@
           :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
           color="neutral"
           variant="ghost"
+          size="lg"
           @click="toggleColorMode"
           :aria-label="isDark ? '切換到淺色模式' : '切換到深色模式'"
         />
         
         <!-- User Avatar Menu (Desktop & Mobile) -->
-        <UDropdown :items="userMenuItems">
+        <UDropdownMenu :items="userMenuItems">
           <UButton
             color="neutral"
             variant="ghost"
-            class="p-0 hover:bg-transparent"
+            size="lg"
+            class="hover:bg-transparent"
             :aria-label="'用戶菜單'"
           >
             <UAvatar
@@ -49,7 +51,7 @@
               </template>
             </UAvatar>
           </UButton>
-        </UDropdown>
+        </UDropdownMenu>
       </div>
     </template>
 
@@ -92,6 +94,9 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useColorMode } from '@vueuse/core'
 import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
 import NotificationBell from '@/components/NotificationBell.vue'
 import { authApi } from '@/api'
@@ -164,13 +169,13 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
   [
     {
       label: userName.value,
-      slot: 'account',
+      type: 'label',
       disabled: true,
       icon: 'i-heroicons-user-circle',
     },
     {
       label: userRole.value,
-      slot: 'description',
+      type: 'label',
       disabled: true,
       class: 'text-xs text-gray-500 dark:text-gray-400'
     }
@@ -179,8 +184,8 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
     {
       label: '個人設定',
       icon: 'i-heroicons-cog-6-tooth',
-      shortcuts: ['⌘', 'K'],
-      click: () => {
+      kbds: ['⌘', 'K'],
+      onSelect: () => {
         // TODO: 導航到個人設定頁面
         console.log('個人設定')
       }
@@ -190,7 +195,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [
     {
       label: '登出',
       icon: 'i-heroicons-arrow-right-on-rectangle',
-      click: handleLogout,
+      onSelect: handleLogout,
       class: 'text-red-600 dark:text-red-400'
     }
   ]

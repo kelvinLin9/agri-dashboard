@@ -286,6 +286,7 @@ import { ref, computed, onMounted, watch, h, resolveComponent } from 'vue'
 import { useNotificationStore } from '@/stores/notification'
 import { useNotifications } from '@/composables/useNotifications'
 import { notificationsApi } from '@/api/notifications'
+import apiClient from '@/api/apiClient'
 import type { NotificationType, NotificationStatus, NotificationChannel, CreateNotificationDto } from '@/api/types'
 
 const notificationStore = useNotificationStore()
@@ -364,19 +365,17 @@ const userOptions = ref<Array<{ value: string; label: string }>>([])
 // 載入用戶列表
 const loadUsers = async () => {
   try {
-    const response = await fetch('/api/members', {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      }
+    const response = await apiClient.get('/members', {
+      params: { limit: 100 }
     })
-    const data = await response.json()
     
-    if (data.data && data.data.data) {
-      userOptions.value = data.data.data.map((member: any) => ({
-        value: member.userId,
-        label: `${member.user?.username || member.name} (${member.user?.email || member.contactEmail || ''})`,
-      }))
-    }
+    // 響應結構: { data: { data: [...], total: N } }
+    const members = response.data.data?.data || response.data.data || []
+    
+    userOptions.value = members.map((member: any) => ({
+      value: member.userId,
+      label: `${member.user?.username || member.realName || '未知'} (${member.user?.email || ''})`,
+    }))
   } catch (error) {
     console.error('載入用戶列表失敗:', error)
   }

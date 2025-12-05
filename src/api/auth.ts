@@ -1,10 +1,9 @@
-import apiClient, { buildQueryString } from './apiClient'
+import apiClient from './apiClient'
 import type {
   AuthResponse,
   RegisterDto,
   LoginDto,
   User,
-  ApiResponse,
 } from './types'
 
 /**

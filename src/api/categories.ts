@@ -20,6 +20,22 @@ export const categoriesApi = {
   },
 
   /**
+   * 查詢分類樹狀結構
+   */
+  getTree: async (): Promise<ApiResponse<Category[]>> => {
+    const response = await apiClient.get<ApiResponse<Category[]>>('/product-categories/tree')
+    return response.data
+  },
+
+  /**
+   * 查詢根分類列表
+   */
+  getRoots: async (): Promise<ApiResponse<Category[]>> => {
+    const response = await apiClient.get<ApiResponse<Category[]>>('/product-categories/roots')
+    return response.data
+  },
+
+  /**
    * 根據 ID 查詢分類
    */
   getById: async (id: string): Promise<ApiResponse<Category>> => {

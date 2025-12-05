@@ -60,6 +60,43 @@ export const notificationsApi = {
   },
 
   /**
+   * 使用模板發送通知 (管理員)
+   */
+  sendByTemplate: async (data: {
+    templateCode: string
+    variables?: Record<string, any>
+    data?: Record<string, any>
+  }): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post<ApiResponse<any>>('/notifications/send-by-template', data)
+    return response.data
+  },
+
+  /**
+   * 批量發送通知 (管理員)
+   */
+  sendBulk: async (data: {
+    userIds: string[]
+    type: string
+    title: string
+    content: string
+    channel: string
+    data?: Record<string, any>
+    actionUrl?: string
+    priority?: number
+  }): Promise<ApiResponse<any>> => {
+    const response = await apiClient.post<ApiResponse<any>>('/notifications/send-bulk', data)
+    return response.data
+  },
+
+  /**
+   * 更新通知狀態 (管理員)
+   */
+  updateStatus: async (id: string, status: string): Promise<ApiResponse<Notification>> => {
+    const response = await apiClient.patch<ApiResponse<Notification>>(`/notifications/${id}/status`, { status })
+    return response.data
+  },
+
+  /**
    * 廣播通知給所有會員（管理員）
    */
   broadcast: async (data: {

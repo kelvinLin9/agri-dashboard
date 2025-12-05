@@ -22,4 +22,6 @@ export { ordersApi } from './orders'
 export { membersApi } from './members'
 export { notificationsApi } from './notifications'
 export { uploadApi } from './upload'
+export { paymentApi } from './payment'
+export { refundApi } from './refund'
 

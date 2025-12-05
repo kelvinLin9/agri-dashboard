@@ -401,3 +401,104 @@ export interface UploadResponse {
   filename: string
   size: number
 }
+
+export interface UpdateUploadDto {
+  filename?: string
+  type?: 'image' | 'video' | 'document'
+}
+
+// 支付相關類型
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+  REFUNDED = 'REFUNDED',
+  PARTIAL_REFUNDED = 'PARTIAL_REFUNDED',
+}
+
+export enum PaymentMethod {
+  CREDIT_CARD = 'CREDIT_CARD',
+  ATM = 'ATM',
+  CVS = 'CVS',
+  COD = 'COD',
+}
+
+export interface Payment {
+  id: string // UUID
+  orderId: string // UUID
+  paymentNumber: string
+  status: PaymentStatus
+  amount: number
+  paymentMethod: PaymentMethod
+  ecpayTradeNo?: string
+  paidAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreatePaymentDto {
+  orderId: string
+}
+
+// 退款相關類型
+export enum RefundStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  COMPLETED = 'COMPLETED',
+}
+
+export interface Refund {
+  id: string // UUID
+  paymentId: string // UUID
+  orderId: string // UUID
+  refundNumber: string
+  amount: number
+  reason: string
+  status: RefundStatus
+  rejectedReason?: string
+  approvedBy?: string
+  approvedAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateRefundDto {
+  orderId: string
+  amount: number
+  reason: string
+}
+
+export interface ApproveRefundDto {
+  note?: string
+}
+
+// 會員點數操作 DTO
+export interface AddPointsDto {
+  points: number
+  reason: string
+}
+
+export interface DeductPointsDto {
+  points: number
+  reason: string
+}
+
+// 通知模板發送 DTO
+export interface SendByTemplateDto {
+  templateCode: string
+  variables?: Record<string, any>
+  data?: Record<string, any>
+}
+
+export interface SendBulkDto {
+  userIds: string[]
+  type: NotificationType
+  title: string
+  content: string
+  channel: NotificationChannel
+  data?: Record<string, any>
+  actionUrl?: string
+  priority?: number
+}

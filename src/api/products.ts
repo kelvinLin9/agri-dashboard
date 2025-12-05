@@ -5,7 +5,6 @@ import type {
   CreateProductDto,
   UpdateProductDto,
   PaginatedResponse,
-  ApiResponse,
 } from './types'
 
 /**

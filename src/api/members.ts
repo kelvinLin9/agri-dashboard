@@ -5,7 +5,6 @@ import type {
   CreateMemberDto,
   UpdateMemberDto,
   PaginatedResponse,
-  ApiResponse,
 } from './types'
 
 /**
@@ -74,5 +73,29 @@ export const membersApi = {
   getStatistics: async (): Promise<any> => {
     const response = await apiClient.get('/members/statistics')
     return response.data
+  },
+
+  /**
+   * 查詢等級福利
+   */
+  getLevelBenefits: async (level: string): Promise<any> => {
+    const response = await apiClient.get<{ data: any }>(`/members/level-benefits/${level}`)
+    return response.data.data
+  },
+
+  /**
+   * 增加會員點數 (管理員)
+   */
+  addPoints: async (id: string, data: { points: number; reason: string }): Promise<Member> => {
+    const response = await apiClient.post<{ data: Member }>(`/members/${id}/add-points`, data)
+    return response.data.data
+  },
+
+  /**
+   * 扣除會員點數 (管理員)
+   */
+  deductPoints: async (id: string, data: { points: number; reason: string }): Promise<Member> => {
+    const response = await apiClient.post<{ data: Member }>(`/members/${id}/deduct-points`, data)
+    return response.data.data
   },
 }

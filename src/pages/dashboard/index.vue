@@ -2,239 +2,232 @@
   <div class="p-6 space-y-6">
     <!-- 頁面標題 -->
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold">Dashboard 總覽</h1>
+      <div>
+        <h1 class="text-2xl font-bold">Dashboard 總覽</h1>
+        <p v-if="dashboardStore.lastUpdate" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          最後更新: {{ formatTime(dashboardStore.lastUpdate) }}
+        </p>
+      </div>
       <UButton
         icon="i-heroicons-arrow-path"
-        :loading="loading"
-        @click="fetchOrders"
+        :loading="dashboardStore.loading"
+        @click="handleRefresh"
       >
-        刷新
+        刷新全部
       </UButton>
     </div>
 
-    <!-- 銷售 & 訂單趨勢圖表（雙軸） -->
-    <UCard>
-      <template #header>
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold">銷售 & 訂單趨勢（最近 30 天）</h3>
-          <div class="text-sm text-gray-500">
-            訂單總數: {{ totalOrders }} | 總銷售額: NT$ {{ totalSales.toLocaleString() }}
-          </div>
-        </div>
-      </template>
-
-      <div v-if="loading" class="flex items-center justify-center h-[400px]">
-        <UIcon name="i-heroicons-arrow-path" class="animate-spin w-8 h-8" />
-        <span class="ml-2">載入中...</span>
-      </div>
-
-      <div v-else-if="error" class="flex flex-col items-center justify-center h-[400px] text-red-500">
-        <UIcon name="i-heroicons-exclamation-triangle" class="w-12 h-12 mb-2" />
-        <p>{{ error }}</p>
-        <UButton size="sm" class="mt-4" @click="fetchOrders">重試</UButton>
-      </div>
-
-      <div v-else-if="!combinedChartData.xAxisData.length" class="flex flex-col items-center justify-center h-[400px] text-gray-500">
-        <UIcon name="i-heroicons-inbox" class="w-12 h-12 mb-2" />
-        <p>暫無數據</p>
-      </div>
-
-      <LineChart
-        v-else
-        :chart-data="combinedChartData"
-        :dual-y-axis="true"
-        left-y-axis-name="銷售金額 (元)"
-        right-y-axis-name="訂單數量 (筆)"
-        :show-legend="true"
-        height="500px"
+    <!-- 總覽卡片 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <OverviewCard
+        title="今日銷售額"
+        :value="dashboardStore.overview?.todaySales || 0"
+        icon="i-heroicons-banknotes"
+        color="green"
+        :trend="dashboardStore.overview?.trends.sales"
+        :formatter="formatCurrency"
       />
-    </UCard>
+      <OverviewCard
+        title="今日訂單數"
+        :value="dashboardStore.overview?.todayOrders || 0"
+        icon="i-heroicons-shopping-cart"
+        color="blue"
+        :trend="dashboardStore.overview?.trends.orders"
+      />
+      <OverviewCard
+        title="總產品數"
+        :value="dashboardStore.overview?.totalProducts || 0"
+        icon="i-heroicons-cube"
+        color="purple"
+      />
+      <OverviewCard
+        title="低庫存產品"
+        :value="dashboardStore.overview?.lowStockProducts || 0"
+        icon="i-heroicons-exclamation-triangle"
+        color="yellow"
+      />
+      <OverviewCard
+        title="待處理訂單"
+        :value="dashboardStore.overview?.pendingOrders || 0"
+        icon="i-heroicons-clock"
+        color="orange"
+      />
+      <OverviewCard
+        title="今日新增會員"
+        :value="dashboardStore.overview?.todayMembers || 0"
+        icon="i-heroicons-user-plus"
+        color="indigo"
+        :trend="dashboardStore.overview?.trends.members"
+      />
+    </div>
 
-    <!-- 訂單狀態分佈卡片 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- 圖表區域 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- 銷售 & 訂單趨勢 -->
       <UCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">總訂單數</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-              {{ totalOrders }}
-            </p>
-          </div>
-          <UIcon name="i-heroicons-shopping-bag" class="w-8 h-8 text-blue-500" />
+        <template #header>
+          <h3 class="text-lg font-semibold">銷售 & 訂單趨勢（最近 30 天）</h3>
+        </template>
+
+        <div v-if="dashboardStore.loading" class="flex items-center justify-center h-[400px]">
+          <UIcon name="i-heroicons-arrow-path" class="animate-spin w-8 h-8" />
+          <span class="ml-2">載入中...</span>
         </div>
+
+        <div v-else-if="!salesTrendChartData.xAxisData.length" class="flex flex-col items-center justify-center h-[400px] text-gray-500">
+          <UIcon name="i-heroicons-inbox" class="w-12 h-12 mb-2" />
+          <p>暫無數據</p>
+        </div>
+
+        <LineChart
+          v-else
+          :chart-data="salesTrendChartData"
+          :dual-y-axis="true"
+          left-y-axis-name="銷售金額 (元)"
+          right-y-axis-name="訂單數量 (筆)"
+          :show-legend="true"
+          height="400px"
+        />
       </UCard>
 
+      <!-- 訂單狀態分佈 -->
       <UCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">總銷售額</p>
-            <p class="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
-              NT$ {{ totalSales.toLocaleString() }}
-            </p>
-          </div>
-          <UIcon name="i-heroicons-banknotes" class="w-8 h-8 text-green-500" />
-        </div>
-      </UCard>
+        <template #header>
+          <h3 class="text-lg font-semibold">訂單狀態分佈</h3>
+        </template>
 
-      <UCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">平均訂單金額</p>
-            <p class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">
-              NT$ {{ avgOrderAmount.toLocaleString() }}
-            </p>
-          </div>
-          <UIcon name="i-heroicons-chart-bar" class="w-8 h-8 text-purple-500" />
+        <div v-if="dashboardStore.loading" class="flex items-center justify-center h-[400px]">
+          <UIcon name="i-heroicons-arrow-path" class="animate-spin w-8 h-8" />
+          <span class="ml-2">載入中...</span>
         </div>
-      </UCard>
 
-      <UCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">已完成訂單</p>
-            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">
-              {{ completedOrders }}
-            </p>
-          </div>
-          <UIcon name="i-heroicons-check-circle" class="w-8 h-8 text-blue-500" />
+        <div v-else-if="!orderStatusChartData.length" class="flex flex-col items-center justify-center h-[400px] text-gray-500">
+          <UIcon name="i-heroicons-inbox" class="w-12 h-12 mb-2" />
+          <p>暫無數據</p>
         </div>
+
+        <PieChart
+          v-else
+          :data="orderStatusChartData"
+          :is-donut="true"
+          :radius="['50%', '70%']"
+          height="400px"
+        />
       </UCard>
     </div>
+
+    <!-- 錯誤提示 -->
+    <UNotification
+      v-if="dashboardStore.error"
+      color="red"
+      icon="i-heroicons-exclamation-triangle"
+      :title="dashboardStore.error"
+      :timeout="5000"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ordersApi } from '@/api/orders'
-import { SortOrder } from '@/api/types'
+import { useDashboardStore } from '@/stores/dashboard'
 import LineChart from '@/components/charts/LineChart.vue'
+import PieChart from '@/components/charts/PieChart.vue'
+import OverviewCard from '@/components/charts/OverviewCard.vue'
 
-interface Order {
-  id: string
-  orderNumber: string
-  totalAmount: number
-  createdAt: string
-  status: string
+const dashboardStore = useDashboardStore()
+
+// 訂單狀態顏色映射
+const statusColors: Record<string, string> = {
+  pending: '#E6A23C',
+  paid: '#409EFF',
+  processing: '#67C23A',
+  shipping: '#FF9500',
+  delivered: '#5AC8FA',
+  completed: '#34C759',
+  cancelled: '#FF3B30',
 }
 
-const orders = ref<Order[]>([])
-const loading = ref(false)
-const error = ref<string | null>(null)
+// 訂單狀態中文映射
+const statusLabels: Record<string, string> = {
+  pending: '待付款',
+  paid: '已付款',
+  processing: '處理中',
+  shipping: '配送中',
+  delivered: '已送達',
+  completed: '已完成',
+  cancelled: '已取消',
+}
 
-// 計算組合圖表數據（銷售金額 + 訂單數量）
-const combinedChartData = computed(() => {
-  if (orders.value.length === 0) {
+// 銷售趨勢圖表數據
+const salesTrendChartData = computed(() => {
+  const trend = dashboardStore.salesTrend
+
+  if (!trend.length) {
     return { xAxisData: [], series: [] }
   }
 
-  // 按日期分組
-  const groupedData: Record<string, { amount: number; count: number }> = {}
-
-  orders.value.forEach((order) => {
-    const date = new Date(order.createdAt).toISOString().split('T')[0]
-    if (!date) return  // 安全檢查
-    
-    if (!groupedData[date]) {
-      groupedData[date] = { amount: 0, count: 0 }
-    }
-
-    // 只計算已完成訂單的金額
-    if (order.status === 'completed') {
-      groupedData[date].amount += Number(order.totalAmount)
-    }
-    groupedData[date].count += 1
-  })
-
-  // 排序並轉換為圖表格式
-  const sortedDates = Object.keys(groupedData).sort()
-  
   return {
-    xAxisData: sortedDates,
+    xAxisData: trend.map((item) => item.date),
     series: [
       {
         name: '銷售金額',
-        data: sortedDates.map(date => Number(groupedData[date]?.amount.toFixed(2) ?? 0)),
+        data: trend.map((item) => item.amount),
         color: '#67C23A',
         smooth: true,
         showArea: true,
-        yAxisIndex: 0, // 左軸
+        yAxisIndex: 0,
       },
       {
         name: '訂單數量',
-        data: sortedDates.map(date => groupedData[date]?.count ?? 0),
+        data: trend.map((item) => item.orderCount),
         color: '#409EFF',
         smooth: true,
         showArea: false,
-        yAxisIndex: 1, // 右軸
+        yAxisIndex: 1,
       },
     ],
   }
 })
 
-// 計算總訂單數
-const totalOrders = computed(() => orders.value.length)
+// 訂單狀態分佈圖表數據
+const orderStatusChartData = computed(() => {
+  const distribution = dashboardStore.orderStatusDistribution
 
-// 計算總銷售額（只計算已完成訂單）
-const totalSales = computed(() => {
-  return orders.value
-    .filter((order) => order.status === 'completed')
-    .reduce((sum, order) => sum + Number(order.totalAmount), 0)
+  return distribution.map((item) => ({
+    name: statusLabels[item.status] || item.status,
+    value: item.count,
+    color: statusColors[item.status] || '#909399',
+  }))
 })
 
-// 計算平均訂單金額
-const avgOrderAmount = computed(() => {
-  const completed = orders.value.filter((order) => order.status === 'completed')
-  if (completed.length === 0) return 0
-  return Math.round(totalSales.value / completed.length)
-})
+// 格式化金額
+function formatCurrency(value: number | string): string {
+  const num = typeof value === 'number' ? value : parseFloat(value)
+  return `NT$ ${num.toLocaleString()}`
+}
 
-// 計算已完成訂單數
-const completedOrders = computed(() => {
-  return orders.value.filter((order) => order.status === 'completed').length
-})
+// 格式化時間
+function formatTime(date: Date): string {
+  return new Date(date).toLocaleString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 
-// 獲取訂單數據
-async function fetchOrders() {
-  loading.value = true
-  error.value = null
-
+// 刷新數據
+async function handleRefresh() {
   try {
-    // 獲取最近 30 天的訂單
-    const endDate = new Date()
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - 30)
-
-    const response = await ordersApi.getAll({
-      page: 1,
-      limit: 100, // 後端限制最大為 100
-      sortBy: 'createdAt',
-      sortOrder: SortOrder.DESC, // 使用枚舉
-    })
-
-    // API 回應結構: Pag inatedResponse<Order>
-    const paginatedData = response || {}
-    const allOrders = Array.isArray(paginatedData.data) ? paginatedData.data : []
-
-    console.log('所有訂單數量:', allOrders.length)
-    console.log('日期範圍:', startDate.toISOString(), '到', endDate.toISOString())
-
-    // 過濾最近 30 天的訂單
-    orders.value = allOrders.filter((order: Order) => {
-      const orderDate = new Date(order.createdAt)
-      return orderDate >= startDate && orderDate <= endDate
-    })
-
-    console.log('過濾後訂單數量:', orders.value.length)
-  } catch (err: any) {
-    error.value = err.message || '獲取訂單數據失敗'
-    console.error('Failed to fetch orders:', err)
-  } finally {
-    loading.value = false
+    await dashboardStore.refreshAll()
+  } catch (error) {
+    console.error('Refresh failed:', error)
   }
 }
 
 // 頁面載入時獲取數據
-onMounted(() => {
-  fetchOrders()
+onMounted(async () => {
+  await handleRefresh()
 })
 </script>

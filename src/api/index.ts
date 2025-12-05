@@ -1,5 +1,5 @@
 /**
- * API 統一導出
+  * API 統一導出
  * 
  * 使用方式：
  * import { authApi, productsApi, ordersApi } from '@/api'
@@ -24,4 +24,7 @@ export { notificationsApi } from './notifications'
 export { uploadApi } from './upload'
 export { paymentApi } from './payment'
 export { refundApi } from './refund'
+export { dashboardApi } from './dashboard'
+export { logsApi } from './logs'
+export { pagesApi } from './pages'
 

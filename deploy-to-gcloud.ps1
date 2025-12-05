@@ -18,10 +18,10 @@ Write-ColorOutput Green "🚀 開始部署前端到 Google Cloud Run..."
 # ===== 配置區域 =====
 $PROJECT_ID = "agri-backend"  # 你的專案 ID
 $SERVICE_NAME = "agri-dashboard"
-$REGION = "europe-west1"
+$REGION = "asia-east1"
 
 # 環境變數
-$VITE_API_URL = "https://agri-backend-660672910950.europe-west1.run.app/api"
+$VITE_API_URL = "https://agri-backend-660672910950.asia-east1.run.app/api"
 $VITE_GOOGLE_CLIENT_ID = "660672910950-a4tdqj33tt75q0lahnhm00l6oj9m7kvo.apps.googleusercontent.com"  # 請填入你的 Google Client ID
 
 # ===== 檢查必要工具 =====

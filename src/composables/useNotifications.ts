@@ -28,7 +28,7 @@ export const useNotifications = () => {
         .replace('/api', '') + '/notifications'
     } else {
       // Fallback URL
-      wsUrl = 'wss://agri-backend-660672910950.europe-west1.run.app/notifications'
+      wsUrl = 'wss://agri-backend-660672910950.asia-east1.run.app/notifications'
     }
 
     console.log('🔧 [useNotifications] WebSocket URL:', wsUrl)

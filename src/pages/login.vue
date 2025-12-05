@@ -311,7 +311,7 @@ const handleGoogleLogin = () => {
   const currentOrigin = window.location.origin
   
   // 重新導向到後端的 Google OAuth 端點，並傳遞前端 origin
-  const backendUrl = import.meta.env.VITE_API_URL || 'https://agri-backend-660672910950.europe-west1.run.app/api'
+  const backendUrl = import.meta.env.VITE_API_URL || 'https://agri-backend-660672910950.asia-east1.run.app/api'
   const redirectUri = encodeURIComponent(currentOrigin)
   window.location.href = `${backendUrl}/auth/google?redirect_uri=${redirectUri}`
 }

@@ -7,7 +7,7 @@
 在部署前，請確認以下環境變數：
 
 ```env
-VITE_API_URL=https://agri-backend-660672910950.europe-west1.run.app/api
+VITE_API_URL=https://agri-backend-660672910950.asia-east1.run.app/api
 VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 ```
 
@@ -18,13 +18,13 @@ VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 #### 已授權的 JavaScript 來源
 ```
 https://your-frontend-url.run.app
-https://agri-backend-660672910950.europe-west1.run.app
+https://agri-backend-660672910950.asia-east1.run.app
 ```
 
 #### 已授權的重新導向 URI
 ```
 https://your-frontend-url.run.app/auth/callback
-https://agri-backend-660672910950.europe-west1.run.app/api/auth/google/callback
+https://agri-backend-660672910950.asia-east1.run.app/api/auth/google/callback
 ```
 
 ---
@@ -87,7 +87,7 @@ gcloud run deploy agri-dashboard \
 ### 建置 Docker 映像
 ```bash
 docker build \
-  --build-arg VITE_API_URL=https://agri-backend-660672910950.europe-west1.run.app/api \
+  --build-arg VITE_API_URL=https://agri-backend-660672910950.asia-east1.run.app/api \
   --build-arg VITE_GOOGLE_CLIENT_ID=your-client-id \
   -t agri-dashboard .
 ```

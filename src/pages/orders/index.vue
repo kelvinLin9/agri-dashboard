@@ -303,6 +303,80 @@
             </div>
           </div>
 
+          <!-- Payment Information -->
+          <div v-if="paymentInfo">
+            <h4 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3">
+              💳 支付資訊
+            </h4>
+            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-3">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <p class="text-sm text-gray-500">支付編號</p>
+                  <p class="font-medium font-mono text-sm">{{ paymentInfo.paymentNumber }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">支付狀態</p>
+                  <UBadge :color="getPaymentStatusColor(paymentInfo.status)" variant="soft">
+                    {{ getPaymentStatusLabel(paymentInfo.status) }}
+                  </UBadge>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">支付金額</p>
+                  <p class="font-semibold text-green-600">{{ formatCurrency(paymentInfo.amount) }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">支付方式</p>
+                  <p class="font-medium">{{ getPaymentMethodLabel(paymentInfo.paymentMethod) }}</p>
+                </div>
+                <div v-if="paymentInfo.ecpayTradeNo">
+                  <p class="text-sm text-gray-500">ECPay 交易編號</p>
+                  <p class="font-medium font-mono text-sm">{{ paymentInfo.ecpayTradeNo }}</p>
+                </div>
+                <div v-if="paymentInfo.paidAt">
+                  <p class="text-sm text-gray-500">付款時間</p>
+                  <p class="font-medium text-sm">{{ formatDateTime(paymentInfo.paidAt) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Refund Information -->
+          <div v-if="refundInfo">
+            <h4 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3">
+              💰 退款資訊
+            </h4>
+            <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg space-y-3">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <p class="text-sm text-gray-500">退款編號</p>
+                  <p class="font-medium font-mono text-sm">{{ refundInfo.refundNumber }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">退款狀態</p>
+                  <UBadge :color="getRefundStatusColor(refundInfo.status)" variant="soft">
+                    {{ getRefundStatusLabel(refundInfo.status) }}
+                  </UBadge>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">退款金額</p>
+                  <p class="font-semibold text-red-600">{{ formatCurrency(refundInfo.amount) }}</p>
+                </div>
+                <div>
+                  <p class="text-sm text-gray-500">申請時間</p>
+                  <p class="font-medium text-sm">{{ formatDateTime(refundInfo.createdAt) }}</p>
+                </div>
+                <div class="col-span-2">
+                  <p class="text-sm text-gray-500">退款原因</p>
+                  <p class="font-medium">{{ refundInfo.reason }}</p>
+                </div>
+                <div v-if="refundInfo.rejectedReason" class="col-span-2">
+                  <p class="text-sm text-gray-500">拒絕原因</p>
+                  <p class="font-medium text-red-600">{{ refundInfo.rejectedReason }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Notes -->
           <div v-if="viewingOrder.customerNote || viewingOrder.adminNote">
             <h4 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3">
@@ -322,7 +396,17 @@
         </div>
 
         <template #footer>
-          <div class="flex justify-end">
+          <div class="flex justify-between items-center">
+            <!-- 退款按鈕 (僅已付款且無退款記錄時顯示) -->
+            <div>
+              <UButton
+                v-if="canApplyRefund"
+                label="申請退款"
+                icon="i-heroicons-arrow-left-on-rectangle"
+                color="warning"
+                @click="openRefundModal"
+              />
+            </div>
             <UButton
               label="關閉"
               color="neutral"
@@ -403,18 +487,100 @@
       </UCard>
       </template>
     </UModal>
+
+    <!-- Refund Application Modal -->
+    <UModal v-model:open="isRefundModalOpen">
+      <template #content>
+        <UCard>
+        <template #header>
+          <h3 class="text-lg font-semibold">申請退款</h3>
+        </template>
+
+        <form @submit.prevent="submitRefund" class="space-y-4">
+          <div class="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              訂單編號: <span class="font-mono font-semibold">{{ viewingOrder?.orderNumber }}</span>
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              訂單金額: <span class="font-semibold text-green-600">{{ formatCurrency(viewingOrder?.totalAmount || 0) }}</span>
+            </p>
+          </div>
+
+          <UFormField label="退款金額" required>
+            <UInput
+              v-model.number="refundForm.amount"
+              type="number"
+              min="1"
+              :max="viewingOrder?.totalAmount || 0"
+              step="0.01"
+              placeholder="輸入退款金額"
+            />
+            <template #hint>
+              <span class="text-xs text-gray-500">最多可退款: {{ formatCurrency(viewingOrder?.totalAmount || 0) }}</span>
+            </template>
+          </UFormField>
+
+          <UFormField label="退款原因" required>
+            <UTextarea
+              v-model="refundForm.reason"
+              :rows="4"
+              placeholder="請詳細說明退款原因..."
+            />
+          </UFormField>
+        </form>
+
+        <template #footer>
+          <div class="flex justify-end gap-3">
+            <UButton
+              label="取消"
+              color="neutral"
+              variant="soft"
+              @click="isRefundModalOpen = false"
+            />
+            <UButton
+              label="提交申請"
+              color="warning"
+              :loading="isSubmittingRefund"
+              :disabled="!canSubmitRefund"
+              @click="submitRefund"
+            />
+          </div>
+        </template>
+      </UCard>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, h, resolveComponent } from 'vue'
-import { ordersApi, type Order, type OrderQueryParams, OrderStatus, SortOrder, type PaginatedResponse, type ApiResponse } from '@/api'
+import { 
+  ordersApi, 
+  paymentApi, 
+  refundApi,
+  type Order, 
+  type OrderQueryParams, 
+  type Payment,
+  type Refund,
+  OrderStatus, 
+  PaymentStatus,
+  RefundStatus,
+  SortOrder, 
+  type PaginatedResponse, 
+  type ApiResponse 
+} from '@/api'
 import { useDebounceFn } from '@vueuse/core'
 
 // Data
 const orders = ref<Order[]>([])
 const isLoading = ref(false)
 const isSaving = ref(false)
+const isSubmittingRefund = ref(false)
+
+// Payment & Refund Data
+const paymentInfo = ref<Payment | null>(null)
+const refundInfo = ref<Refund | null>(null)
+
 
 // Pagination
 const page = ref(1)
@@ -446,8 +612,16 @@ const selectedShippingMethod = computed({
 // Modals
 const isViewModalOpen = ref(false)
 const isEditModalOpen = ref(false)
+const isRefundModalOpen = ref(false)
 const viewingOrder = ref<Order | null>(null)
 const editingOrder = ref<Order | null>(null)
+
+// Refund Form
+const defaultRefundForm = {
+  amount: 0,
+  reason: ''
+}
+const refundForm = ref({ ...defaultRefundForm })
 
 // Form
 const defaultForm = {
@@ -611,6 +785,27 @@ const completedCount = computed(() => {
   return orders.value.filter(o => o.status === OrderStatus.COMPLETED || o.status === OrderStatus.DELIVERED).length
 })
 
+// Refund related computed
+const canApplyRefund = computed(() => {
+  if (!viewingOrder.value || refundInfo.value) return false
+  
+  // 檢查訂單狀態是否為已付款或更後面的狀態
+  const validStatuses = [
+    OrderStatus.PAID,
+    OrderStatus.PROCESSING,
+    OrderStatus.SHIPPING,
+    OrderStatus.DELIVERED,
+    OrderStatus.COMPLETED
+  ]
+  return validStatuses.includes(viewingOrder.value.status)
+})
+
+const canSubmitRefund = computed(() => {
+  return refundForm.value.amount > 0 && 
+         refundForm.value.amount <= (viewingOrder.value?.totalAmount || 0) &&
+         refundForm.value.reason.trim().length > 0
+})
+
 // Methods
 const fetchOrders = async () => {
   isLoading.value = true
@@ -667,9 +862,72 @@ const fetchOrders = async () => {
   }
 }
 
-const viewOrder = (order: Order) => {
+const viewOrder = async (order: Order) => {
   viewingOrder.value = order
   isViewModalOpen.value = true
+  
+  // 重置支付和退款資訊
+  paymentInfo.value = null
+  refundInfo.value = null
+  
+  // 獲取支付資訊
+  await fetchPaymentInfo(order.id)
+  
+  // 獲取退款資訊 (如果有)
+  await fetchRefundInfo(order.id)
+}
+
+const fetchPaymentInfo = async (orderId: string) => {
+  try {
+    const payment = await paymentApi.getByOrderId(orderId)
+    paymentInfo.value = payment
+  } catch (error) {
+    console.error('獲取支付資訊失敗:', error)
+    // 沒有支付記錄也是正常的,不顯示錯誤
+  }
+}
+
+const fetchRefundInfo = async (orderId: string) => {
+  try {
+    const refund = await refundApi.getByOrderId(orderId)
+    refundInfo.value = refund
+  } catch (error) {
+    console.error('獲取退款資訊失敗:', error)
+    // 沒有退款記錄也是正常的,不顯示錯誤
+  }
+}
+
+const openRefundModal = () => {
+  refundForm.value = {
+    amount: viewingOrder.value?.totalAmount || 0,
+    reason: ''
+  }
+  isRefundModalOpen.value = true
+}
+
+const submitRefund = async () => {
+  if (!viewingOrder.value || !canSubmitRefund.value) return
+  
+  isSubmittingRefund.value = true
+  try {
+    await refundApi.create({
+      orderId: viewingOrder.value.id,
+      amount: refundForm.value.amount,
+      reason: refundForm.value.reason
+    })
+    
+    // TODO: Show success toast
+    console.log('退款申請成功')
+    
+    // 關閉 modal 並刷新退款資訊
+    isRefundModalOpen.value = false
+    await fetchRefundInfo(viewingOrder.value.id)
+  } catch (error) {
+    console.error('退款申請失敗:', error)
+    // TODO: Show error toast
+  } finally {
+    isSubmittingRefund.value = false
+  }
 }
 
 const editOrder = (order: Order) => {
@@ -764,6 +1022,52 @@ const getShippingMethodLabel = (method: string) => {
     self_pickup: '自取',
   }
   return labels[method] || method
+}
+
+// Payment Status Helpers
+const getPaymentStatusColor = (status: PaymentStatus) =>{
+  const colors: Record<PaymentStatus, string> = {
+    [PaymentStatus.PENDING]: 'yellow',
+    [PaymentStatus.PAID]: 'success',
+    [PaymentStatus.FAILED]: 'error',
+    [PaymentStatus.CANCELLED]: 'neutral',
+    [PaymentStatus.REFUNDED]: 'warning',
+    [PaymentStatus.PARTIAL_REFUNDED]: 'orange',
+  }
+  return colors[status] || 'neutral'
+}
+
+const getPaymentStatusLabel = (status: PaymentStatus) => {
+  const labels: Record<PaymentStatus, string> = {
+    [PaymentStatus.PENDING]: '待付款',
+    [PaymentStatus.PAID]: '已付款',
+    [PaymentStatus.FAILED]: '付款失敗',
+    [PaymentStatus.CANCELLED]: '已取消',
+    [PaymentStatus.REFUNDED]: '已退款',
+    [PaymentStatus.PARTIAL_REFUNDED]: '部分退款',
+  }
+  return labels[status] || status
+}
+
+// Refund Status Helpers
+const getRefundStatusColor = (status: RefundStatus) => {
+  const colors: Record<RefundStatus, string> = {
+    [RefundStatus.PENDING]: 'yellow',
+    [RefundStatus.APPROVED]: 'blue',
+    [RefundStatus.REJECTED]: 'error',
+    [RefundStatus.COMPLETED]: 'success',
+  }
+  return colors[status] || 'neutral'
+}
+
+const getRefundStatusLabel = (status: RefundStatus) => {
+  const labels: Record<RefundStatus, string> = {
+    [RefundStatus.PENDING]: '待審核',
+    [RefundStatus.APPROVED]: '已批准',
+    [RefundStatus.REJECTED]: '已拒絕',
+    [RefundStatus.COMPLETED]: '已完成',
+  }
+  return labels[status] || status
 }
 
 const formatCurrency = (amount: number) => {

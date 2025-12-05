@@ -488,14 +488,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, h, resolveComponent } from 'vue'
-import { productsApi } from '@/api/products'
-import { categoriesApi } from '@/api/categories'
-import type { Product, Category } from '@/api/types'
+import { productsApi, categoriesApi, type Product, type ProductQueryParams, type Category, SortOrder } from '@/api'
 import { useDebounceFn } from '@vueuse/core'
 
 // Data
 const products = ref<Product[]>([])
 const categories = ref<Category[]>([])
+const categoryTree = ref<Category[]>([]) // 階層式分類樹
 const isLoading = ref(false)
 const isSaving = ref(false)
 const isDeleting = ref(false)
@@ -566,10 +565,33 @@ const statusOptions = [
   { label: '缺貨', value: 'out_of_stock' },
 ]
 
+// Helper function to flatten category tree with indentation
+const flattenCategoryTree = (tree: any[], level = 0, parentPath = ''): { label: string, value: string, level: number }[] => {
+  const result: { label: string, value: string, level: number }[] = []
+  
+  tree.forEach(category => {
+    const currentPath = parentPath ? `${parentPath} > ${category.name}` : category.name
+    const indent = '　'.repeat(level) // 全形空格用於縮排
+    
+    result.push({
+      label: `${indent}${category.name}`,
+      value: category.id.toString(), // 確保是字串
+      level
+    })
+    
+    if (category.children && Array.isArray(category.children) && category.children.length > 0) {
+      result.push(...flattenCategoryTree(category.children, level + 1, currentPath))
+    }
+  })
+  
+  return result
+}
+
 const categoryOptions = computed(() => {
+  const flattened = flattenCategoryTree(categoryTree.value)
   return [
-    { label: '全部分類', value: null },
-    ...categories.value.map(c => ({ label: c.name, value: c.id }))
+    { label: '全部分類', value: null, level: 0 },
+    ...flattened.map(c => ({ label: c.label, value: c.value }))
   ]
 })
 
@@ -721,6 +743,17 @@ const featuredCount = computed(() => {
 })
 
 // Methods
+const fetchCategoryTree = async () => {
+  try {
+    const response = await categoriesApi.getTree()
+    // getTree returns ApiResponse<Category[]>, need to extract .data
+    categoryTree.value = Array.isArray(response) ? response : (response.data || [])
+  } catch (error) {
+    console.error('獲取分類樹失敗:', error)
+    categoryTree.value = []
+  }
+}
+
 const fetchCategories = async () => {
   try {
     const response = await categoriesApi.getAll()
@@ -889,7 +922,9 @@ const formatDateTime = (date: string | Date | undefined): string => {
 
 // Lifecycle
 onMounted(() => {
-  fetchCategories()
   fetchProducts()
+  fetchCategories()
+  fetchCategoryTree() // 獲取階層式分類樹
 })
 </script>
+```

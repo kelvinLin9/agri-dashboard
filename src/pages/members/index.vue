@@ -392,16 +392,37 @@
         </div>
 
         <template #footer>
-          <div class="flex justify-end gap-3">
-            <UButton
-              label="關閉"
-              color="neutral"
-              @click="isViewModalOpen = false"
-            />
-            <UButton
-              label="編輯"
-              @click="editFromView"
-            />
+          <div class="flex justify-between items-center">
+            <!-- 左側功能按鈕 -->
+            <div class="flex gap-2">
+              <UButton
+                label="調整點數"
+                icon="i-heroicons-banknotes"
+                color="purple"
+                variant="soft"
+                @click="openPointsModal"
+              />
+              <UButton
+                label="等級福利"
+                icon="i-heroicons-gift"
+                color="blue"
+                variant="soft"
+                @click="openLevelBenefitsModal"
+              />
+            </div>
+            
+            <!-- 右側操作按鈕 -->
+            <div class="flex gap-3">
+              <UButton
+                label="關閉"
+                color="neutral"
+                @click="isViewModalOpen = false"
+              />
+              <UButton
+                label="編輯"
+                @click="editFromView"
+              />
+            </div>
           </div>
         </template>
       </UCard>
@@ -434,6 +455,109 @@
               color="error"
               :loading="isDeleting"
               @click="deleteMember"
+            />
+          </div>
+        </template>
+      </UCard>
+      </template>
+    </UModal>
+
+    <!-- Points Adjustment Modal -->
+    <UModal v-model:open="isPointsModalOpen">
+      <template #content>
+        <UCard>
+        <template #header>
+          <h3 class="text-lg font-semibold">調整會員點數</h3>
+        </template>
+
+        <form @submit.prevent="submitPoints" class="space-y-4">
+          <div class="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              會員: <span class="font-semibold">{{ viewingMember?.user?.username }}</span>
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+              當前點數: <span class="font-bold text-purple-600">{{ viewingMember?.points || 0 }}</span> 點
+            </p>
+          </div>
+
+          <UFormField label="操作類型" required>
+            <USelectMenu
+              v-model="pointsFormType"
+              :items="pointsTypeOptions"
+            />
+          </UFormField>
+
+          <UFormField label="點數數量" required>
+            <UInput
+              v-model.number="pointsForm.points"
+              type="number"
+              min="1"
+              placeholder="輸入點數數量"
+            />
+          </UFormField>
+
+          <UFormField label="調整原因" required>
+            <UTextarea
+              v-model="pointsForm.reason"
+              :rows="3"
+              placeholder="請說明調整原因..."
+            />
+          </UFormField>
+        </form>
+
+        <template #footer>
+          <div class="flex justify-end gap-3">
+            <UButton
+              label="取消"
+              color="neutral"
+              variant="soft"
+              @click="isPointsModalOpen = false"
+            />
+            <UButton
+              label="確認調整"
+              :color="pointsFormType?.value === 'add' ? 'success' : 'warning'"
+              :loading="isAdjustingPoints"
+              :disabled="!canSubmitPoints"
+              @click="submitPoints"
+            />
+          </div>
+        </template>
+      </UCard>
+      </template>
+    </UModal>
+
+    <!-- Level Benefits Modal -->
+    <UModal v-model:open="isLevelBenefitsModalOpen">
+      <template #content>
+        <UCard>
+        <template #header>
+          <h3 class="text-lg font-semibold">
+            {{ getLevelLabel(viewingMember?.level || MemberLevel.BRONZE) }} 會員福利
+          </h3>
+        </template>
+
+        <div v-if="levelBenefits" class="space-y-4">
+          <div v-if="levelBenefits.loading" class="flex justify-center py-8">
+            <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-blue-500" />
+          </div>
+
+          <div v-else-if="levelBenefits.data" class="space-y-3">
+            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <pre class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ JSON.stringify(levelBenefits.data, null, 2) }}</pre>
+            </div>
+          </div>
+
+          <div v-else class="text-center py-8 text-gray-500">
+            無法載入等級福利資訊
+          </div>
+        </div>
+
+        <template #footer>
+          <div class="flex justify-end">
+            <UButton
+              label="關閉"
+              color="neutral"
+              @click="isLevelBenefitsModalOpen = false"
             />
           </div>
         </template>
@@ -475,11 +599,45 @@ const selectedLevel = computed({
 const isModalOpen = ref(false)
 const isViewModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
+const isPointsModalOpen = ref(false)
+const isLevelBenefitsModalOpen = ref(false)
 
 // Current Member
 const editingMember = ref<Member | null>(null)
 const viewingMember = ref<Member | null>(null)
 const deletingMember = ref<Member | null>(null)
+
+// Points Form
+const pointsForm = ref({
+  type: 'add' as 'add' | 'deduct',
+  points: 0,
+  reason: ''
+})
+
+const pointsTypeOptions = [
+  { label: '➕ 增加點數', value: 'add' },
+  { label: '➖ 扣除點數', value: 'deduct' }
+]
+
+const pointsFormType = computed({
+  get: () => pointsTypeOptions.find(opt => opt.value === pointsForm.value.type),
+  set: (val) => { 
+    if (val?.value === 'add' || val?.value === 'deduct') {
+      pointsForm.value.type = val.value
+    }
+  }
+})
+
+const isAdjustingPoints = ref(false)
+
+// Level Benefits
+const levelBenefits = ref<{
+  loading: boolean
+  data: any | null
+}>({
+  loading: false,
+  data: null
+})
 
 // Form
 const memberForm = ref({
@@ -657,7 +815,75 @@ const vipCount = computed(() => {
   ).length
 })
 
+// Points computed
+const canSubmitPoints = computed(() => {
+  return pointsForm.value.points > 0 && pointsForm.value.reason.trim().length > 0
+})
+
 // Methods
+const openPointsModal = () => {
+  pointsForm.value = {
+    type: 'add',
+    points: 0,
+    reason: ''
+  }
+  isPointsModalOpen.value = true
+}
+
+const openLevelBenefitsModal = async () => {
+  if (!viewingMember.value) return
+  
+  isLevelBenefitsModalOpen.value = true
+  levelBenefits.value.loading = true
+  levelBenefits.value.data = null
+  
+  try {
+    const benefits = await membersApi.getLevelBenefits(viewingMember.value.level)
+    levelBenefits.value.data = benefits
+  } catch (error) {
+    console.error('獲取等級福利失敗:', error)
+  } finally {
+    levelBenefits.value.loading = false
+  }
+}
+
+const submitPoints = async () => {
+  if (!viewingMember.value || !canSubmitPoints.value) return
+  
+  isAdjustingPoints.value = true
+  try {
+    if (pointsForm.value.type === 'add') {
+      await membersApi.addPoints(viewingMember.value.id, {
+        points: pointsForm.value.points,
+        reason: pointsForm.value.reason
+      })
+    } else {
+      await membersApi.deductPoints(viewingMember.value.id, {
+        points: pointsForm.value.points,
+        reason: pointsForm.value.reason
+      })
+    }
+    
+    // TODO: Show success toast
+    console.log(`點數${pointsForm.value.type === 'add' ? '增加' : '扣除'}成功`)
+    
+    // 關閉 Modal 並刷新會員列表
+    isPointsModalOpen.value = false
+    await fetchMembers()
+    
+    // 更新 viewingMember 的點數顯示
+    if (viewingMember.value) {
+      const updated = members.value.find(m => m.id === viewingMember.value?.id)
+      if (updated) viewingMember.value = updated
+    }
+  } catch (error) {
+    console.error('點數調整失敗:', error)
+    // TODO: Show error toast
+  } finally {
+    isAdjustingPoints.value = false
+  }
+}
+
 const fetchMembers = async () => {
   isLoading.value = true
   try {

@@ -8,6 +8,20 @@
       </div>
       <div class="flex gap-2">
         <UButton
+          label="模板發送"
+          icon="i-heroicons-document-text"
+          color="blue"
+          variant="outline"
+          @click="isTemplateSendModalOpen = true"
+        />
+        <UButton
+          label="批量發送"
+          icon="i-heroicons-users"
+          color="purple"
+          variant="outline"
+          @click="isBulkSendModalOpen = true"
+        />
+        <UButton
           label="建立通知"
           icon="i-heroicons-plus"
           color="primary"
@@ -278,6 +292,156 @@
         </UCard>
       </template>
     </UModal>
+
+    <!-- Template Send Modal -->
+    <UModal v-model:open="isTemplateSendModalOpen">
+      <template #content>
+        <UCard>
+          <template #header>
+            <h3 class="text-lg font-semibold">📝 模板發送通知</h3>
+          </template>
+
+          <div class="space-y-4">
+            <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <p class="text-sm text-blue-800 dark:text-blue-200">
+                使用預設模板快速發送通知，模板會自動填充指定的變數內容
+              </p>
+            </div>
+
+            <UFormField label="模板代碼" required>
+              <UInput
+                v-model="templateForm.templateCode"
+                placeholder="例如: order_shipped, payment_success"
+              />
+            </UFormField>
+
+            <UFormField label="模板變數 (JSON格式)" required>
+              <UTextarea
+                v-model="templateForm.variablesJson"
+                :rows="4"
+                placeholder='{"orderNumber": "ORD-001", "userName": "張三"}'
+              />
+            </UFormField>
+
+            <UFormField label="接收用戶 (選填)">
+              <USelectMenu
+                v-model="templateForm.userId"
+                :items="userOptions"
+                value-key="value"
+                searchable
+                placeholder="留空則發送給所有用戶"
+              />
+            </UFormField>
+          </div>
+
+          <template #footer>
+            <div class="flex justify-end gap-2">
+              <UButton
+                label="取消"
+                color="neutral"
+                variant="ghost"
+                @click="isTemplateSendModalOpen = false"
+              />
+              <UButton
+                label="發送"
+                color="blue"
+                :loading="isSendingTemplate"
+                @click="handleTemplateSend"
+              />
+            </div>
+          </template>
+        </UCard>
+      </template>
+    </UModal>
+
+    <!-- Bulk Send Modal -->
+    <UModal v-model:open="isBulkSendModalOpen">
+      <template #content>
+        <UCard>
+          <template #header>
+            <h3 class="text-lg font-semibold">👥 批量發送通知</h3>
+          </template>
+
+          <div class="space-y-4">
+            <div class="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <p class="text-sm text-purple-800 dark:text-purple-200">
+                選擇多個用戶發送通知，最多可選擇 100 位用戶
+              </p>
+            </div>
+
+            <UFormField label="接收用戶" required>
+              <USelectMenu
+                v-model="bulkForm.selectedUsers"
+                :items="userOptions"
+                value-key="value"
+                searchable
+                multiple
+                placeholder="選擇接收用戶 (可多選)"
+              >
+                <template #leading>
+                  <UIcon name="i-heroicons-users" class="w-5 h-5" />
+                </template>
+              </USelectMenu>
+              <template #hint>
+                <span class="text-xs text-purple-600">
+                  已選擇 {{ bulkForm.selectedUsers?.length || 0 }} 位用戶
+                </span>
+              </template>
+            </UFormField>
+
+            <UFormField label="通知類型" required>
+              <USelectMenu
+                v-model="bulkForm.type"
+                :items="typeOptions.filter(opt => opt.value)"
+                value-key="value"
+                placeholder="選擇通知類型"
+              />
+            </UFormField>
+
+            <UFormField label="標題" required>
+              <UInput
+                v-model="bulkForm.title"
+                placeholder="輸入通知標題"
+              />
+            </UFormField>
+
+            <UFormField label="內容" required>
+              <UTextarea
+                v-model="bulkForm.content"
+                :rows="4"
+                placeholder="輸入通知內容"
+              />
+            </UFormField>
+
+            <UFormField label="發送渠道" required>
+              <USelectMenu
+                v-model="bulkFormChannel"
+                :items="channelOptions"
+                placeholder="選擇發送渠道"
+              />
+            </UFormField>
+          </div>
+
+          <template #footer>
+            <div class="flex justify-end gap-2">
+              <UButton
+                label="取消"
+                color="neutral"
+                variant="ghost"
+                @click="isBulkSendModalOpen = false"
+              />
+              <UButton
+                label="批量發送"
+                color="purple"
+                :loading="isSendingBulk"
+                :disabled="!canSendBulk"
+                @click="handleBulkSend"
+              />
+            </div>
+          </template>
+        </UCard>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -312,6 +476,46 @@ const selectedStatus = computed({
 // Create notification modal
 const isCreateModalOpen = ref(false)
 const isCreating = ref(false)
+
+// Template send modal
+const isTemplateSendModalOpen = ref(false)
+const isSendingTemplate = ref(false)
+const templateForm = ref({
+  templateCode: '',
+  variablesJson: '',
+  userId: ''
+})
+
+// Bulk send modal
+const isBulkSendModalOpen = ref(false)
+const isSendingBulk = ref(false)
+const bulkForm = ref<{
+  selectedUsers: string[]
+  type: NotificationType | null
+  channel: NotificationChannel | null
+  title: string
+  content: string
+}>({
+  selectedUsers: [],
+  type: null,
+  channel: null,
+  title: '',
+  content: ''
+})
+
+const bulkFormChannel = computed({
+  get: () => channelOptions.find(opt => opt.value === bulkForm.value.channel),
+  set: (val) => { bulkForm.value.channel = val?.value as NotificationChannel | null }
+})
+
+const canSendBulk = computed(() => {
+  return bulkForm.value.selectedUsers.length > 0 &&
+         bulkForm.value.type &&
+         bulkForm.value.channel &&
+         bulkForm.value.title &&
+         bulkForm.value.content
+})
+
 const createForm = ref<{
   userId: string
   type: NotificationType | null
@@ -649,6 +853,117 @@ const handleCreateNotification = async () => {
     })
   } finally {
     isCreating.value = false
+  }
+}
+
+const handleTemplateSend = async () => {
+  if (!templateForm.value.templateCode || !templateForm.value.variablesJson) {
+    toast.add({
+      title: '錯誤',
+      description: '請填寫模板代碼和變數',
+      color: 'error',
+    })
+    return
+  }
+
+  // 驗證 JSON 格式
+  let variables: Record<string, any>
+  try {
+    variables = JSON.parse(templateForm.value.variablesJson)
+  } catch (error) {
+    toast.add({
+      title: '錯誤',
+      description: '變數格式不正確，請輸入有效的 JSON',
+      color: 'error',
+    })
+    return
+  }
+
+  isSendingTemplate.value = true
+  try {
+    await notificationsApi.sendByTemplate({
+      templateCode: templateForm.value.templateCode,
+      variables,
+      data: templateForm.value.userId ? { userId: templateForm.value.userId } : undefined
+    })
+
+    toast.add({
+      title: '成功',
+      description: templateForm.value.userId ? '模板通知已發送！' : '模板通知已廣播給所有用戶！',
+      color: 'success',
+    })
+
+    // Reset form
+    templateForm.value = {
+      templateCode: '',
+      variablesJson: '',
+      userId: ''
+    }
+    isTemplateSendModalOpen.value = false
+
+    // Refresh notifications list
+    notificationStore.fetchNotifications()
+    notificationStore.fetchUnreadCount()
+  } catch (error: any) {
+    console.error('模板發送失敗:', error)
+    toast.add({
+      title: '錯誤',
+      description: error.response?.data?.message || '模板發送失敗',
+      color: 'error',
+    })
+  } finally {
+    isSendingTemplate.value = false
+  }
+}
+
+const handleBulkSend = async () => {
+  if (!canSendBulk.value) {
+    toast.add({
+      title: '錯誤',
+      description: '請填寫所有必填欄位',
+      color: 'error',
+    })
+    return
+  }
+
+  isSendingBulk.value = true
+  try {
+    await notificationsApi.sendBulk({
+      userIds: bulkForm.value.selectedUsers,
+      type: bulkForm.value.type!,
+      channel: bulkForm.value.channel!,
+      title: bulkForm.value.title,
+      content: bulkForm.value.content
+    })
+
+    toast.add({
+      title: '成功',
+      description: `批量通知已發送給 ${bulkForm.value.selectedUsers.length} 位用戶！`,
+      color: 'success',
+    })
+
+    // Reset form
+    bulkForm.value = {
+      selectedUsers: [],
+      type: null,
+      channel: null,
+      title: '',
+      content: ''
+    }
+    isBulkSendModalOpen.value = false
+
+    // Refresh notifications list
+    notificationStore.fetchNotifications()
+    notificationStore.fetchUnreadCount()
+  } catch (error: any) {
+    console.error('批量發送失敗:', error)
+    toast.add({
+      title: '錯誤',
+      description: error.response?.data?.message || '批量發送失敗',
+      color: 'error',
+    })
+  } finally {
+    isSendingBulk.value = false
   }
 }
 

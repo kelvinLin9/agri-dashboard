@@ -304,7 +304,7 @@ const clearCart = async () => {
 const goToCheckout = async () => {
   try {
     const validation = await cartStore.validateCart()
-    if (!validation.valid) {
+    if (!validation.isValid) {
       alert('請檢查商品庫存或價格')
       return
     }

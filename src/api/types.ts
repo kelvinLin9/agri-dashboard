@@ -552,7 +552,7 @@ export interface UpdateCartItemDto {
 }
 
 export interface ValidateCartResponse {
-  valid: boolean
+  isValid: boolean  // 改為 isValid 匹配後端 API
   issues?: {
     productId: string
     issue: string

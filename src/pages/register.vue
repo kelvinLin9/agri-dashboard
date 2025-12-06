@@ -343,29 +343,15 @@ const handleRegister = async () => {
   }
 }
 
-const handleGoogleRegister = async () => {
-  isGoogleLoading.value = true
-  errorMessage.value = ''
-
-  try {
-    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-    
-    if (!googleClientId) {
-      throw new Error('Google Client ID 未設定')
-    }
-
-    // Google OAuth 註冊流程（與登入相同）
-    const redirectUri = `${window.location.origin}/auth/google/callback`
-    const scope = 'email profile'
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=code&scope=${scope}&access_type=offline&prompt=consent`
-
-    window.location.href = googleAuthUrl
-  } catch (error: any) {
-    console.error('Google 註冊失敗:', error)
-    errorMessage.value = error.message || 'Google 註冊失敗'
-    isGoogleLoading.value = false
-  }
+const handleGoogleRegister = () => {
+  const currentOrigin = window.location.origin
+  const backendUrl = import.meta.env.VITE_API_URL || 'https://agri-backend-660672910950.asia-east1.run.app/api'
+  const redirectUri = encodeURIComponent(currentOrigin)
+  const fullUrl = `${backendUrl}/auth/google?redirect_uri=${redirectUri}`
+  
+  window.location.href = fullUrl
 }
+
 
 // Clear error when user types
 import { watch } from 'vue'

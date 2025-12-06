@@ -181,13 +181,20 @@ export enum OrderStatus {
 }
 
 export interface OrderItem {
-  id: string
-  productId: string
+  id: number
+  orderId: string
+  productId: number
   productName: string
+  productSku: string
+  productImage: string
+  unitPrice: string | number
   quantity: number
-  price: number
-  subtotal: number
+  subtotal: string | number
+  discountAmount?: string | number
+  total: string | number
   note?: string
+  createdAt?: string
+  updatedAt?: string
   product?: Product
 }
 
@@ -205,12 +212,12 @@ export interface Order {
   recipientCity: string
   recipientDistrict: string
   recipientAddress: string
-  subtotal: number
-  shippingFee: number
-  discountAmount: number
+  subtotal: string | number
+  shippingFee: string | number
+  discountAmount: string | number
   pointsUsed: number
   pointsEarned: number
-  totalAmount: number
+  totalAmount: string | number
   trackingNumber?: string
   customerNote?: string
   adminNote?: string

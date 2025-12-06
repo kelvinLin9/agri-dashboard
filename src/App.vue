@@ -11,6 +11,9 @@
     
     <!-- 推送通知訂閱提示 -->
     <PushNotificationPrompt />
+    
+    <!-- 浮動購物車按鈕 -->
+    <FloatingCart />
   </UApp>
 </template>
 
@@ -21,6 +24,7 @@ import Header from './layout/Header.vue'
 import LoadingOverlay from './components/LoadingOverlay.vue'
 import PwaInstallPrompt from './components/PwaInstallPrompt.vue'
 import PushNotificationPrompt from './components/PushNotificationPrompt.vue'
+import FloatingCart from './components/FloatingCart.vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { useNotificationStore } from '@/stores/notification'
 import { isLoading } from '@/utils/loading'

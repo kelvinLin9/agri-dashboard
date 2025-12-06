@@ -53,6 +53,7 @@ export const useOrderStore = defineStore('order', () => {
     try {
       const response = await ordersApi.getById(id)
       currentOrder.value = response.data
+      return response.data  // ✅ 返回訂單數據
     }
     catch (err: any) {
       error.value = err.message || '載入訂單詳情失敗'

@@ -79,7 +79,7 @@
                 <p class="text-sm text-gray-500">x{{ item.quantity }}</p>
               </div>
               <div class="text-right">
-                <p class="font-semibold">${{ item.subtotal.toLocaleString() }}</p>
+                <p class="font-semibold">${{ Number(item.subtotal).toLocaleString() }}</p>
               </div>
             </div>
             <p v-if="order.orderItems && order.orderItems.length > 2" class="text-sm text-gray-500">
@@ -94,7 +94,7 @@
             </div>
             <div class="text-right">
               <p class="text-sm text-gray-600 dark:text-gray-400">訂單總額</p>
-              <p class="text-xl font-bold text-green-600">${{ order.totalAmount.toLocaleString() }}</p>
+              <p class="text-xl font-bold text-green-600">${{ Number(order.totalAmount).toLocaleString() }}</p>
             </div>
           </div>
 

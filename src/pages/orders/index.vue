@@ -840,9 +840,12 @@ const fetchOrders = async () => {
     // getMyOrders 回傳 ApiResponse: { data: Order[] }
     // 需要統一處理
     
+    
     if (isAdmin) {
-      // Admin API returns PaginatedResponse<Order>
-      const paginatedData = response as PaginatedResponse<Order>
+      // Admin API returns ApiResponse<PaginatedResponse<Order>>
+      // Need to access response.data to get the actual PaginatedResponse
+      const apiResponse = response as any
+      const paginatedData = apiResponse.data || apiResponse
       orders.value = Array.isArray(paginatedData.data) ? paginatedData.data : []
       total.value = paginatedData.meta?.total || paginatedData.total || 0
     } else {
@@ -1070,12 +1073,13 @@ const getRefundStatusLabel = (status: RefundStatus) => {
   return labels[status] || status
 }
 
-const formatCurrency = (amount: number) => {
+const formatCurrency = (amount: number | string) => {
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
   return new Intl.NumberFormat('zh-TW', {
     style: 'currency',
     currency: 'TWD',
     minimumFractionDigits: 0,
-  }).format(amount)
+  }).format(numAmount)
 }
 
 const formatDateTime = (dateString: string) => {

@@ -245,6 +245,21 @@ export interface CreateOrderDto {
   customerNote?: string
 }
 
+export interface CreateOrderFromCartDto {
+  paymentMethod: string
+  shippingMethod: string
+  recipientName: string
+  recipientPhone: string
+  recipientEmail?: string
+  recipientPostalCode: string
+  recipientCity: string
+  recipientDistrict: string
+  recipientAddress: string
+  couponCode?: string
+  pointsUsed?: number
+  customerNote?: string
+}
+
 export interface UpdateOrderDto {
   status?: OrderStatus
   trackingNumber?: string | null
@@ -501,4 +516,45 @@ export interface SendBulkDto {
   data?: Record<string, any>
   actionUrl?: string
   priority?: number
+}
+
+// 購物車相關類型
+export interface CartItem {
+  id: string
+  productId: string
+  cartId: string
+  productName?: string      // API 返回的商品名稱
+  productImage?: string     // API 返回的商品圖片
+  unitPrice: number         // 單價（實際 API 字段名）
+  quantity: number
+  price?: number           // 備用欄位
+  subtotal: number
+  product?: Product
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Cart {
+  id: string
+  memberId: string
+  items: CartItem[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AddCartItemDto {
+  productId: string
+  quantity: number
+}
+
+export interface UpdateCartItemDto {
+  quantity: number
+}
+
+export interface ValidateCartResponse {
+  valid: boolean
+  issues?: {
+    productId: string
+    issue: string
+  }[]
 }

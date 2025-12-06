@@ -3,6 +3,7 @@ import type {
   Order,
   OrderQueryParams,
   CreateOrderDto,
+  CreateOrderFromCartDto,
   UpdateOrderDto,
   PaginatedResponse,
   ApiResponse,
@@ -50,6 +51,14 @@ export const ordersApi = {
    */
   create: async (data: CreateOrderDto): Promise<ApiResponse<Order>> => {
     const response = await apiClient.post<ApiResponse<Order>>('/orders', data)
+    return response.data
+  },
+
+  /**
+   * 從購物車建立訂單
+   */
+  createFromCart: async (data: CreateOrderFromCartDto): Promise<ApiResponse<Order>> => {
+    const response = await apiClient.post<ApiResponse<Order>>('/orders/from-cart', data)
     return response.data
   },
 

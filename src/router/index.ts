@@ -90,6 +90,67 @@ const router = createRouter({
         layout: 'blank'
       },
     },
+    // Shopping Flow Routes (Customer-facing)
+    {
+      path: '/shop',
+      name: 'shop',
+      redirect: '/shop/products',
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/shop/products',
+      name: 'shop-products',
+      component: () => import('../pages/shop/products/index.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/shop/products/:id',
+      name: 'shop-product-detail',
+      component: () => import('../pages/shop/products/[id].vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/cart',
+      name: 'cart',
+      component: () => import('../pages/cart.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/checkout',
+      name: 'checkout',
+      component: () => import('../pages/checkout.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/payment',
+      name: 'payment',
+      component: () => import('../pages/payment.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/payment/success',
+      name: 'payment-success',
+      component: () => import('../pages/payment/success.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/payment/failed',
+      name: 'payment-failed',
+      component: () => import('../pages/payment/failed.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/my-orders',
+      name: 'my-orders',
+      component: () => import('../pages/my-orders/index.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/my-orders/:id',
+      name: 'my-order-detail',
+      component: () => import('../pages/my-orders/[id].vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 

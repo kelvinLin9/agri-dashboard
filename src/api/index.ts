@@ -27,4 +27,5 @@ export { refundApi } from './refund'
 export { dashboardApi } from './dashboard'
 export { logsApi } from './logs'
 export { pagesApi } from './pages'
+export { cartApi } from './cart'
 

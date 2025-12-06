@@ -107,7 +107,7 @@
     </div>
 
     <!-- Hidden div for ECPay form submission -->
-    <div id="ecpay-container" style="display: none;"></div>
+    <div id="ecpay-container"></div>
   </div>
 </template>
 
@@ -208,16 +208,32 @@ const proceedToPayment = async () => {
     // Get HTML form from backend
     const html = await response.text()
 
+    console.log('📝 收到 ECPay 表單，準備提交...')
+    console.log('📄 表單 HTML:', html.substring(0, 500)) // 顯示前 500 字元
+
     // Create a temporary div to hold the form
     const container = document.getElementById('ecpay-container')
     if (container) {
+      // 設為可見，讓腳本能正常執行
+      container.style.display = 'block'
       container.innerHTML = html
       
-      // Find and submit the form
+      // 等待一小段時間讓腳本執行
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // 如果腳本沒有自動提交，手動提交
       const form = container.querySelector('form')
       if (form) {
-        // Auto-submit the form (will redirect to ECPay)
+        console.log('📤 提交 ECPay 表單...')
+        console.log('🔍 表單 action:', form.action)
+        console.log('🔍 表單欄位數:', form.elements.length)
+        
+        // 暫時註釋以便查看 Console
         form.submit()
+        // console.log('⏸️  已暫停自動提交，請複製上面的訊息')
+      } else {
+        console.error('❌ 找不到 ECPay 表單')
+        throw new Error('無法找到支付表單')
       }
     }
   } catch (err: any) {

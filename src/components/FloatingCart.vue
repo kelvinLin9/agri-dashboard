@@ -46,8 +46,25 @@ const goToCart = () => {
 }
 
 // 載入購物車數據
-onMounted(() => {
-  cartStore.fetchCart()
+onMounted(async () => {
+  // 檢查是否已登入（有 token）
+  const token = localStorage.getItem('access_token')
+  
+  if (!token) {
+    console.log('⏳ 未登入或 token 尚未載入，跳過購物車載入')
+    return
+  }
+  
+  try {
+    await cartStore.fetchCart()
+  } catch (error: any) {
+    // 靜默處理 401 錯誤（可能是 token 還沒完全設定好）
+    if (error?.response?.status === 401) {
+      console.log('⚠️ 認證失敗，可能正在登入中...')
+    } else {
+      console.error('❌ 載入購物車失敗:', error)
+    }
+  }
 })
 </script>
 

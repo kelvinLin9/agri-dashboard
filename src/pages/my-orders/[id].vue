@@ -102,12 +102,12 @@
               </div>
               <div class="flex-1">
                 <p class="font-semibold text-gray-900 dark:text-white">{{ item.productName }}</p>
-                <p class="text-sm text-gray-500">單價: ${{ item.price.toLocaleString() }}</p>
+                <p class="text-sm text-gray-500">單價: ${{ (Number(item.unitPrice) || 0).toLocaleString() }}</p>
                 <p class="text-sm text-gray-500">數量: x{{ item.quantity }}</p>
               </div>
               <div class="text-right">
                 <p class="font-bold text-lg text-gray-900 dark:text-white">
-                  ${{ item.subtotal.toLocaleString() }}
+                  ${{ (Number(item.subtotal) || 0).toLocaleString() }}
                 </p>
               </div>
             </div>

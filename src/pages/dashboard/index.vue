@@ -117,12 +117,11 @@
     </div>
 
     <!-- 錯誤提示 -->
-    <UNotification
+    <UAlert
       v-if="dashboardStore.error"
-      color="red"
+      color="error"
       icon="i-heroicons-exclamation-triangle"
       :title="dashboardStore.error"
-      :timeout="5000"
     />
   </div>
 </template>

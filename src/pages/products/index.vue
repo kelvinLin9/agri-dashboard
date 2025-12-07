@@ -172,7 +172,7 @@
       :ui="{ content: 'sm:max-w-5xl' }"
     >
       <template #body>
-        <form @submit.prevent="saveProduct">
+        <UForm :schema="ProductFormSchema" :state="productForm" @submit="onFormSubmit">
           <div class="max-h-[75vh] overflow-y-auto px-1">
             <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
               <!-- Left Column: Core Fields (3/5) -->
@@ -184,20 +184,20 @@
                     基本資訊
                   </h3>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <UFormField label="產品名稱" required>
+                    <UFormField label="產品名稱" name="name" required>
                       <UInput v-model="productForm.name" placeholder="輸入產品名稱" />
                     </UFormField>
-                    <UFormField label="Slug (網址代稱)" required>
+                    <UFormField label="Slug (網址代稱)" name="slug" required>
                       <UInput v-model="productForm.slug" placeholder="輸入 Slug" />
                     </UFormField>
-                    <UFormField label="分類" required>
+                    <UFormField label="分類" name="categoryId" required>
                       <USelectMenu
                         v-model="formSelectedCategory"
                         :items="formCategoryOptions"
                         placeholder="選擇分類"
                       />
                     </UFormField>
-                    <UFormField label="狀態" required>
+                    <UFormField label="狀態" name="status" required>
                       <USelectMenu
                         v-model="formSelectedStatus"
                         :items="formStatusOptions"
@@ -413,23 +413,22 @@
               </div>
             </div>
           </div>
-        </form>
-      </template>
-
-      <template #footer>
-        <div class="flex justify-end gap-3">
-          <UButton
-            label="取消"
-            color="neutral"
-            variant="soft"
-            @click="isModalOpen = false"
-          />
-          <UButton
-            label="儲存"
-            :loading="isSaving"
-            @click="saveProduct"
-          />
-        </div>
+          
+          <!-- 表單按鈕 (移入 UForm 內以便驗證) -->
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-4">
+            <UButton
+              label="取消"
+              color="neutral"
+              variant="soft"
+              @click="isModalOpen = false"
+            />
+            <UButton
+              type="submit"
+              label="儲存"
+              :loading="isSaving"
+            />
+          </div>
+        </UForm>
       </template>
     </UModal>
 
@@ -605,10 +604,15 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, h, resolveComponent } from 'vue'
+import type { FormSubmitEvent } from '@nuxt/ui'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import { productsApi, categoriesApi, type Product, type ProductQueryParams, type Category, SortOrder } from '@/api'
 import SearchBox from '@/components/common/SearchBox.vue'
 import { useImageUpload } from '@/composables/useImageUpload'
+import { ProductFormSchema, type ProductFormData } from '@/schemas/product'
+
+// Toast (必須在 setup 頂層呼叫)
+const toast = useToast()
 
 // Data
 const products = ref<Product[]>([])
@@ -722,7 +726,6 @@ const handleUploadImages = async (files: File[]) => {
   if (files.length === 0) return
   
   isUploadingImage.value = true
-  const toast = useToast()
   
   try {
     // 驗證檔案
@@ -1068,10 +1071,21 @@ const editProduct = (product: Product) => {
     ...defaultForm,
     ...product,
     categoryId: product.categoryId || 0,
+    status: product.status || 'active',
+    originalPrice: product.originalPrice || 0,
+    salePrice: product.salePrice || 0,
+    costPrice: product.costPrice || 0,
+    stockQuantity: product.stockQuantity || 0,
+    lowStockThreshold: product.lowStockThreshold || 10,
     shortDescription: product.shortDescription || '',
     description: product.description || '',
     origin: product.origin || '',
+    shelfLife: product.shelfLife || 0,
     mainImage: product.mainImage || '',
+    images: product.images || [],
+    seoTitle: product.seoTitle || '',
+    seoDescription: product.seoDescription || '',
+    seoKeywords: product.seoKeywords || '',
   }
   isModalOpen.value = true
   console.log('isModalOpen set to:', isModalOpen.value)
@@ -1084,6 +1098,12 @@ const editFromView = () => {
   }
 }
 
+// 表單提交 (驗證通過後)
+const onFormSubmit = async (event: FormSubmitEvent<ProductFormData>) => {
+  console.log('Form validated:', event.data)
+  await saveProduct()
+}
+
 const saveProduct = async () => {
   isSaving.value = true
   try {
@@ -1091,15 +1111,16 @@ const saveProduct = async () => {
     
     if (editingProduct.value) {
       await productsApi.update(editingProduct.value.id, data)
+      toast.add({ title: '更新成功', description: '產品已成功更新', color: 'success' })
     } else {
       await productsApi.create(data)
+      toast.add({ title: '新增成功', description: '產品已成功建立', color: 'success' })
     }
     isModalOpen.value = false
     fetchProducts()
-    // TODO: Show success toast
   } catch (error: any) {
     console.error('儲存產品失敗:', error)
-    // TODO: Show error toast
+    toast.add({ title: '儲存失敗', description: error.message || '請稍後再試', color: 'error' })
   } finally {
     isSaving.value = false
   }

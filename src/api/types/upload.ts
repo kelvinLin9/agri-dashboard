@@ -29,3 +29,16 @@ export interface UpdateUploadDto {
   filename?: string
   type?: 'image' | 'video' | 'document'
 }
+
+// 上傳設定
+export interface UploadConfig {
+  maxFileSize: number
+  maxFileSizeMB: number
+  maxFilesPerUpload: number
+  allowedImageTypes: string[]
+  allowedImageExtensions: string[]
+  allowedDocumentTypes: string[]
+  allowedDocumentExtensions: string[]
+  allowedVideoTypes: string[]
+  allowedVideoExtensions: string[]
+}

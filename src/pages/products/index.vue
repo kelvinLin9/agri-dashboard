@@ -77,7 +77,6 @@
             @search="handleFilterChange"
           />
         </div>
-
         <!-- Category Filter -->
         <USelectMenu
           v-model="selectedCategory"
@@ -170,130 +169,249 @@
     <UModal 
       v-model:open="isModalOpen"
       :title="editingProduct ? '編輯產品' : '新增產品'"
-      :ui="{ content: 'sm:max-w-4xl' }"
+      :ui="{ content: 'sm:max-w-5xl' }"
     >
       <template #body>
         <form @submit.prevent="saveProduct">
-          <div class="h-[60vh] overflow-y-auto px-1">
-            <UTabs :items="tabItems" class="w-full">
-              <!-- Basic Info Tab -->
-              <template #basic>
-                <div class="space-y-4 py-4">
+          <div class="max-h-[75vh] overflow-y-auto px-1">
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              <!-- Left Column: Core Fields (3/5) -->
+              <div class="lg:col-span-3 space-y-6">
+                <!-- 基本資訊區塊 -->
+                <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                  <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                    <UIcon name="i-heroicons-cube" class="w-4 h-4" />
+                    基本資訊
+                  </h3>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <UFormField label="產品名稱" required>
                       <UInput v-model="productForm.name" placeholder="輸入產品名稱" />
-                    </UFormField>
-                    <UFormField label="SKU (庫存單位)" required>
-                      <UInput v-model="productForm.sku" placeholder="輸入 SKU" />
                     </UFormField>
                     <UFormField label="Slug (網址代稱)" required>
                       <UInput v-model="productForm.slug" placeholder="輸入 Slug" />
                     </UFormField>
                     <UFormField label="分類" required>
-                      <USelect
-                        v-model="productForm.categoryId"
-                        :items="categoryOptions"
-                        option-attribute="label"
-                        value-attribute="value"
+                      <USelectMenu
+                        v-model="formSelectedCategory"
+                        :items="formCategoryOptions"
                         placeholder="選擇分類"
                       />
                     </UFormField>
                     <UFormField label="狀態" required>
-                      <USelect
-                        v-model="productForm.status"
-                        :items="statusOptions"
-                        option-attribute="label"
-                        value-attribute="value"
+                      <USelectMenu
+                        v-model="formSelectedStatus"
+                        :items="formStatusOptions"
+                        placeholder="選擇狀態"
                       />
                     </UFormField>
-                  </div>
-                  <div class="flex gap-4 mt-4">
-                    <UCheckbox v-model="productForm.isFeatured" label="精選產品" />
-                    <UCheckbox v-model="productForm.isNew" label="新品" />
+                    <div class="flex items-end gap-4 pb-1">
+                      <UCheckbox v-model="productForm.isFeatured" label="精選產品" />
+                      <UCheckbox v-model="productForm.isNew" label="新品" />
+                    </div>
                   </div>
                 </div>
-              </template>
 
-              <!-- Pricing Tab -->
-              <template #pricing>
-                <div class="space-y-4 py-4">
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- 價格 & 庫存區塊 -->
+                <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                  <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                    <UIcon name="i-heroicons-currency-dollar" class="w-4 h-4" />
+                    價格 & 庫存
+                  </h3>
+                  <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <UFormField label="原價" required>
-                      <UInput v-model.number="productForm.originalPrice" type="number" min="0" />
+                      <UInput v-model.number="productForm.originalPrice" type="number" min="0">
+                        <template #leading>
+                          <span class="text-gray-500 text-sm">$</span>
+                        </template>
+                      </UInput>
                     </UFormField>
                     <UFormField label="特價">
-                      <UInput v-model.number="productForm.salePrice" type="number" min="0" />
+                      <UInput v-model.number="productForm.salePrice" type="number" min="0">
+                        <template #leading>
+                          <span class="text-gray-500 text-sm">$</span>
+                        </template>
+                      </UInput>
                     </UFormField>
                     <UFormField label="成本價">
-                      <UInput v-model.number="productForm.costPrice" type="number" min="0" />
+                      <UInput v-model.number="productForm.costPrice" type="number" min="0">
+                        <template #leading>
+                          <span class="text-gray-500 text-sm">$</span>
+                        </template>
+                      </UInput>
                     </UFormField>
-                  </div>
-                </div>
-              </template>
-
-              <!-- Inventory Tab -->
-              <template #inventory>
-                <div class="space-y-4 py-4">
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <UFormField label="庫存數量" required>
                       <UInput v-model.number="productForm.stockQuantity" type="number" min="0" />
                     </UFormField>
                     <UFormField label="低庫存警示值">
                       <UInput v-model.number="productForm.lowStockThreshold" type="number" min="0" />
                     </UFormField>
-                  </div>
-                  <UCheckbox v-model="productForm.trackInventory" label="追蹤庫存" class="mt-2" />
-                </div>
-              </template>
-
-              <!-- Details Tab -->
-              <template #details>
-                <div class="space-y-4 py-4">
-                  <UFormField label="簡短描述">
-                    <UTextarea v-model="productForm.shortDescription" :rows="2" />
-                  </UFormField>
-                  <UFormField label="詳細描述 (HTML)">
-                    <UTextarea v-model="productForm.description" :rows="6" />
-                  </UFormField>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <UFormField label="產地">
-                      <UInput v-model="productForm.origin" />
-                    </UFormField>
-                    <UFormField label="保存期限 (天)">
-                      <UInput v-model.number="productForm.shelfLife" type="number" min="0" />
-                    </UFormField>
-                  </div>
-                </div>
-              </template>
-
-              <!-- Images Tab -->
-              <template #images>
-                <div class="space-y-4 py-4">
-                  <UFormField label="主圖片 URL">
-                    <UInput v-model="productForm.mainImage" placeholder="https://..." />
-                    <div v-if="productForm.mainImage" class="mt-2">
-                      <img :src="productForm.mainImage" class="h-32 object-contain border rounded" />
+                    <div class="flex items-end pb-1">
+                      <UCheckbox v-model="productForm.trackInventory" label="追蹤庫存" />
                     </div>
-                  </UFormField>
-                  <!-- Gallery implementation can be added here -->
+                  </div>
                 </div>
-              </template>
 
-              <!-- SEO Tab -->
-              <template #seo>
-                <div class="space-y-4 py-4">
-                  <UFormField label="SEO 標題">
-                    <UInput v-model="productForm.seoTitle" />
-                  </UFormField>
-                  <UFormField label="SEO 描述">
-                    <UTextarea v-model="productForm.seoDescription" :rows="3" />
-                  </UFormField>
-                  <UFormField label="SEO 關鍵字">
-                    <UInput v-model="productForm.seoKeywords" placeholder="以逗號分隔" />
-                  </UFormField>
+                <!-- 描述區塊 -->
+                <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                  <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                    <UIcon name="i-heroicons-document-text" class="w-4 h-4" />
+                    產品描述
+                  </h3>
+                  <div class="space-y-4">
+                    <UFormField label="簡短描述">
+                      <UTextarea v-model="productForm.shortDescription" :rows="2" placeholder="一句話描述產品特色" />
+                    </UFormField>
+                    <UFormField label="詳細描述">
+                      <UTextarea v-model="productForm.description" :rows="4" placeholder="詳細的產品說明..." />
+                    </UFormField>
+                    <div class="grid grid-cols-2 gap-4">
+                      <UFormField label="產地">
+                        <UInput v-model="productForm.origin" placeholder="台灣" />
+                      </UFormField>
+                      <UFormField label="保存期限 (天)">
+                        <UInput v-model.number="productForm.shelfLife" type="number" min="0" />
+                      </UFormField>
+                    </div>
+                  </div>
                 </div>
-              </template>
-            </UTabs>
+              </div>
+
+              <!-- Right Column: Image & SEO (2/5) -->
+              <div class="lg:col-span-2 space-y-6">
+                <!-- 圖片區塊 -->
+                <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                  <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                    <UIcon name="i-heroicons-photo" class="w-4 h-4" />
+                    產品圖片
+                  </h3>
+                  <div class="space-y-4">
+                    <!-- 主圖片 -->
+                    <div>
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">主圖片</p>
+                      <div 
+                        class="aspect-[4/3] bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600 relative group"
+                      >
+                        <img 
+                          v-if="productForm.mainImage" 
+                          :src="productForm.mainImage" 
+                          class="w-full h-full object-contain"
+                          @error="(e: Event) => (e.target as HTMLImageElement).style.display = 'none'"
+                        />
+                        <div v-if="!productForm.mainImage" class="text-center text-gray-400">
+                          <UIcon name="i-heroicons-photo" class="w-10 h-10 mx-auto mb-1" />
+                          <p class="text-xs">尚無主圖片</p>
+                        </div>
+                        <!-- 主圖片操作按鈕 -->
+                        <div 
+                          v-if="productForm.mainImage"
+                          class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
+                        >
+                          <UButton 
+                            icon="i-heroicons-trash" 
+                            size="sm" 
+                            color="error" 
+                            variant="solid"
+                            @click="productForm.mainImage = ''"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 上傳圖片 -->
+                    <div
+                      class="border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer hover:border-primary"
+                      :class="isUploadingImage ? 'opacity-50 pointer-events-none' : 'border-gray-300 dark:border-gray-600'"
+                      @click="triggerImageUpload"
+                      @dragover.prevent
+                      @drop.prevent="handleImageDrop"
+                    >
+                      <input
+                        ref="imageFileInput"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        class="hidden"
+                        @change="handleImageSelect"
+                      />
+                      <UIcon 
+                        :name="isUploadingImage ? 'i-heroicons-arrow-path' : 'i-heroicons-cloud-arrow-up'" 
+                        :class="isUploadingImage ? 'animate-spin' : ''"
+                        class="w-8 h-8 mx-auto mb-2 text-gray-400" 
+                      />
+                      <p class="text-sm text-gray-500 dark:text-gray-400">
+                        {{ isUploadingImage ? '上傳中...' : '點擊或拖曳圖片上傳' }}
+                      </p>
+                    </div>
+
+                    <!-- 附加圖片網格 -->
+                    <div v-if="allImages.length > 0">
+                      <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                        所有圖片 ({{ allImages.length }})
+                        <span class="text-gray-400">· 點擊設為主圖</span>
+                      </p>
+                      <div class="grid grid-cols-3 gap-2">
+                        <div 
+                          v-for="(img, index) in allImages" 
+                          :key="index"
+                          class="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden relative group cursor-pointer"
+                          :class="{ 'ring-2 ring-primary ring-offset-2': img === productForm.mainImage }"
+                          @click="setAsMainImage(img)"
+                        >
+                          <img 
+                            :src="img" 
+                            class="w-full h-full object-cover"
+                            @error="(e: Event) => (e.target as HTMLImageElement).style.display = 'none'"
+                          />
+                          <!-- 主圖標記 -->
+                          <div 
+                            v-if="img === productForm.mainImage"
+                            class="absolute top-1 left-1 bg-primary text-white text-xs px-1.5 py-0.5 rounded"
+                          >
+                            主圖
+                          </div>
+                          <!-- 刪除按鈕 -->
+                          <div 
+                            class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                          >
+                            <UButton 
+                              icon="i-heroicons-trash" 
+                              size="xs" 
+                              color="error" 
+                              variant="solid"
+                              @click.stop="removeImage(index)"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- 提示文字 -->
+                    <p class="text-xs text-gray-400 dark:text-gray-500">
+                      建議圖片尺寸：800x800 像素以上，支援 JPG、PNG 格式
+                    </p>
+                  </div>
+                </div>
+
+                <!-- SEO 區塊 -->
+                <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+                  <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                    <UIcon name="i-heroicons-magnifying-glass" class="w-4 h-4" />
+                    SEO 設定
+                  </h3>
+                  <div class="space-y-3">
+                    <UFormField label="SEO 標題">
+                      <UInput v-model="productForm.seoTitle" size="sm" placeholder="搜尋引擎標題" />
+                    </UFormField>
+                    <UFormField label="SEO 描述">
+                      <UTextarea v-model="productForm.seoDescription" :rows="2" placeholder="搜尋引擎描述文字" />
+                    </UFormField>
+                    <UFormField label="SEO 關鍵字">
+                      <UInput v-model="productForm.seoKeywords" size="sm" placeholder="關鍵字1, 關鍵字2, ..." />
+                    </UFormField>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </form>
       </template>
@@ -488,7 +606,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, h, resolveComponent } from 'vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
-import { productsApi, categoriesApi, type Product, type ProductQueryParams, type Category, SortOrder } from '@/api'
+import { productsApi, categoriesApi, uploadApi, type Product, type ProductQueryParams, type Category, SortOrder } from '@/api'
 import SearchBox from '@/components/common/SearchBox.vue'
 
 // Data
@@ -550,12 +668,129 @@ const defaultForm = {
   origin: '',
   shelfLife: 0,
   mainImage: '',
+  images: [] as string[],
   seoTitle: '',
   seoDescription: '',
   seoKeywords: '',
 }
 
 const productForm = ref({ ...defaultForm })
+
+// 圖片管理
+const newImageUrl = ref('')
+
+// 所有圖片（主圖 + 附加圖片合併，去重）
+const allImages = computed(() => {
+  const images = [...(productForm.value.images || [])]
+  if (productForm.value.mainImage && !images.includes(productForm.value.mainImage)) {
+    images.unshift(productForm.value.mainImage)
+  }
+  return images
+})
+
+// 新增圖片
+const addImage = () => {
+  const url = newImageUrl.value.trim()
+  if (!url) return
+  
+  // 避免重複
+  if (!productForm.value.images.includes(url) && productForm.value.mainImage !== url) {
+    productForm.value.images.push(url)
+  }
+  
+  // 如果沒有主圖，自動設為主圖
+  if (!productForm.value.mainImage) {
+    productForm.value.mainImage = url
+  }
+  
+  newImageUrl.value = ''
+}
+
+// 移除圖片
+const removeImage = (index: number) => {
+  const img = allImages.value[index]
+  if (!img) return
+  
+  // 從 images 陣列移除
+  const imgIndex = productForm.value.images.indexOf(img)
+  if (imgIndex > -1) {
+    productForm.value.images.splice(imgIndex, 1)
+  }
+  
+  // 如果刪除的是主圖，設定新的主圖
+  if (productForm.value.mainImage === img) {
+    productForm.value.mainImage = productForm.value.images[0] || ''
+  }
+}
+
+// 設為主圖
+const setAsMainImage = (url: string) => {
+  productForm.value.mainImage = url
+}
+
+// 圖片上傳
+const imageFileInput = ref<HTMLInputElement | null>(null)
+const isUploadingImage = ref(false)
+
+const triggerImageUpload = () => {
+  imageFileInput.value?.click()
+}
+
+const handleImageSelect = async (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    await uploadImages(Array.from(target.files))
+    target.value = '' // 重設 input 以允許重複選擇同一檔案
+  }
+}
+
+const handleImageDrop = async (e: DragEvent) => {
+  if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+    const imageFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+    if (imageFiles.length > 0) {
+      await uploadImages(imageFiles)
+    }
+  }
+}
+
+const uploadImages = async (files: File[]) => {
+  if (files.length === 0) return
+  
+  isUploadingImage.value = true
+  const toast = useToast()
+  
+  try {
+    for (const file of files) {
+      const result = await uploadApi.upload(file, 'product')
+      const imageUrl = result.url
+      
+      // 添加到圖片列表
+      if (!productForm.value.images.includes(imageUrl)) {
+        productForm.value.images.push(imageUrl)
+      }
+      
+      // 如果沒有主圖，自動設為主圖
+      if (!productForm.value.mainImage) {
+        productForm.value.mainImage = imageUrl
+      }
+    }
+    
+    toast.add({
+      title: '上傳成功',
+      description: `成功上傳 ${files.length} 張圖片`,
+      color: 'success',
+    })
+  } catch (error) {
+    console.error('圖片上傳失敗:', error)
+    toast.add({
+      title: '上傳失敗',
+      description: '圖片上傳失敗，請稍後再試',
+      color: 'error',
+    })
+  } finally {
+    isUploadingImage.value = false
+  }
+}
 
 // Options
 const statusOptions = [
@@ -593,6 +828,31 @@ const categoryOptions = computed(() => {
     { label: '全部分類', value: null, level: 0 },
     ...flattened.map(c => ({ label: c.label, value: parseInt(c.value, 10) }))
   ]
+})
+
+// 給表單用的分類選項（不含「全部分類」）
+const formCategoryOptions = computed(() => {
+  const flattened = flattenCategoryTree(categoryTree.value)
+  return flattened.map(c => ({ label: c.label, value: parseInt(c.value, 10) }))
+})
+
+// 給表單用的狀態選項（不含「全部狀態」）
+const formStatusOptions = [
+  { label: '上架中', value: 'active' },
+  { label: '下架', value: 'inactive' },
+  { label: '缺貨', value: 'out_of_stock' },
+]
+
+// 表單分類 computed（處理物件和純值的轉換）
+const formSelectedCategory = computed({
+  get: () => formCategoryOptions.value.find(opt => opt.value === productForm.value.categoryId),
+  set: (val) => { productForm.value.categoryId = val?.value ?? 0 }
+})
+
+// 表單狀態 computed（處理物件和純值的轉換）
+const formSelectedStatus = computed({
+  get: () => formStatusOptions.find(opt => opt.value === productForm.value.status),
+  set: (val) => { productForm.value.status = val?.value ?? 'active' }
 })
 
 const tabItems = [

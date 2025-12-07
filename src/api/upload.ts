@@ -1,5 +1,5 @@
 import apiClient from './apiClient'
-import type { Upload, UploadResponse, UpdateUploadDto, ApiResponse } from './types'
+import type { Upload, UploadResponse, UpdateUploadDto, ApiResponse, UploadConfig } from './types'
 
 /**
  * 上傳 API
@@ -116,6 +116,14 @@ export const uploadApi = {
    */
   cleanup: async (): Promise<any> => {
     const response = await apiClient.post<{ data: any }>('/uploads/cleanup')
+    return response.data.data
+  },
+
+  /**
+   * 取得上傳設定
+   */
+  getConfig: async (): Promise<UploadConfig> => {
+    const response = await apiClient.get<{ data: UploadConfig }>('/uploads/config')
     return response.data.data
   },
 }

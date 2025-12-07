@@ -1,6 +1,7 @@
 import { ref, onUnmounted } from 'vue'
 import { io, Socket } from 'socket.io-client'
 import { useNotificationStore } from '@/stores/notification'
+import { useToast } from '@/composables/useToast'
 import type { Notification } from '@/api/types'
 
 export const useNotifications = () => {
@@ -77,7 +78,7 @@ export const useNotifications = () => {
       // 更新 Store
       notificationStore.addNotification(notification)
 
-      // 顯示 Toast
+      // 顯示控制台通知（開發用）
       showNotificationToast(notification)
 
       // 桌面通知（如果已授權）
@@ -104,21 +105,28 @@ export const useNotifications = () => {
 
   // 顯示 Toast 通知
   const showNotificationToast = (notification: Notification) => {
-    const actions = notification.actionUrl ? [{
-      label: '查看',
-      click: () => {
-        // 使用 window.location 導航，避免 useRouter 在非 setup 中調用的問題
-        window.location.href = notification.actionUrl!
-        notificationStore.markAsRead(notification.id)
-      }
-    }] : undefined
+    // 根據優先級決定顏色
+    const color = notification.priority >= 3 ? 'error' :
+      notification.priority >= 2 ? 'warning' :
+        notification.priority >= 1 ? 'info' : 'primary'
+
+    // 根據類型決定圖標
+    const icons: Record<string, string> = {
+      system: 'i-heroicons-cog-6-tooth',
+      order: 'i-heroicons-shopping-bag',
+      payment: 'i-heroicons-credit-card',
+      member: 'i-heroicons-user',
+      product: 'i-heroicons-cube',
+      promotion: 'i-heroicons-megaphone',
+      refund: 'i-heroicons-arrow-uturn-left',
+    }
+    const icon = icons[notification.type] || 'i-heroicons-bell'
 
     toast.add({
       title: notification.title,
       description: notification.content,
-      icon: getNotificationIcon(notification.type),
-      color: getNotificationColor(notification.priority),
-      actions
+      icon,
+      color,
     })
   }
 
@@ -151,28 +159,6 @@ export const useNotifications = () => {
       return permission === 'granted'
     }
     return Notification.permission === 'granted'
-  }
-
-  // 通知類型對應圖標
-  const getNotificationIcon = (type: string) => {
-    const icons: Record<string, string> = {
-      system: 'i-heroicons-cog-6-tooth',
-      order: 'i-heroicons-shopping-bag',
-      payment: 'i-heroicons-credit-card',
-      member: 'i-heroicons-user',
-      product: 'i-heroicons-cube',
-      promotion: 'i-heroicons-megaphone',
-      refund: 'i-heroicons-arrow-uturn-left',
-    }
-    return icons[type] || 'i-heroicons-bell'
-  }
-
-  // 優先級對應顏色
-  const getNotificationColor = (priority: number) => {
-    if (priority >= 3) return 'error'
-    if (priority >= 2) return 'warning'
-    if (priority >= 1) return 'info'
-    return 'neutral'
   }
 
   // 組件卸載時斷開連線

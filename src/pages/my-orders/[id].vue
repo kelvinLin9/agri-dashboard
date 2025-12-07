@@ -217,11 +217,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useOrderStore } from '@/stores/orders'
+import { useToast } from '@/composables/useToast'
 import { OrderStatus } from '@/api'
 
 const route = useRoute()
 const router = useRouter()
 const orderStore = useOrderStore()
+const toast = useToast()
 
 const orderId = route.params.id as string
 const order = computed(() => orderStore.currentOrder)
@@ -290,11 +292,11 @@ const confirmCancel = () => {
 const cancelOrder = async () => {
   try {
     await orderStore.cancelOrder(orderId)
-    console.log('訂單已取消')
+    toast.success('訂單已取消')
     fetchOrder()
   } catch (error) {
     console.error('取消訂單失敗:', error)
-    alert('無法取消訂單，請稍後再試')
+    toast.error('取消失敗', '無法取消訂單，請稍後再試')
   }
 }
 

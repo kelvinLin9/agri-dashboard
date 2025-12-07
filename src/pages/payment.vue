@@ -115,11 +115,13 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useOrderStore } from '@/stores/orders'
+import { useToast } from '@/composables/useToast'
 import type { Order } from '@/api/types'
 
 const route = useRoute()
 const router = useRouter()
 const orderStore = useOrderStore()
+const toast = useToast()
 
 const orderId = ref(route.query.orderId as string || '')
 const order = ref<Order | null>(null)
@@ -238,7 +240,7 @@ const proceedToPayment = async () => {
     }
   } catch (err: any) {
     console.error('支付失敗:', err)
-    alert(err.message || '支付處理失敗，請稍後再試')
+    toast.error('支付失敗', err.message || '支付處理失敗，請稍後再試')
   } finally {
     isSubmitting.value = false
   }

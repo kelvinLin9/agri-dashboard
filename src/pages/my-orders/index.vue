@@ -145,10 +145,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOrderStore } from '@/stores/orders'
+import { useToast } from '@/composables/useToast'
 import { OrderStatus } from '@/api'
 
 const router = useRouter()
 const orderStore = useOrderStore()
+const toast = useToast()
 
 // Pagination
 const page = ref(1)
@@ -171,13 +173,7 @@ const statusFilters = computed(() => [
 // Methods
 const fetchMyOrders = async () => {
   try {
-    await orderStore.fetchMyOrders({
-      page: page.value,
-      limit: pageSize.value,
-      status: selectedStatus.value,
-      sortBy: 'createdAt',
-      sortOrder: 'DESC',
-    })
+    await orderStore.fetchMyOrders()
     totalOrders.value = orderStore.orders.length // TODO: 需要從 API 獲取總數
   } catch (error) {
     console.error('獲取訂單失敗:', error)
@@ -197,11 +193,11 @@ const cancelOrder = async (orderId: string) => {
 
   try {
     await orderStore.cancelOrder(orderId)
-    console.log('訂單已取消')
+    toast.success('訂單已取消')
     fetchMyOrders()
   } catch (error) {
     console.error('取消訂單失敗:', error)
-    alert('無法取消訂單，請稍後再試')
+    toast.error('取消失敗', '無法取消訂單，請稍後再試')
   }
 }
 

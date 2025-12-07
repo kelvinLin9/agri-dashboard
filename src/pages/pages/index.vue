@@ -168,7 +168,9 @@
 <script setup lang="ts">
 import { ref, onMounted, h, resolveComponent } from 'vue'
 import { pagesApi, PageType, PageStatus, type Page, type CreatePageDto } from '@/api/pages'
+import { useToast } from '@/composables/useToast'
 
+const toast = useToast()
 const pages = ref<Page[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -364,9 +366,10 @@ async function handleSave() {
     
     await fetchPages()
     closeModal()
+    toast.success(editingPage.value ? '更新成功' : '建立成功')
   } catch (err: any) {
     console.error('Failed to save page:', err)
-    alert(err.message || '保存失敗')
+    toast.error('保存失敗', err.message || '無法保存頁面')
   } finally {
     saving.value = false
   }
@@ -383,9 +386,10 @@ async function handlePublish(id: string) {
   try {
     await pagesApi.publish(id)
     await fetchPages()
+    toast.success('發布成功', '頁面已發布')
   } catch (err: any) {
     console.error('Failed to publish page:', err)
-    alert(err.message || '發布失敗')
+    toast.error('發布失敗', err.message || '無法發布頁面')
   }
 }
 
@@ -394,9 +398,10 @@ async function handleUnpublish(id: string) {
   try {
     await pagesApi.unpublish(id)
     await fetchPages()
+    toast.success('已取消發布', '頁面已改為草稿')
   } catch (err: any) {
     console.error('Failed to unpublish page:', err)
-    alert(err.message || '取消發布失敗')
+    toast.error('取消發布失敗', err.message || '無法取消發布')
   }
 }
 
@@ -414,9 +419,10 @@ async function confirmDelete() {
     await fetchPages()
     showDeleteModal.value = false
     deletingPage.value = null
+    toast.success('刪除成功', '頁面已刪除')
   } catch (err: any) {
     console.error('Failed to delete page:', err)
-    alert(err.message || '刪除失敗')
+    toast.error('刪除失敗', err.message || '無法刪除頁面')
   }
 }
 

@@ -337,9 +337,9 @@
 
         <div class="space-y-6">
           <!-- Product Image -->
-          <div v-if="viewingProduct.imageUrl">
+          <div v-if="viewingProduct.mainImage">
             <img
-              :src="viewingProduct.imageUrl"
+              :src="viewingProduct.mainImage"
               :alt="viewingProduct.name"
               class="w-full h-64 object-cover rounded-lg"
             />
@@ -511,7 +511,7 @@ const total = ref(0)
 
 // Filters (internal simple values)
 const search = ref('')
-const filterCategory = ref<string | undefined>(undefined)
+const filterCategory = ref<number | undefined>(undefined)
 const filterStatus = ref<string | undefined>(undefined)
 
 // Convert simple values to SelectMenu option objects
@@ -540,7 +540,7 @@ const defaultForm = {
   name: '',
   sku: '',
   slug: '',
-  categoryId: '',
+  categoryId: 0,
   status: 'active',
   isFeatured: false,
   isNew: false,
@@ -596,7 +596,7 @@ const categoryOptions = computed(() => {
   const flattened = flattenCategoryTree(categoryTree.value)
   return [
     { label: '全部分類', value: null, level: 0 },
-    ...flattened.map(c => ({ label: c.label, value: c.value }))
+    ...flattened.map(c => ({ label: c.label, value: parseInt(c.value, 10) }))
   ]
 })
 
@@ -831,11 +831,11 @@ const editProduct = (product: Product) => {
   productForm.value = {
     ...defaultForm,
     ...product,
-    categoryId: product.category?.id || '',
+    categoryId: product.categoryId || 0,
     shortDescription: product.shortDescription || '',
     description: product.description || '',
     origin: product.origin || '',
-    mainImage: product.imageUrl || '',
+    mainImage: product.mainImage || '',
   }
   isModalOpen.value = true
   console.log('isModalOpen set to:', isModalOpen.value)
@@ -852,7 +852,6 @@ const saveProduct = async () => {
   isSaving.value = true
   try {
     const data: any = { ...productForm.value }
-    data.imageUrl = data.mainImage
     
     if (editingProduct.value) {
       await productsApi.update(editingProduct.value.id, data)

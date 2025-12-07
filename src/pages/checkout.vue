@@ -101,10 +101,12 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { useOrderStore } from '@/stores/orders'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const cartStore = useCartStore()
 const orderStore = useOrderStore()
+const toast = useToast()
 
 const isSubmitting = ref(false)
 
@@ -146,11 +148,11 @@ const submitOrder = async () => {
   isSubmitting.value = true
   try {
     const order = await orderStore.createOrderFromCart(form.value)
-    console.log('訂單已建立:', order.orderNumber)
+    toast.success('訂單已建立', `訂單編號: ${order.orderNumber}`)
     router.push(`/payment?orderId=${order.id}`)
   } catch (error: any) {
     console.error('建立訂單失敗:', error)
-    alert('無法建立訂單，請稍後再試')
+    toast.error('建立訂單失敗', '無法建立訂單，請稍後再試')
   } finally {
     isSubmitting.value = false
   }

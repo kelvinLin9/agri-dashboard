@@ -40,8 +40,8 @@
               <!-- Product Image -->
               <div class="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
                 <img
-                  v-if="item.product?.imageUrl"
-                  :src="item.product.imageUrl"
+                  v-if="item.product?.mainImage"
+                  :src="item.product.mainImage"
                   :alt="item.product?.name"
                   class="w-full h-full object-cover"
                 />
@@ -239,9 +239,11 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const cartStore = useCartStore()
+const toast = useToast()
 
 // State
 const isUpdating = ref(false)
@@ -267,18 +269,10 @@ const removeItem = async (itemId: string) => {
   isUpdating.value = true
   try {
     await cartStore.removeItem(itemId)
-    toast.add({
-      title: '已移除',
-      description: '商品已從購物車移除',
-      color: 'success',
-      icon: 'i-heroicons-check-circle'
-    })
+    toast.success('已移除', '商品已從購物車移除')
   } catch (error: any) {
-    toast.add({
-      title: '移除失敗',
-      description: error.message || '無法移除商品',
-      color: 'error'
-    })
+    console.error('移除失敗:', error.message || '無法移除商品')
+    toast.error('移除失敗', '無法移除商品，請稍後再試')
   } finally {
     isUpdating.value = false
   }
@@ -305,7 +299,7 @@ const goToCheckout = async () => {
   try {
     const validation = await cartStore.validateCart()
     if (!validation.isValid) {
-      alert('請檢查商品庫存或價格')
+      toast.warning('無法結帳', '請檢查商品庫存或價格')
       return
     }
     router.push('/checkout')

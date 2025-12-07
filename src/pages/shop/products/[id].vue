@@ -24,8 +24,8 @@
         <div>
           <div class="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-4">
             <img
-              v-if="product.imageUrl"
-              :src="product.imageUrl"
+              v-if="product.mainImage"
+              :src="product.mainImage"
               :alt="product.name"
               class="w-full h-full object-cover"
             />
@@ -35,9 +35,9 @@
           </div>
 
           <!-- Gallery (if available) -->
-          <div v-if="product.gallery && product.gallery.length > 0" class="grid grid-cols-4 gap-2">
+          <div v-if="product.images && product.images.length > 0" class="grid grid-cols-4 gap-2">
             <div
-              v-for="(image, index) in product.gallery"
+              v-for="(image, index) in product.images"
               :key="index"
               class="aspect-square bg-gray-100 dark:bg-gray-800 rounded cursor-pointer hover:opacity-75"
             >
@@ -220,10 +220,12 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { productsApi, type Product } from '@/api'
 import { useCartStore } from '@/stores/cart'
+import { useToast } from '@/composables/useToast'
 
 const route = useRoute()
 const router = useRouter()
 const cartStore = useCartStore()
+const toast = useToast()
 
 // Data
 const product = ref<Product | null>(null)
@@ -253,11 +255,11 @@ const addToCart = async () => {
       productId: product.value.id,
       quantity: quantity.value
     })
-    console.log('已加入購物車:', product.value.name, 'x', quantity.value)
+    toast.success('已加入購物車', `${product.value.name} x ${quantity.value}`)
     quantity.value = 1
   } catch (error: any) {
     console.error('加入購物車失敗:', error)
-    alert('無法加入購物車，請稍後再試')
+    toast.error('加入失敗', '無法加入購物車，請稍後再試')
   } finally {
     isAddingToCart.value = false
   }

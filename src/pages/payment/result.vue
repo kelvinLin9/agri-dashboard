@@ -152,11 +152,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useToast } from '#app'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToast()
 
 const isLoading = ref(true)
 const paymentStatus = ref<'success' | 'failed' | 'unknown'>('unknown')
@@ -225,13 +223,7 @@ const checkPaymentStatus = async () => {
     // Check if order is paid
     if (orderDetails.value.orderStatus === 'paid' || orderDetails.value.isPaid) {
       paymentStatus.value = 'success'
-      
-      toast.add({
-        title: '支付成功',
-        description: `訂單 ${orderDetails.value.orderNumber} 已完成支付`,
-        color: 'green',
-        icon: 'i-heroicons-check-circle'
-      })
+      console.log(`支付成功：訂單 ${orderDetails.value.orderNumber} 已完成支付`)
     } else if (orderDetails.value.orderStatus === 'cancelled' || orderDetails.value.orderStatus === 'failed') {
       paymentStatus.value = 'failed'
       errorMessage.value = '訂單已取消或支付失敗'

@@ -63,8 +63,8 @@
           <!-- Product Image -->
           <div class="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg mb-4 overflow-hidden">
             <img
-              v-if="product.imageUrl"
-              :src="product.imageUrl"
+              v-if="product.mainImage"
+              :src="product.mainImage"
               :alt="product.name"
               class="w-full h-full object-cover"
             />
@@ -155,10 +155,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { productsApi, categoriesApi, type Product, type Category } from '@/api'
 import { useCartStore } from '@/stores/cart'
+import { useToast } from '@/composables/useToast'
 import { useDebounceFn } from '@vueuse/core'
 
 const router = useRouter()
 const cartStore = useCartStore()
+const toast = useToast()
 
 // Data
 const products = ref<Product[]>([])
@@ -268,10 +270,10 @@ const addToCart = async (product: Product) => {
       productId: product.id,
       quantity: 1
     })
-    console.log('已加入購物車:', product.name)
+    toast.success('已加入購物車', product.name)
   } catch (error: any) {
     console.error('加入購物車失敗:', error)
-    alert('無法加入購物車，請稍後再試')
+    toast.error('加入失敗', '無法加入購物車，請稍後再試')
   }
 }
 

@@ -2,3 +2,21 @@
 @import '@nuxt/ui';
 
 @theme static {}
+
+/* Z-index 層級修復 - 確保 Modal 和下拉選單正確顯示在最上層 */
+[data-radix-popper-content-wrapper],
+[role="dialog"],
+[data-headlessui-state="open"] {
+  z-index: 9999 !important;
+}
+
+/* 下拉選單 */
+[role="listbox"],
+[role="menu"] {
+  z-index: 9998 !important;
+}
+
+/* Tooltip */
+[role="tooltip"] {
+  z-index: 9997 !important;
+}

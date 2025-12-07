@@ -268,7 +268,7 @@
                 </div>
                 <div class="text-right">
                   <p class="font-semibold">{{ formatCurrency(item.subtotal) }}</p>
-                  <p class="text-sm text-gray-500">單價: {{ formatCurrency(item.price) }}</p>
+                  <p class="text-sm text-gray-500">單價: {{ formatCurrency(item.price ?? 0) }}</p>
                 </div>
               </div>
             </div>

@@ -70,8 +70,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
+const toast = useToast()
 const cleared = ref(false)
 const countdown = ref(3)
 const hasPrompted = ref(false)
@@ -105,7 +107,7 @@ const clearAllStorage = () => {
   if (confirm('⚠️ 這將清除所有資料並登出,確定要繼續嗎?')) {
     localStorage.clear()
     console.log('🗑️ 已清除所有 LocalStorage')
-    alert('✅ 已清除所有資料!')
+    toast.success('已清除所有資料', '即將跳轉到登入頁面')
     router.push('/login')
   }
 }

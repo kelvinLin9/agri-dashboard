@@ -71,6 +71,42 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // ECharts 相關 - 拆分為獨立 chunk
+          if (id.includes('echarts') || id.includes('zrender')) {
+            return 'echarts'
+          }
+          // Vue 核心 - 拆分為獨立 chunk
+          if (id.includes('node_modules/vue/') ||
+            id.includes('node_modules/@vue/') ||
+            id.includes('node_modules/vue-router/') ||
+            id.includes('node_modules/pinia/')) {
+            return 'vue-vendor'
+          }
+          // Reka UI (Nuxt UI 底層) - 拆分為獨立 chunk
+          if (id.includes('reka-ui') || id.includes('@floating-ui')) {
+            return 'ui-primitives'
+          }
+          // 其他 node_modules - 拆分為通用 vendor chunk
+          if (id.includes('node_modules')) {
+            // Socket.io 相關
+            if (id.includes('socket.io')) {
+              return 'socket-io'
+            }
+            // Axios
+            if (id.includes('axios')) {
+              return 'axios'
+            }
+          }
+        }
+      }
+    },
+    // 調整 chunk size 警告閾值
+    chunkSizeWarningLimit: 600
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

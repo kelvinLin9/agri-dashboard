@@ -168,21 +168,18 @@
     </UCard>
 
     <!-- Create/Edit Modal -->
-    <UModal v-model:open="isModalOpen">
-      <template #content>
-        <UCard>
-        <template #header>
-          <h3 class="text-lg font-semibold">
-            {{ editingProduct ? '編輯產品' : '新增產品' }}
-          </h3>
-        </template>
-
-        <form @submit.prevent="saveProduct" class="space-y-4">
-          <div class="h-[60vh] overflow-y-auto p-1">
+    <UModal 
+      v-model:open="isModalOpen"
+      :title="editingProduct ? '編輯產品' : '新增產品'"
+      :ui="{ content: 'sm:max-w-4xl' }"
+    >
+      <template #body>
+        <form @submit.prevent="saveProduct">
+          <div class="h-[60vh] overflow-y-auto px-1">
             <UTabs :items="tabItems" class="w-full">
-              <template #default="{ item }">
-                <!-- Basic Info Tab -->
-                <div v-if="item.key === 'basic'" class="space-y-4 mt-4">
+              <!-- Basic Info Tab -->
+              <template #basic>
+                <div class="space-y-4 py-4">
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <UFormField label="產品名稱" required>
                       <UInput v-model="productForm.name" placeholder="輸入產品名稱" />
@@ -216,9 +213,11 @@
                     <UCheckbox v-model="productForm.isNew" label="新品" />
                   </div>
                 </div>
+              </template>
 
-                <!-- Pricing Tab -->
-                <div v-else-if="item.key === 'pricing'" class="space-y-4 mt-4">
+              <!-- Pricing Tab -->
+              <template #pricing>
+                <div class="space-y-4 py-4">
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <UFormField label="原價" required>
                       <UInput v-model.number="productForm.originalPrice" type="number" min="0" />
@@ -231,9 +230,11 @@
                     </UFormField>
                   </div>
                 </div>
+              </template>
 
-                <!-- Inventory Tab -->
-                <div v-else-if="item.key === 'inventory'" class="space-y-4 mt-4">
+              <!-- Inventory Tab -->
+              <template #inventory>
+                <div class="space-y-4 py-4">
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <UFormField label="庫存數量" required>
                       <UInput v-model.number="productForm.stockQuantity" type="number" min="0" />
@@ -244,9 +245,11 @@
                   </div>
                   <UCheckbox v-model="productForm.trackInventory" label="追蹤庫存" class="mt-2" />
                 </div>
+              </template>
 
-                <!-- Details Tab -->
-                <div v-else-if="item.key === 'details'" class="space-y-4 mt-4">
+              <!-- Details Tab -->
+              <template #details>
+                <div class="space-y-4 py-4">
                   <UFormField label="簡短描述">
                     <UTextarea v-model="productForm.shortDescription" :rows="2" />
                   </UFormField>
@@ -262,9 +265,11 @@
                     </UFormField>
                   </div>
                 </div>
+              </template>
 
-                <!-- Images Tab -->
-                <div v-else-if="item.key === 'images'" class="space-y-4 mt-4">
+              <!-- Images Tab -->
+              <template #images>
+                <div class="space-y-4 py-4">
                   <UFormField label="主圖片 URL">
                     <UInput v-model="productForm.mainImage" placeholder="https://..." />
                     <div v-if="productForm.mainImage" class="mt-2">
@@ -273,9 +278,11 @@
                   </UFormField>
                   <!-- Gallery implementation can be added here -->
                 </div>
+              </template>
 
-                <!-- SEO Tab -->
-                <div v-else-if="item.key === 'seo'" class="space-y-4 mt-4">
+              <!-- SEO Tab -->
+              <template #seo>
+                <div class="space-y-4 py-4">
                   <UFormField label="SEO 標題">
                     <UInput v-model="productForm.seoTitle" />
                   </UFormField>
@@ -290,41 +297,43 @@
             </UTabs>
           </div>
         </form>
+      </template>
 
-        <template #footer>
-          <div class="flex justify-end gap-3">
-            <UButton
-              label="取消"
-              color="neutral"
-              variant="soft"
-              @click="isModalOpen = false"
-            />
-            <UButton
-              label="儲存"
-              :loading="isSaving"
-              @click="saveProduct"
-            />
-          </div>
-        </template>
-      </UCard>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <UButton
+            label="取消"
+            color="neutral"
+            variant="soft"
+            @click="isModalOpen = false"
+          />
+          <UButton
+            label="儲存"
+            :loading="isSaving"
+            @click="saveProduct"
+          />
+        </div>
       </template>
     </UModal>
 
     <!-- View Product Modal -->
-    <UModal v-model:open="isViewModalOpen">
-      <template #content>
-        <UCard v-if="viewingProduct">
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold">產品詳情</h3>
-            <UBadge
-              :color="getStatusColor(viewingProduct.status)"
-              size="lg"
-            >
-              {{ getStatusLabel(viewingProduct.status) }}
-            </UBadge>
-          </div>
-        </template>
+    <UModal 
+      v-model:open="isViewModalOpen"
+      title="產品詳情"
+    >
+      <template #header v-if="viewingProduct">
+        <div class="flex items-center justify-between w-full">
+          <h3 class="text-lg font-semibold">產品詳情</h3>
+          <UBadge
+            :color="getStatusColor(viewingProduct.status)"
+            size="lg"
+          >
+            {{ getStatusLabel(viewingProduct.status) }}
+          </UBadge>
+        </div>
+      </template>
+
+      <template #body v-if="viewingProduct">
 
         <div class="space-y-6">
           <!-- Product Image -->
@@ -433,54 +442,50 @@
             </div>
           </div>
         </div>
+      </template>
 
-        <template #footer>
-          <div class="flex justify-end gap-3">
-            <UButton
-              label="關閉"
-              color="neutral"
-              @click="isViewModalOpen = false"
-            />
-            <UButton
-              label="編輯"
-              @click="editFromView"
-            />
-          </div>
-        </template>
-      </UCard>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <UButton
+            label="關閉"
+            color="neutral"
+            @click="isViewModalOpen = false"
+          />
+          <UButton
+            label="編輯"
+            @click="editFromView"
+          />
+        </div>
       </template>
     </UModal>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model:open="isDeleteModalOpen">
-      <template #content>
-        <UCard>
-        <template #header>
-          <h3 class="text-lg font-semibold">確認刪除</h3>
-        </template>
-
+    <UModal 
+      v-model:open="isDeleteModalOpen"
+      title="確認刪除"
+    >
+      <template #body>
         <p class="text-gray-600 dark:text-gray-400">
           確定要刪除產品 <span class="font-semibold">{{ deletingProduct?.name }}</span> 嗎？
           此操作無法復原。
         </p>
+      </template>
 
-        <template #footer>
-          <div class="flex justify-end gap-3">
-            <UButton
-              label="取消"
-              color="neutral"
-              variant="soft"
-              @click="isDeleteModalOpen = false"
-            />
-            <UButton
-              label="確認刪除"
-              color="error"
-              :loading="isDeleting"
-              @click="deleteProduct"
-            />
-          </div>
-        </template>
-      </UCard>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <UButton
+            label="取消"
+            color="neutral"
+            variant="soft"
+            @click="isDeleteModalOpen = false"
+          />
+          <UButton
+            label="確認刪除"
+            color="error"
+            :loading="isDeleting"
+            @click="deleteProduct"
+          />
+        </div>
       </template>
     </UModal>
   </div>
@@ -596,12 +601,12 @@ const categoryOptions = computed(() => {
 })
 
 const tabItems = [
-  { label: '基本資訊', key: 'basic' },
-  { label: '價格設定', key: 'pricing' },
-  { label: '庫存管理', key: 'inventory' },
-  { label: '詳細資訊', key: 'details' },
-  { label: '圖片管理', key: 'images' },
-  { label: 'SEO 設定', key: 'seo' },
+  { label: '基本資訊', slot: 'basic' },
+  { label: '價格設定', slot: 'pricing' },
+  { label: '庫存管理', slot: 'inventory' },
+  { label: '詳細資訊', slot: 'details' },
+  { label: '圖片管理', slot: 'images' },
+  { label: 'SEO 設定', slot: 'seo' },
 ]
 
 // Table Columns

@@ -64,6 +64,18 @@
         </div>
       </div>
     </UCard>
+
+    <!-- 確認清除對話框 -->
+    <ConfirmDialog
+      v-model:open="showClearDialog"
+      title="清除所有資料"
+      message="這將清除所有資料並登出，確定要繼續嗎？"
+      type="danger"
+      confirm-label="確認清除"
+      warning-message="此操作將清除所有 LocalStorage 資料，包括登入狀態。"
+      @confirm="doClearAllStorage"
+      @cancel="showClearDialog = false"
+    />
   </div>
 </template>
 
@@ -71,6 +83,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
 const router = useRouter()
 const toast = useToast()
@@ -79,6 +92,7 @@ const countdown = ref(3)
 const hasPrompted = ref(false)
 const hasToken = ref(false)
 const notificationPermission = ref('unknown')
+const showClearDialog = ref(false)
 
 onMounted(() => {
   // 檢查當前狀態
@@ -104,11 +118,14 @@ const clearPushNotificationPrompt = () => {
 }
 
 const clearAllStorage = () => {
-  if (confirm('⚠️ 這將清除所有資料並登出,確定要繼續嗎?')) {
-    localStorage.clear()
-    console.log('🗑️ 已清除所有 LocalStorage')
-    toast.success('已清除所有資料', '即將跳轉到登入頁面')
-    router.push('/login')
-  }
+  showClearDialog.value = true
+}
+
+const doClearAllStorage = () => {
+  localStorage.clear()
+  console.log('🗑️ 已清除所有 LocalStorage')
+  toast.success('已清除所有資料', '即將跳轉到登入頁面')
+  showClearDialog.value = false
+  router.push('/login')
 }
 </script>

@@ -70,12 +70,11 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <!-- Search -->
         <div class="md:col-span-2">
-          <UInput
+          <SearchBox
             v-model="searchQuery"
-            icon="i-heroicons-magnifying-glass"
             placeholder="搜尋會員（帳號、Email、電話、地址）"
             size="lg"
-            @input="debouncedSearch"
+            @search="handleSearch"
           />
         </div>
 
@@ -570,6 +569,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, h, resolveComponent } from 'vue'
 import { membersApi, type Member, type MemberQueryParams, MemberLevel, SortOrder } from '@/api'
+import SearchBox from '@/components/common/SearchBox.vue'
 
 // Data
 const members = ref<Member[]>([])
@@ -917,16 +917,10 @@ const fetchMembers = async () => {
   }
 }
 
-const debouncedSearch = (() => {
-  let timeout: NodeJS.Timeout
-  return () => {
-    clearTimeout(timeout)
-    timeout = setTimeout(() => {
-      pagination.value.page = 1
-      fetchMembers()
-    }, 500)
-  }
-})()
+const handleSearch = () => {
+  pagination.value.page = 1
+  fetchMembers()
+}
 
 const clearFilters = () => {
   searchQuery.value = ''

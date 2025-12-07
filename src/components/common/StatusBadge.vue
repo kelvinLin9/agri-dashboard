@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-type StatusType = 'order' | 'payment' | 'refund' | 'member' | 'notification' | 'product'
+type StatusType = 'order' | 'payment' | 'refund' | 'member' | 'notification' | 'product' | 'page'
 
 interface Props {
   status: string
@@ -81,6 +81,13 @@ const statusConfigs = {
     inactive: { label: '已下架', color: 'neutral' },
     out_of_stock: { label: '缺貨', color: 'error' },
     draft: { label: '草稿', color: 'neutral' },
+  },
+
+  // 頁面狀態 (CMS)
+  page: {
+    draft: { label: '草稿', color: 'neutral' },
+    published: { label: '已發布', color: 'success' },
+    archived: { label: '已歸檔', color: 'warning' },
   },
 } as const
 

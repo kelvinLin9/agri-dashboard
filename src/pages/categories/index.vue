@@ -72,10 +72,15 @@
         <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-blue-500" />
       </div>
 
-      <div v-else-if="categoryTree.length === 0" class="text-center py-12">
-        <UIcon name="i-heroicons-folder-open" class="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <p class="text-gray-500">尚無分類，請新增第一個分類</p>
-      </div>
+      <EmptyState
+        v-else-if="categoryTree.length === 0"
+        icon="i-heroicons-folder-open"
+        title="尚無分類"
+        description="請新增第一個分類"
+        action-label="新增分類"
+        action-icon="i-heroicons-plus"
+        @action="openCreateModal"
+      />
 
       <div v-else class="space-y-1">
         <CategoryTreeNode
@@ -335,6 +340,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { categoriesApi, type Category } from '@/api'
 import CategoryTreeNode from './CategoryTreeNode.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 
 // Data
 const categoryTree = ref<any[]>([])

@@ -14,12 +14,11 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <!-- Search -->
           <div class="md:col-span-2">
-            <UInput
+            <SearchBox
               v-model="search"
-              icon="i-heroicons-magnifying-glass"
               placeholder="搜尋農產品..."
               size="lg"
-              @input="debouncedSearch"
+              @search="handleSearch"
             />
           </div>
 
@@ -48,10 +47,13 @@
         <USkeleton v-for="i in 8" :key="i" class="h-80" />
       </div>
 
-      <div v-else-if="products.length === 0" class="text-center py-16">
-        <UIcon name="i-heroicons-shopping-bag" class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-        <p class="text-gray-500 dark:text-gray-400 text-lg">沒有找到商品</p>
-      </div>
+      <EmptyState
+        v-else-if="products.length === 0"
+        icon="i-heroicons-shopping-bag"
+        title="沒有找到商品"
+        description="試試其他的搜尋條件吧！"
+        icon-size="lg"
+      />
 
       <div v-else class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
         <UCard
@@ -156,7 +158,8 @@ import { useRouter } from 'vue-router'
 import { productsApi, categoriesApi, type Product, type Category } from '@/api'
 import { useCartStore } from '@/stores/cart'
 import { useToast } from '@/composables/useToast'
-import { useDebounceFn } from '@vueuse/core'
+import EmptyState from '@/components/common/EmptyState.vue'
+import SearchBox from '@/components/common/SearchBox.vue'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -250,10 +253,10 @@ const fetchProducts = async () => {
   }
 }
 
-const debouncedSearch = useDebounceFn(() => {
+const handleSearch = () => {
   page.value = 1
   fetchProducts()
-}, 500)
+}
 
 const handleFilterChange = () => {
   page.value = 1

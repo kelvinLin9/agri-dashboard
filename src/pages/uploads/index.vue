@@ -72,12 +72,11 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <!-- Search -->
         <div class="md:col-span-2">
-          <UInput
+          <SearchBox
             v-model="searchQuery"
-            icon="i-heroicons-magnifying-glass"
             placeholder="搜尋檔案名稱"
             size="lg"
-            @input="debouncedSearch"
+            @search="handleSearch"
           />
         </div>
 
@@ -119,10 +118,15 @@
         <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-blue-500" />
       </div>
 
-      <div v-else-if="uploads.length === 0" class="text-center py-12">
-        <UIcon name="i-heroicons-photo" class="w-16 h-16 mx-auto text-gray-400 mb-4" />
-        <p class="text-gray-500">尚無上傳檔案</p>
-      </div>
+      <EmptyState
+        v-else-if="uploads.length === 0"
+        icon="i-heroicons-photo"
+        title="尚無上傳檔案"
+        description="點擊上方按鈕上傳第一個檔案"
+        action-label="上傳檔案"
+        action-icon="i-heroicons-arrow-up-tray"
+        @action="openUploadModal"
+      />
 
       <!-- Grid View -->
       <div v-else-if="viewMode === 'grid'" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -423,6 +427,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, h, resolveComponent } from 'vue'
 import { uploadApi, type Upload } from '@/api'
+import EmptyState from '@/components/common/EmptyState.vue'
+import SearchBox from '@/components/common/SearchBox.vue'
 
 // Data
 const uploads = ref<Upload[]>([])
@@ -622,16 +628,10 @@ const fetchStatistics = async () => {
   }
 }
 
-const debouncedSearch = (() => {
-  let timeout: NodeJS.Timeout
-  return () => {
-    clearTimeout(timeout)
-    timeout = setTimeout(() => {
-      pagination.value.page = 1
-      fetchUploads()
-    }, 500)
-  }
-})()
+const handleSearch = () => {
+  pagination.value.page = 1
+  fetchUploads()
+}
 
 const toggleViewMode = () => {
   viewMode.value = viewMode.value === 'grid' ? 'list' : 'grid'

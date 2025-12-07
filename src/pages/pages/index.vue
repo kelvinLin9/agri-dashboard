@@ -169,6 +169,7 @@
 import { ref, onMounted, h, resolveComponent } from 'vue'
 import { pagesApi, PageType, PageStatus, type Page, type CreatePageDto } from '@/api/pages'
 import { useToast } from '@/composables/useToast'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 
 const toast = useToast()
 const pages = ref<Page[]>([])
@@ -222,11 +223,12 @@ const tableColumns = [
     id: 'status',
     header: '狀態',
     cell: ({ row }: any) => {
-      const UBadge = resolveComponent('UBadge')
       const page = row.original
-      return h(UBadge, {
-        color: getStatusColor(page.status)
-      }, () => getStatusLabel(page.status))
+      return h(StatusBadge, {
+        status: page.status,
+        type: 'page',
+        size: 'sm'
+      })
     }
   },
   {
@@ -456,26 +458,6 @@ function getTypeLabel(type: PageType): string {
     [PageType.CUSTOM]: '自訂',
   }
   return labels[type] || type
-}
-
-// 狀態顏色
-function getStatusColor(status: PageStatus): string {
-  const colors = {
-    [PageStatus.DRAFT]: 'gray',
-    [PageStatus.PUBLISHED]: 'green',
-    [PageStatus.ARCHIVED]: 'orange',
-  }
-  return colors[status] || 'gray'
-}
-
-// 狀態標籤
-function getStatusLabel(status: PageStatus): string {
-  const labels = {
-    [PageStatus.DRAFT]: '草稿',
-    [PageStatus.PUBLISHED]: '已發布',
-    [PageStatus.ARCHIVED]: '已歸檔',
-  }
-  return labels[status] || status
 }
 
 // 頁面載入時獲取數據

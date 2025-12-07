@@ -33,16 +33,15 @@
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="orderStore.orders.length === 0" class="text-center py-16">
-        <UIcon name="i-heroicons-shopping-bag" class="w-24 h-24 text-gray-300 mx-auto mb-4" />
-        <h2 class="text-2xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
-          還沒有訂單
-        </h2>
-        <p class="text-gray-500 mb-6">快去選購喜歡的商品吧！</p>
-        <UButton size="lg" @click="router.push('/shop/products')">
-          前往商店
-        </UButton>
-      </div>
+      <EmptyState
+        v-else-if="orderStore.orders.length === 0"
+        icon="i-heroicons-shopping-bag"
+        title="還沒有訂單"
+        description="快去選購喜歡的商品吧！"
+        action-label="前往商店"
+        action-icon="i-heroicons-arrow-right"
+        @action="router.push('/shop/products')"
+      />
 
       <!-- Orders List -->
       <div v-else class="space-y-4">
@@ -58,9 +57,7 @@
               <p class="text-sm text-gray-500">訂單編號</p>
               <p class="font-mono font-semibold text-primary-600">{{ order.orderNumber }}</p>
             </div>
-            <UBadge :color="getStatusColor(order.status)" variant="soft" size="lg">
-              {{ getStatusLabel(order.status) }}
-            </UBadge>
+            <StatusBadge :status="order.status" type="order" size="lg" />
           </div>
 
           <!-- Order Items Preview -->
@@ -139,6 +136,18 @@
       </div>
     </div>
   </div>
+
+  <!-- 確認取消訂單對話框 -->
+  <ConfirmDialog
+    v-model:open="confirmState.isOpen.value"
+    :title="'取消訂單'"
+    :message="'確定要取消此訂單嗎？取消後無法恢復。'"
+    type="danger"
+    confirm-label="確認取消"
+    :loading="isCancelling"
+    @confirm="handleCancelConfirm"
+    @cancel="confirmState.handleCancel"
+  />
 </template>
 
 <script setup lang="ts">
@@ -146,11 +155,20 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOrderStore } from '@/stores/orders'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import { OrderStatus } from '@/api'
 
 const router = useRouter()
 const orderStore = useOrderStore()
 const toast = useToast()
+const confirmState = useConfirm()
+
+// Cancel order state
+const isCancelling = ref(false)
+const cancellingOrderId = ref<string | null>(null)
 
 // Pagination
 const page = ref(1)
@@ -189,64 +207,30 @@ const goToPayment = (orderId: string) => {
 }
 
 const cancelOrder = async (orderId: string) => {
-  if (!confirm('確定要取消此訂單嗎？')) return
+  cancellingOrderId.value = orderId
+  confirmState.isOpen.value = true
+}
 
+const handleCancelConfirm = async () => {
+  if (!cancellingOrderId.value) return
+  
+  isCancelling.value = true
   try {
-    await orderStore.cancelOrder(orderId)
+    await orderStore.cancelOrder(cancellingOrderId.value)
     toast.success('訂單已取消')
+    confirmState.isOpen.value = false
     fetchMyOrders()
   } catch (error) {
     console.error('取消訂單失敗:', error)
     toast.error('取消失敗', '無法取消訂單，請稍後再試')
+  } finally {
+    isCancelling.value = false
+    cancellingOrderId.value = null
   }
 }
 
 const canCancel = (status: OrderStatus): boolean => {
   return status === OrderStatus.PENDING || status === OrderStatus.PAID
-}
-
-// Helper functions
-const getStatusColor = (status: OrderStatus): string => {
-  switch (status) {
-    case OrderStatus.PENDING:
-      return 'yellow'
-    case OrderStatus.PAID:
-    case OrderStatus.PROCESSING:
-      return 'blue'
-    case OrderStatus.SHIPPING:
-      return 'purple'
-    case OrderStatus.DELIVERED:
-    case OrderStatus.COMPLETED:
-      return 'green'
-    case OrderStatus.CANCELLED:
-    case OrderStatus.REFUNDED:
-      return 'red'
-    default:
-      return 'gray'
-  }
-}
-
-const getStatusLabel = (status: OrderStatus): string => {
-  switch (status) {
-    case OrderStatus.PENDING:
-      return '待付款'
-    case OrderStatus.PAID:
-      return '已付款'
-    case OrderStatus.PROCESSING:
-      return '處理中'
-    case OrderStatus.SHIPPING:
-      return '配送中'
-    case OrderStatus.DELIVERED:
-      return '已送達'
-    case OrderStatus.COMPLETED:
-      return '已完成'
-    case OrderStatus.CANCELLED:
-      return '已取消'
-    case OrderStatus.REFUNDED:
-      return '已退款'
-    default:
-      return '未知狀態'
-  }
 }
 
 const formatDateTime = (dateString: string) => {

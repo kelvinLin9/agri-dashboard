@@ -70,12 +70,11 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <!-- Search -->
         <div class="md:col-span-1">
-          <UInput
+          <SearchBox
             v-model="search"
-            icon="i-heroicons-magnifying-glass"
             placeholder="搜尋產品（名稱、SKU）"
             size="lg"
-            @input="debouncedSearch"
+            @search="handleFilterChange"
           />
         </div>
 
@@ -324,12 +323,7 @@
       <template #header v-if="viewingProduct">
         <div class="flex items-center justify-between w-full">
           <h3 class="text-lg font-semibold">產品詳情</h3>
-          <UBadge
-            :color="getStatusColor(viewingProduct.status)"
-            size="lg"
-          >
-            {{ getStatusLabel(viewingProduct.status) }}
-          </UBadge>
+          <StatusBadge :status="viewingProduct.status" type="product" size="lg" />
         </div>
       </template>
 
@@ -493,8 +487,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, h, resolveComponent } from 'vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import { productsApi, categoriesApi, type Product, type ProductQueryParams, type Category, SortOrder } from '@/api'
-import { useDebounceFn } from '@vueuse/core'
+import SearchBox from '@/components/common/SearchBox.vue'
 
 // Data
 const products = ref<Product[]>([])
@@ -658,12 +653,11 @@ const columns = [
     accessorKey: 'status',
     header: '狀態',
     cell: ({ row }: any) => {
-      const UBadge = resolveComponent('UBadge')
-      return h(UBadge, {
-        color: getStatusColor(row.original.status),
-        variant: 'soft',
-        size: 'md'
-      }, () => getStatusLabel(row.original.status))
+      return h(StatusBadge, {
+        status: row.original.status,
+        type: 'product',
+        size: 'sm'
+      })
     }
   },
   {
@@ -794,10 +788,6 @@ const fetchProducts = async () => {
   }
 }
 
-const debouncedSearch = useDebounceFn(() => {
-  page.value = 1
-  fetchProducts()
-}, 500)
 
 const handleFilterChange = () => {
   page.value = 1
@@ -892,14 +882,6 @@ const deleteProduct = async () => {
 }
 
 // Helper Functions
-const getStatusColor = (status: string): string => {
-  const colors: Record<string, string> = {
-    'active': 'success',
-    'inactive': 'gray',
-    'out_of_stock': 'error',
-  }
-  return colors[status] || 'gray'
-}
 
 const getStatusLabel = (status: string | null): string => {
   if (!status) return '全部狀態'

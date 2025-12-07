@@ -451,6 +451,7 @@ import { useNotificationStore } from '@/stores/notification'
 import { useNotifications } from '@/composables/useNotifications'
 import { notificationsApi } from '@/api/notifications'
 import apiClient from '@/api/apiClient'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import type { NotificationType, NotificationStatus, NotificationChannel, CreateNotificationDto } from '@/api/types'
 
 const notificationStore = useNotificationStore()
@@ -664,12 +665,11 @@ const columns = [
     accessorKey: 'status',
     header: '狀態',
     cell: ({ row }: any) => {
-      const UBadge = resolveComponent('UBadge')
-      return h(UBadge, {
-        color: getStatusColor(row.original.status),
-        variant: 'soft',
+      return h(StatusBadge, {
+        status: row.original.status,
+        type: 'notification',
         size: 'sm'
-      }, () => getStatusLabel(row.original.status))
+      })
     }
   },
   {
@@ -1018,17 +1018,6 @@ const getStatusLabel = (status: string | null) => {
     failed: '失敗',
   }
   return labels[status] || status
-}
-
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    pending: 'neutral',
-    sent: 'blue',
-    delivered: 'info',
-    read: 'success',
-    failed: 'error',
-  }
-  return colors[status] || 'neutral'
 }
 
 const getPriorityLabel = (priority: number) => {

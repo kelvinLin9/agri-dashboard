@@ -64,12 +64,11 @@
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <!-- Search -->
         <div class="md:col-span-1">
-          <UInput
+          <SearchBox
             v-model="search"
-            icon="i-heroicons-magnifying-glass"
             placeholder="搜尋訂單編號、會員"
             size="lg"
-            @input="debouncedSearch"
+            @search="handleFilterChange"
           />
         </div>
 
@@ -188,12 +187,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-semibold">訂單詳情</h3>
-            <UBadge
-              :color="getStatusColor(viewingOrder.status)"
-              size="lg"
-            >
-              {{ getStatusLabel(viewingOrder.status) }}
-            </UBadge>
+            <StatusBadge :status="viewingOrder.status" type="order" size="lg" />
           </div>
         </template>
 
@@ -554,6 +548,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, h, resolveComponent } from 'vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 import { 
   ordersApi, 
   paymentApi, 
@@ -569,7 +564,7 @@ import {
   type PaginatedResponse, 
   type ApiResponse 
 } from '@/api'
-import { useDebounceFn } from '@vueuse/core'
+import SearchBox from '@/components/common/SearchBox.vue'
 
 // Data
 const orders = ref<Order[]>([])
@@ -693,12 +688,11 @@ const columns = [
     accessorKey: 'status',
     header: '狀態',
     cell: ({ row }: any) => {
-      const UBadge = resolveComponent('UBadge')
-      return h(UBadge, {
-        color: getStatusColor(row.original.status),
-        variant: 'soft',
+      return h(StatusBadge, {
+        status: row.original.status,
+        type: 'order',
         size: 'sm'
-      }, () => getStatusLabel(row.original.status))
+      })
     }
   },
   {
@@ -967,9 +961,6 @@ const handleFilterChange = () => {
   fetchOrders()
 }
 
-const debouncedSearch = useDebounceFn(() => {
-  handleFilterChange()
-}, 500)
 
 const clearFilters = () => {
   search.value = ''
@@ -979,35 +970,7 @@ const clearFilters = () => {
   handleFilterChange()
 }
 
-// Helper Functions
-const getStatusColor = (status: OrderStatus) => {
-  const colors: Record<OrderStatus, string> = {
-    [OrderStatus.PENDING]: 'yellow',
-    [OrderStatus.PAID]: 'blue',
-    [OrderStatus.PROCESSING]: 'indigo',
-    [OrderStatus.SHIPPING]: 'purple',
-    [OrderStatus.DELIVERED]: 'green',
-    [OrderStatus.COMPLETED]: 'success',
-    [OrderStatus.CANCELLED]: 'error',
-    [OrderStatus.REFUNDED]: 'warning',
-  }
-  return colors[status] || 'neutral'
-}
-
-const getStatusLabel = (status: OrderStatus) => {
-  const labels: Record<OrderStatus, string> = {
-    [OrderStatus.PENDING]: '待付款',
-    [OrderStatus.PAID]: '已付款',
-    [OrderStatus.PROCESSING]: '處理中',
-    [OrderStatus.SHIPPING]: '配送中',
-    [OrderStatus.DELIVERED]: '已送達',
-    [OrderStatus.COMPLETED]: '已完成',
-    [OrderStatus.CANCELLED]: '已取消',
-    [OrderStatus.REFUNDED]: '已退款',
-  }
-  return labels[status] || status
-}
-
+// Helper Functions (kept for getPaymentMethodLabel, etc.)
 const getPaymentMethodLabel = (method: string) => {
   const labels: Record<string, string> = {
     credit_card: '信用卡',

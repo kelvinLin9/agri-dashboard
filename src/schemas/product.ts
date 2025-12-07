@@ -33,8 +33,8 @@ export const ProductFormSchema = v.object({
     v.picklist(['active', 'inactive', 'out_of_stock'], '請選擇有效的狀態')
   ),
 
-  isFeatured: v.optional(v.boolean()),
-  isNew: v.optional(v.boolean()),
+  isFeatured: v.nullish(v.boolean()),
+  isNew: v.nullish(v.boolean()),
 
   // 價格
   originalPrice: v.pipe(
@@ -42,14 +42,14 @@ export const ProductFormSchema = v.object({
     v.minValue(0, '原價不能為負數')
   ),
 
-  salePrice: v.optional(
+  salePrice: v.nullish(
     v.pipe(
       v.number('售價必須是數字'),
       v.minValue(0, '售價不能為負數')
     )
   ),
 
-  costPrice: v.optional(
+  costPrice: v.nullish(
     v.pipe(
       v.number('成本價必須是數字'),
       v.minValue(0, '成本價不能為負數')
@@ -63,7 +63,7 @@ export const ProductFormSchema = v.object({
     v.integer('庫存數量必須是整數')
   ),
 
-  lowStockThreshold: v.optional(
+  lowStockThreshold: v.nullish(
     v.pipe(
       v.number('低庫存閾值必須是數字'),
       v.minValue(0, '低庫存閾值不能為負數'),
@@ -71,27 +71,27 @@ export const ProductFormSchema = v.object({
     )
   ),
 
-  trackInventory: v.optional(v.boolean()),
+  trackInventory: v.nullish(v.boolean()),
 
   // 描述
-  shortDescription: v.optional(
+  shortDescription: v.nullish(
     v.pipe(
       v.string(),
       v.maxLength(200, '簡短描述最多 200 個字')
     )
   ),
 
-  description: v.optional(v.string()),
+  description: v.nullish(v.string()),
 
   // 產品資訊
-  origin: v.optional(
+  origin: v.nullish(
     v.pipe(
       v.string(),
       v.maxLength(50, '產地最多 50 個字')
     )
   ),
 
-  shelfLife: v.optional(
+  shelfLife: v.nullish(
     v.pipe(
       v.number('保存期限必須是數字'),
       v.minValue(0, '保存期限不能為負數')
@@ -99,25 +99,25 @@ export const ProductFormSchema = v.object({
   ),
 
   // 圖片
-  mainImage: v.optional(v.string()),
-  images: v.optional(v.array(v.string())),
+  mainImage: v.nullish(v.string()),
+  images: v.nullish(v.array(v.string())),
 
   // SEO
-  seoTitle: v.optional(
+  seoTitle: v.nullish(
     v.pipe(
       v.string(),
       v.maxLength(60, 'SEO 標題最多 60 個字')
     )
   ),
 
-  seoDescription: v.optional(
+  seoDescription: v.nullish(
     v.pipe(
       v.string(),
       v.maxLength(160, 'SEO 描述最多 160 個字')
     )
   ),
 
-  seoKeywords: v.optional(
+  seoKeywords: v.nullish(
     v.pipe(
       v.string(),
       v.maxLength(200, 'SEO 關鍵字最多 200 個字')

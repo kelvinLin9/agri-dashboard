@@ -323,7 +323,7 @@
                       :class="isUploadingImage ? 'opacity-50 pointer-events-none' : 'border-gray-300 dark:border-gray-600'"
                       @click="triggerImageUpload"
                       @dragover.prevent
-                      @drop.prevent="handleImageDrop"
+                      @drop.prevent="onImageDrop"
                     >
                       <input
                         ref="imageFileInput"
@@ -331,7 +331,7 @@
                         accept="image/*"
                         multiple
                         class="hidden"
-                        @change="handleImageSelect"
+                        @change="onImageSelect"
                       />
                       <UIcon 
                         :name="isUploadingImage ? 'i-heroicons-arrow-path' : 'i-heroicons-cloud-arrow-up'" 
@@ -606,8 +606,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, h, resolveComponent } from 'vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
-import { productsApi, categoriesApi, uploadApi, type Product, type ProductQueryParams, type Category, SortOrder } from '@/api'
+import { productsApi, categoriesApi, type Product, type ProductQueryParams, type Category, SortOrder } from '@/api'
 import SearchBox from '@/components/common/SearchBox.vue'
+import { useImageUpload } from '@/composables/useImageUpload'
 
 // Data
 const products = ref<Product[]>([])
@@ -676,102 +677,70 @@ const defaultForm = {
 
 const productForm = ref({ ...defaultForm })
 
-// 圖片管理
-const newImageUrl = ref('')
+// 圖片上傳 composable
+const imageUpload = useImageUpload({ usage: 'product' })
 
-// 所有圖片（主圖 + 附加圖片合併，去重）
+// 計算屬性：合併顯示用的所有圖片
 const allImages = computed(() => {
-  const images = [...(productForm.value.images || [])]
-  if (productForm.value.mainImage && !images.includes(productForm.value.mainImage)) {
-    images.unshift(productForm.value.mainImage)
+  const result = [...productForm.value.images]
+  if (productForm.value.mainImage && !result.includes(productForm.value.mainImage)) {
+    result.unshift(productForm.value.mainImage)
   }
-  return images
+  return result
 })
 
-// 新增圖片
-const addImage = () => {
-  const url = newImageUrl.value.trim()
-  if (!url) return
-  
-  // 避免重複
-  if (!productForm.value.images.includes(url) && productForm.value.mainImage !== url) {
-    productForm.value.images.push(url)
-  }
-  
-  // 如果沒有主圖，自動設為主圖
-  if (!productForm.value.mainImage) {
-    productForm.value.mainImage = url
-  }
-  
-  newImageUrl.value = ''
-}
-
-// 移除圖片
+// 圖片管理函式
 const removeImage = (index: number) => {
   const img = allImages.value[index]
   if (!img) return
-  
+
   // 從 images 陣列移除
   const imgIndex = productForm.value.images.indexOf(img)
   if (imgIndex > -1) {
     productForm.value.images.splice(imgIndex, 1)
   }
-  
+
   // 如果刪除的是主圖，設定新的主圖
   if (productForm.value.mainImage === img) {
     productForm.value.mainImage = productForm.value.images[0] || ''
   }
 }
 
-// 設為主圖
 const setAsMainImage = (url: string) => {
   productForm.value.mainImage = url
 }
 
 // 圖片上傳
-const imageFileInput = ref<HTMLInputElement | null>(null)
 const isUploadingImage = ref(false)
+const imageFileInput = ref<HTMLInputElement | null>(null)
 
 const triggerImageUpload = () => {
   imageFileInput.value?.click()
 }
 
-const handleImageSelect = async (e: Event) => {
-  const target = e.target as HTMLInputElement
-  if (target.files && target.files.length > 0) {
-    await uploadImages(Array.from(target.files))
-    target.value = '' // 重設 input 以允許重複選擇同一檔案
-  }
-}
-
-const handleImageDrop = async (e: DragEvent) => {
-  if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-    const imageFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
-    if (imageFiles.length > 0) {
-      await uploadImages(imageFiles)
-    }
-  }
-}
-
-const uploadImages = async (files: File[]) => {
+const handleUploadImages = async (files: File[]) => {
   if (files.length === 0) return
   
   isUploadingImage.value = true
   const toast = useToast()
   
   try {
+    // 驗證檔案
     for (const file of files) {
-      const result = await uploadApi.upload(file, 'product')
-      const imageUrl = result.url
-      
-      // 添加到圖片列表
-      if (!productForm.value.images.includes(imageUrl)) {
-        productForm.value.images.push(imageUrl)
+      const validation = imageUpload.validateFile(file)
+      if (!validation.valid) {
+        throw new Error(validation.error)
       }
-      
-      // 如果沒有主圖，自動設為主圖
+    }
+    
+    // 上傳並添加到表單
+    const urls = await imageUpload.uploadFiles(files)
+    for (const url of urls) {
+      if (!productForm.value.images.includes(url) && productForm.value.mainImage !== url) {
+        productForm.value.images.push(url)
+      }
       if (!productForm.value.mainImage) {
-        productForm.value.mainImage = imageUrl
+        productForm.value.mainImage = url
       }
     }
     
@@ -780,15 +749,32 @@ const uploadImages = async (files: File[]) => {
       description: `成功上傳 ${files.length} 張圖片`,
       color: 'success',
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('圖片上傳失敗:', error)
     toast.add({
       title: '上傳失敗',
-      description: '圖片上傳失敗，請稍後再試',
+      description: error.message || '圖片上傳失敗，請稍後再試',
       color: 'error',
     })
   } finally {
     isUploadingImage.value = false
+  }
+}
+
+const onImageSelect = async (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    await handleUploadImages(Array.from(target.files))
+    target.value = ''
+  }
+}
+
+const onImageDrop = async (e: DragEvent) => {
+  if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+    const imageFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+    if (imageFiles.length > 0) {
+      await handleUploadImages(imageFiles)
+    }
   }
 }
 

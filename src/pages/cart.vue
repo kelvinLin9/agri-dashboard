@@ -53,11 +53,39 @@
               <!-- Product Info -->
               <div class="flex-1 min-w-0">
                 <h3 class="font-semibold text-gray-900 dark:text-white mb-1">
-                  {{ item.product?.name || '商品' }}
+                  {{ item.product?.name || item.productName || '商品' }}
                 </h3>
-                <p class="text-sm text-gray-500 mb-2">
-                  單價: ${{ (item.unitPrice || item.price || 0).toLocaleString() }}
-                </p>
+                
+                <!-- 價格資訊與變動提示 -->
+                <div class="flex items-center gap-2 mb-2">
+                  <p class="text-sm text-gray-500">
+                    單價: ${{ (item.unitPrice || item.price || 0).toLocaleString() }}
+                  </p>
+                  <!-- 價格變動提示 -->
+                  <UBadge 
+                    v-if="item.priceChanged" 
+                    color="warning" 
+                    size="xs"
+                    class="animate-pulse"
+                  >
+                    <UIcon name="i-heroicons-arrow-trending-up" class="mr-1" />
+                    價格已更新
+                  </UBadge>
+                </div>
+
+                <!-- 庫存警告 -->
+                <div v-if="item.stockQuantity !== undefined && item.stockQuantity <= 5 && item.stockQuantity > 0" 
+                     class="flex items-center gap-1 text-orange-500 text-xs mb-2">
+                  <UIcon name="i-heroicons-exclamation-triangle" />
+                  <span>僅剩 {{ item.stockQuantity }} 件</span>
+                </div>
+
+                <!-- 無庫存警告 -->
+                <div v-if="item.isAvailable === false || (item.stockQuantity !== undefined && item.stockQuantity <= 0)" 
+                     class="flex items-center gap-1 text-red-500 text-xs mb-2">
+                  <UIcon name="i-heroicons-x-circle" />
+                  <span>商品已無庫存</span>
+                </div>
 
                 <!-- Quantity Controls -->
                 <div class="flex items-center gap-3 mt-2">
@@ -78,7 +106,7 @@
                       size="sm"
                       color="neutral"
                       variant="ghost"
-                      :disabled="isUpdating"
+                      :disabled="isUpdating || (item.stockQuantity !== undefined && item.quantity >= item.stockQuantity)"
                       @click="updateQuantity(item.id, item.quantity + 1)"
                     />
                   </div>
@@ -299,12 +327,21 @@ const goToCheckout = async () => {
   try {
     const validation = await cartStore.validateCart()
     if (!validation.isValid) {
-      toast.warning('無法結帳', '請檢查商品庫存或價格')
+      // 顯示詳細的驗證問題
+      if (validation.issues && validation.issues.length > 0) {
+        const issueMessages = validation.issues.map(issue => issue.issue).join('、')
+        toast.warning('無法結帳', issueMessages)
+      } else {
+        toast.warning('無法結帳', '請檢查商品庫存或價格')
+      }
+      // 重新載入購物車以獲取最新狀態
+      await cartStore.fetchCart()
       return
     }
     router.push('/checkout')
   } catch (error: any) {
     console.error('驗證失敗:', error)
+    toast.error('驗證失敗', '無法驗證購物車，請稍後再試')
   }
 }
 

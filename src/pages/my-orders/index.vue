@@ -56,6 +56,15 @@
             <div>
               <p class="text-sm text-gray-500">訂單編號</p>
               <p class="font-mono font-semibold text-primary-600">{{ order.orderNumber }}</p>
+              <!-- 待付款訂單顯示倒數計時 -->
+              <OrderCountdown
+                v-if="order.status === OrderStatus.PENDING"
+                :created-at="order.createdAt"
+                :timeout-minutes="30"
+                class="mt-2"
+                @warning="handleOrderWarning(order)"
+                @expired="handleOrderExpired(order)"
+              />
             </div>
             <StatusBadge :status="order.status" type="order" size="lg" />
           </div>
@@ -159,7 +168,9 @@ import { useConfirm } from '@/composables/useConfirm'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import OrderCountdown from '@/components/common/OrderCountdown.vue'
 import { OrderStatus } from '@/api'
+import type { Order } from '@/api/types/order'
 
 const router = useRouter()
 const orderStore = useOrderStore()
@@ -231,6 +242,17 @@ const handleCancelConfirm = async () => {
 
 const canCancel = (status: OrderStatus): boolean => {
   return status === OrderStatus.PENDING || status === OrderStatus.PAID
+}
+
+// 訂單倒數計時事件處理
+const handleOrderWarning = (order: Order) => {
+  toast.warning('訂單即將逾時', `訂單 ${order.orderNumber} 剩餘不到 5 分鐘，請盡快付款`)
+}
+
+const handleOrderExpired = (order: Order) => {
+  toast.info('訂單已逾時', `訂單 ${order.orderNumber} 已超過付款時限，系統將自動取消`)
+  // 重新載入訂單列表以更新狀態
+  setTimeout(() => fetchMyOrders(), 2000)
 }
 
 const formatDateTime = (dateString: string) => {

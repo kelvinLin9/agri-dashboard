@@ -11,10 +11,15 @@ export interface CartItem {
   cartId: string
   productName?: string      // API 返回的商品名稱
   productImage?: string     // API 返回的商品圖片
-  unitPrice: number         // 單價（實際 API 字段名）
+  productSlug?: string      // 商品 slug
+  unitPrice: number         // 加入時的單價
+  currentPrice: number      // 當前產品價格
   quantity: number
   price?: number           // 備用欄位
   subtotal: number
+  stockQuantity: number    // 當前庫存
+  isAvailable: boolean     // 是否可購買
+  priceChanged: boolean    // 價格是否已變動
   product?: Product
   createdAt: string
   updatedAt: string

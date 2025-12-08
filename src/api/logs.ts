@@ -47,6 +47,14 @@ export interface QueryLogsParams {
 }
 
 /**
+ * 日誌查詢響應
+ */
+export interface QueryLogsResponse {
+  logs: AuditLog[]
+  total: number
+}
+
+/**
  * 日誌統計資料
  */
 export interface LogStatistics {
@@ -64,8 +72,8 @@ class LogsApi {
   /**
    * 查詢日誌列表
    */
-  async getAll(params?: QueryLogsParams): Promise<AuditLog[]> {
-    const { data } = await apiClient.get<AuditLog[]>('/logs', { params })
+  async getAll(params?: QueryLogsParams): Promise<QueryLogsResponse> {
+    const { data } = await apiClient.get<QueryLogsResponse>('/logs', { params })
     return data
   }
 

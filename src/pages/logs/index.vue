@@ -199,12 +199,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { logsApi, OperationType, type AuditLog, type LogStatistics } from '@/api/logs'
+import { logsApi, OperationType, type AuditLog, type LogStatistics, type QueryLogsResponse } from '@/api/logs'
 
 const logs = ref<AuditLog[]>([])
 const statistics = ref<LogStatistics | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
+const totalLogs = ref(0)
 
 // 篩選參數
 const selectedOperationType = ref<{ label: string; value: OperationType | null }>({ label: '全部類型', value: null })
@@ -279,7 +280,9 @@ async function fetchLogs() {
       params.userId = searchUserId.value
     }
 
-    logs.value = await logsApi.getAll(params)
+    const response = await logsApi.getAll(params)
+    logs.value = response.logs
+    totalLogs.value = response.total
   } catch (err: any) {
     error.value = err.message || '獲取日誌失敗'
     console.error('Failed to fetch logs:', err)

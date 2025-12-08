@@ -1,52 +1,102 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Hero Banner -->
-    <div class="bg-gradient-to-r from-green-600 to-emerald-600 text-white py-12">
-      <div class="container mx-auto px-6">
-        <h1 class="text-4xl font-bold mb-2">農產品商店</h1>
-        <p class="text-green-100">新鮮、健康、直送到家</p>
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-green-50/30 to-emerald-50/50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <!-- Hero Banner with animated background -->
+    <div class="relative overflow-hidden bg-gradient-to-r from-green-600 via-emerald-500 to-teal-500 text-white py-16 md:py-20">
+      <!-- Animated background elements -->
+      <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute -top-1/2 -left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute -bottom-1/2 -right-1/4 w-96 h-96 bg-emerald-300/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+        <div class="absolute top-1/4 right-1/4 w-64 h-64 bg-teal-400/15 rounded-full blur-2xl animate-pulse" style="animation-delay: 0.5s;"></div>
+      </div>
+      
+      <!-- Decorative leaf patterns -->
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute top-10 left-10 text-6xl">🌿</div>
+        <div class="absolute bottom-10 right-20 text-5xl">🍃</div>
+        <div class="absolute top-20 right-1/3 text-4xl">🌱</div>
+      </div>
+      
+      <div class="container mx-auto px-6 relative z-10">
+        <div class="max-w-2xl">
+          <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium mb-6">
+            <span class="w-2 h-2 bg-green-300 rounded-full animate-pulse"></span>
+            新鮮直送・每日精選
+          </div>
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 tracking-tight">
+            農產品商店
+          </h1>
+          <p class="text-lg md:text-xl text-green-100 leading-relaxed max-w-lg">
+            嚴選台灣在地優質農產，從產地直送到您家，享受最新鮮的美味
+          </p>
+          
+          <!-- Stats badges -->
+          <div class="flex flex-wrap gap-4 mt-8">
+            <div class="flex items-center gap-2 px-4 py-2 bg-white/15 backdrop-blur-sm rounded-xl">
+              <UIcon name="i-heroicons-truck" class="w-5 h-5" />
+              <span class="text-sm font-medium">免費配送</span>
+            </div>
+            <div class="flex items-center gap-2 px-4 py-2 bg-white/15 backdrop-blur-sm rounded-xl">
+              <UIcon name="i-heroicons-shield-check" class="w-5 h-5" />
+              <span class="text-sm font-medium">品質保證</span>
+            </div>
+            <div class="flex items-center gap-2 px-4 py-2 bg-white/15 backdrop-blur-sm rounded-xl">
+              <UIcon name="i-heroicons-clock" class="w-5 h-5" />
+              <span class="text-sm font-medium">24小時新鮮</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="container mx-auto px-6 py-8">
-      <!-- Search and Filters -->
-      <UCard class="mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <!-- Search -->
-          <div class="md:col-span-2">
-            <SearchBox
-              v-model="search"
-              placeholder="搜尋農產品..."
+    <div class="container mx-auto px-6 py-10">
+      <!-- Search and Filters with glassmorphism -->
+      <div class="relative mb-10 -mt-8">
+        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl shadow-green-500/5 border border-white/50 dark:border-gray-700/50 p-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-6">
+            <!-- Search -->
+            <div class="md:col-span-2">
+              <SearchBox
+                v-model="search"
+                placeholder="搜尋農產品..."
+                size="lg"
+                @search="handleSearch"
+              />
+            </div>
+
+            <!-- Category Filter -->
+            <USelectMenu
+              v-model="selectedCategory"
+              :items="categoryOptions"
+              placeholder="選擇分類"
               size="lg"
-              @search="handleSearch"
+              @change="handleFilterChange"
+            />
+
+            <!-- Sort -->
+            <USelectMenu
+              v-model="selectedSort"
+              :items="sortOptions"
+              placeholder="排序方式"
+              size="lg"
+              @change="handleFilterChange"
             />
           </div>
-
-          <!-- Category Filter -->
-          <USelectMenu
-            v-model="selectedCategory"
-            :items="categoryOptions"
-            placeholder="選擇分類"
-            size="lg"
-            @change="handleFilterChange"
-          />
-
-          <!-- Sort -->
-          <USelectMenu
-            v-model="selectedSort"
-            :items="sortOptions"
-            placeholder="排序方式"
-            size="lg"
-            @change="handleFilterChange"
-          />
         </div>
-      </UCard>
-
-      <!-- Product Grid -->
-      <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        <USkeleton v-for="i in 8" :key="i" class="h-80" />
       </div>
 
+      <!-- Product Grid Loading State -->
+      <div v-if="isLoading" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
+        <div v-for="i in 8" :key="i" class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg animate-pulse">
+          <div class="aspect-square bg-gray-200 dark:bg-gray-700"></div>
+          <div class="p-5 space-y-3">
+            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-3/4"></div>
+            <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full w-1/2"></div>
+            <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
       <EmptyState
         v-else-if="products.length === 0"
         icon="i-heroicons-shopping-bag"
@@ -55,39 +105,77 @@
         icon-size="lg"
       />
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        <UCard
-          v-for="product in products"
+      <!-- Product Grid -->
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 lg:gap-8">
+        <div
+          v-for="(product, index) in products"
           :key="product.id"
-          class="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+          class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-green-500/10 transition-all duration-500 cursor-pointer transform hover:-translate-y-2"
+          :style="{ animationDelay: `${index * 50}ms` }"
           @click="viewProduct(product)"
         >
+          <!-- Sale Badge -->
+          <div v-if="product.salePrice && product.originalPrice" class="absolute top-4 left-4 z-20">
+            <div class="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+              {{ Math.round((1 - product.salePrice / product.originalPrice) * 100) }}% OFF
+            </div>
+          </div>
+          
+          <!-- New Badge -->
+          <div v-if="product.isNew" class="absolute top-4 right-4 z-20">
+            <div class="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+              <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+              新品
+            </div>
+          </div>
+
           <!-- Product Image -->
-          <div class="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg mb-4 overflow-hidden">
+          <div class="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-800 overflow-hidden">
             <img
               v-if="product.mainImage"
               :src="product.mainImage"
               :alt="product.name"
-              class="w-full h-full object-cover"
+              class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
             />
             <div v-else class="w-full h-full flex items-center justify-center">
-              <UIcon name="i-heroicons-photo" class="w-16 h-16 text-gray-300" />
+              <UIcon name="i-heroicons-photo" class="w-20 h-20 text-gray-300 dark:text-gray-600" />
+            </div>
+            
+            <!-- Hover overlay with quick add button -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
+              <UButton
+                v-if="product.stockQuantity > 0"
+                color="white"
+                variant="solid"
+                size="lg"
+                class="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 shadow-xl"
+                @click.stop="addToCart(product)"
+              >
+                <UIcon name="i-heroicons-shopping-cart" class="mr-2" />
+                快速加入
+              </UButton>
             </div>
           </div>
 
           <!-- Product Info -->
-          <div class="space-y-2">
-            <h3 class="font-semibold text-gray-900 dark:text-white line-clamp-2">
+          <div class="p-5 space-y-3">
+            <!-- Category tag -->
+            <div v-if="product.category" class="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+              <UIcon name="i-heroicons-tag" class="w-3 h-3" />
+              {{ product.category?.name || '農產品' }}
+            </div>
+            
+            <h3 class="font-bold text-lg text-gray-900 dark:text-white line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
               {{ product.name }}
             </h3>
 
-            <p v-if="product.shortDescription" class="text-sm text-gray-500 line-clamp-2">
+            <p v-if="product.shortDescription" class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
               {{ product.shortDescription }}
             </p>
 
             <!-- Price -->
-            <div class="flex items-baseline gap-2">
-              <span v-if="product.salePrice" class="text-2xl font-bold text-green-600">
+            <div class="flex items-baseline gap-2 pt-2">
+              <span v-if="product.salePrice" class="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
                 ${{ product.salePrice.toLocaleString() }}
               </span>
               <span
@@ -97,56 +185,60 @@
                 ${{ product.originalPrice.toLocaleString() }}
               </span>
               <span v-if="!product.salePrice" class="text-2xl font-bold text-gray-900 dark:text-white">
-                ${{ product.originalPrice.toLocaleString() }}
+                ${{ product.originalPrice?.toLocaleString() }}
               </span>
             </div>
 
             <!-- Stock Status -->
-            <div class="flex items-center justify-between">
-              <UBadge
-                v-if="product.stockQuantity > 0"
-                color="success"
-                variant="soft"
-                size="sm"
-              >
-                庫存: {{ product.stockQuantity }}
-              </UBadge>
-              <UBadge v-else color="error" variant="soft" size="sm">
-                缺貨
-              </UBadge>
-
-              <UBadge v-if="product.isNew" color="purple" variant="soft" size="sm">
-                新品
-              </UBadge>
+            <div class="flex items-center justify-between pt-2">
+              <div class="flex items-center gap-2">
+                <span v-if="product.stockQuantity > 10" class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 font-medium">
+                  <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                  庫存充足
+                </span>
+                <span v-else-if="product.stockQuantity > 0" class="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-medium">
+                  <span class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+                  僅剩 {{ product.stockQuantity }} 件
+                </span>
+                <span v-else class="flex items-center gap-1.5 text-xs text-red-500 font-medium">
+                  <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                  已售完
+                </span>
+              </div>
             </div>
 
             <!-- Add to Cart Button -->
             <UButton
               block
-              color="primary"
+              :color="product.stockQuantity > 0 ? 'primary' : 'neutral'"
+              :variant="product.stockQuantity > 0 ? 'solid' : 'outline'"
               :disabled="product.stockQuantity <= 0"
+              class="mt-3 group/btn transition-all duration-300"
               @click.stop="addToCart(product)"
             >
               <template v-if="product.stockQuantity > 0">
-                <UIcon name="i-heroicons-shopping-cart" class="mr-2" />
+                <UIcon name="i-heroicons-shopping-cart" class="mr-2 group-hover/btn:animate-bounce" />
                 加入購物車
               </template>
               <template v-else>
-                缺貨中
+                <UIcon name="i-heroicons-x-circle" class="mr-2" />
+                暫時缺貨
               </template>
             </UButton>
           </div>
-        </UCard>
+        </div>
       </div>
 
       <!-- Pagination -->
-      <div v-if="products.length > 0" class="flex justify-center mt-8">
-        <UPagination
-          v-model:page="page"
-          :items-per-page="limit"
-          :total="total"
-          @update:page="fetchProducts"
-        />
+      <div v-if="products.length > 0" class="flex justify-center mt-12">
+        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl shadow-green-500/5 border border-white/50 dark:border-gray-700/50 p-4">
+          <UPagination
+            v-model:page="page"
+            :items-per-page="limit"
+            :total="total"
+            @update:page="fetchProducts"
+          />
+        </div>
       </div>
     </div>
   </div>

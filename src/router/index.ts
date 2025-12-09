@@ -99,6 +99,15 @@ const router = createRouter({
         layout: 'blank'
       },
     },
+    {
+      path: '/verify-email',
+      name: 'verify-email',
+      component: () => import('../pages/verify-email.vue'),
+      meta: {
+        requiresAuth: false,
+        layout: 'blank'
+      },
+    },
     // Shopping Flow Routes (Customer-facing)
     {
       path: '/shop',

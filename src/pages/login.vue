@@ -20,13 +20,14 @@
 
       <!-- Login Form -->
       <form @submit.prevent="handleLogin" class="space-y-4">
-        <!-- Username or Email -->
-        <UFormField label="帳號或 Email">
+        <!-- Email -->
+        <UFormField label="Email">
           <UInput
-            v-model="loginForm.usernameOrEmail"
-            icon="i-heroicons-user"
+            v-model="loginForm.email"
+            icon="i-heroicons-envelope"
             size="lg"
-            placeholder="請輸入帳號或 Email"
+            type="email"
+            placeholder="請輸入 Email"
             :disabled="isLoading"
             :ui="{ trailing: 'pointer-events-none' }"
           >
@@ -176,7 +177,7 @@ const route = useRoute()
 
 // Form Data
 const loginForm = ref({
-  usernameOrEmail: '',
+  email: '',
   password: '',
 })
 
@@ -209,10 +210,10 @@ const isFormValid = computed(() => {
 
 // 表單驗證提示
 const inputError = computed(() => {
-  const { usernameOrEmail, password } = loginForm.value
+  const { email, password } = loginForm.value
   
   // 如果欄位都是空的，不顯示錯誤
-  if (!usernameOrEmail && !password) {
+  if (!email && !password) {
     return ''
   }
   
@@ -235,7 +236,7 @@ const handleLogin = async () => {
 
   try {
     const response = await authApi.login({
-      usernameOrEmail: loginForm.value.usernameOrEmail,
+      email: loginForm.value.email,
       password: loginForm.value.password,
     })
 
@@ -296,7 +297,7 @@ const clearError = () => {
 
 // Watch for input changes
 import { watch } from 'vue'
-watch([() => loginForm.value.usernameOrEmail, () => loginForm.value.password], clearError)
+watch([() => loginForm.value.email, () => loginForm.value.password], clearError)
 </script>
 
 <style scoped>

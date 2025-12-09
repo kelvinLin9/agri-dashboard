@@ -5,11 +5,13 @@
 // 用戶介面
 export interface User {
   id: string
-  username: string
+  username?: string
   email: string
   nickname?: string
   role: 'super_admin' | 'admin' | 'operator' | 'customer_service'
   status: 'active' | 'inactive' | 'locked'
+  avatar?: string
+  emailVerified?: boolean
   createdAt: string
   updatedAt: string
 }
@@ -21,16 +23,15 @@ export interface AuthResponse {
   user: User
 }
 
-// 註冊 DTO
+// 註冊 DTO（移除 username）
 export interface RegisterDto {
-  username: string
   email: string
   password: string
   nickname?: string
 }
 
-// 登入 DTO
+// 登入 DTO（改為 email）
 export interface LoginDto {
-  usernameOrEmail: string
+  email: string
   password: string
 }

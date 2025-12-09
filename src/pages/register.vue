@@ -20,22 +20,6 @@
 
       <!-- Register Form -->
       <form @submit.prevent="handleRegister" class="space-y-4">
-        <!-- Username -->
-        <UFormField label="用戶名" required :error="errors.username">
-          <UInput
-            v-model="registerForm.username"
-            icon="i-heroicons-user"
-            size="lg"
-            placeholder="請輸入用戶名"
-            :disabled="isLoading"
-            :ui="{ trailing: 'pointer-events-none' }"
-          >
-            <template #trailing>
-              <span class="w-5 h-5"></span>
-            </template>
-          </UInput>
-        </UFormField>
-
         <!-- Email -->
         <UFormField label="Email" required :error="errors.email">
           <UInput
@@ -249,7 +233,6 @@ const router = useRouter()
 
 // Form Data
 const registerForm = ref({
-  username: '',
   email: '',
   nickname: '',
   password: '',
@@ -310,7 +293,6 @@ const handleRegister = async () => {
 
   try {
     const response = await authApi.register({
-      username: registerForm.value.username,
       email: registerForm.value.email,
       password: registerForm.value.password,
       nickname: registerForm.value.nickname || undefined,
@@ -318,13 +300,13 @@ const handleRegister = async () => {
 
     // 註冊成功
     console.log('註冊成功:', response)
-    successMessage.value = '註冊成功！正在跳轉...'
+    successMessage.value = '註冊成功！請檢查您的信箱驗證 Email...'
     // GA4: 追蹤註冊成功
     trackSignUp('email')
     // 延遲跳轉以顯示成功訊息
     setTimeout(() => {
       router.push('/')
-    }, 1500)
+    }, 2000)
   } catch (error: any) {
     console.error('註冊失敗:', error)
     errorMessage.value = error.message || '註冊失敗，請稍後再試'
@@ -347,9 +329,6 @@ const handleGoogleRegister = () => {
 
 // Clear error when user types
 import { watch } from 'vue'
-watch(() => registerForm.value.username, () => {
-  if (errors.value.username) delete errors.value.username
-})
 watch(() => registerForm.value.email, () => {
   if (errors.value.email) delete errors.value.email
 })

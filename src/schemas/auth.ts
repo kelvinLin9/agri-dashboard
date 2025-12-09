@@ -6,12 +6,7 @@
 import * as v from 'valibot'
 
 /**
- * 用戶名驗證正則：3-20個字符，只能包含字母、數字、底線
- */
-const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/
-
-/**
- * 密碼強度驗證正則
+ * 密碼強度驗證正則（統一前後端規則）
  */
 const passwordStrengthRegex = {
   lowercase: /[a-z]/,
@@ -21,18 +16,17 @@ const passwordStrengthRegex = {
 }
 
 // ========================================
-// 登入表單 Schema
+// 登入表單 Schema（改為純 Email 登入）
 // ========================================
 
 /**
  * 登入表單驗證 Schema
  */
 export const LoginFormSchema = v.object({
-  usernameOrEmail: v.pipe(
-    v.string('帳號或 Email 必須是文字'),
-    v.nonEmpty('請輸入帳號或 Email'),
-    v.minLength(3, '帳號或 Email 至少 3 個字元'),
-    v.maxLength(50, '帳號或 Email 最多 50 個字元')
+  email: v.pipe(
+    v.string('Email 必須是文字'),
+    v.nonEmpty('請輸入 Email'),
+    v.email('請輸入正確的 Email 格式')
   ),
 
   password: v.pipe(
@@ -49,7 +43,7 @@ export type LoginFormData = v.InferOutput<typeof LoginFormSchema>
 export type LoginFormInput = v.InferInput<typeof LoginFormSchema>
 
 // ========================================
-// 註冊表單 Schema
+// 註冊表單 Schema（移除 username）
 // ========================================
 
 /**
@@ -57,14 +51,6 @@ export type LoginFormInput = v.InferInput<typeof LoginFormSchema>
  */
 export const RegisterFormSchema = v.pipe(
   v.object({
-    username: v.pipe(
-      v.string('用戶名必須是文字'),
-      v.nonEmpty('請輸入用戶名'),
-      v.minLength(3, '用戶名至少 3 個字元'),
-      v.maxLength(20, '用戶名最多 20 個字元'),
-      v.regex(usernameRegex, '用戶名只能包含字母、數字和底線')
-    ),
-
     email: v.pipe(
       v.string('Email 必須是文字'),
       v.nonEmpty('請輸入 Email'),
@@ -114,3 +100,17 @@ export const RegisterFormSchema = v.pipe(
  */
 export type RegisterFormData = v.InferOutput<typeof RegisterFormSchema>
 export type RegisterFormInput = v.InferInput<typeof RegisterFormSchema>
+
+// ========================================
+// 重發驗證信 Schema
+// ========================================
+
+export const ResendVerificationSchema = v.object({
+  email: v.pipe(
+    v.string('Email 必須是文字'),
+    v.nonEmpty('請輸入 Email'),
+    v.email('請輸入正確的 Email 格式')
+  ),
+})
+
+export type ResendVerificationInput = v.InferInput<typeof ResendVerificationSchema>

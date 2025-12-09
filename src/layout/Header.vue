@@ -2,7 +2,14 @@
   <UHeader>
     <!-- Logo / Title -->
     <template #title>
-      <div class="text-2xl font-bold">梅</div>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-harvest-500 to-earth-600 rounded-lg text-white font-bold text-sm shadow-warm">
+          日
+        </div>
+        <div class="text-xl font-bold bg-gradient-to-r from-harvest-600 to-earth-600 bg-clip-text text-transparent hidden sm:block">
+          日沐 SunBathe
+        </div>
+      </div>
     </template>
 
     <!-- Desktop Navigation (center) -->

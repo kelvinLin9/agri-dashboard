@@ -27,15 +27,14 @@
           </div>
           
           <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-amber-950 leading-tight mb-6">
-            從產地到餐桌
-            <span class="block mt-2 bg-gradient-to-r from-amber-600 via-orange-500 to-green-600 bg-clip-text text-transparent">
-              新鮮直送您的家
+            日沐 SunBathe
+            <span class="block text-transparent bg-clip-text bg-gradient-to-r from-harvest-600 to-earth-500 mt-2">
+              溫暖您的每一餐
             </span>
           </h1>
           
           <p class="text-xl md:text-2xl text-amber-800/80 leading-relaxed mb-10 max-w-2xl">
-            我們與台灣各地小農合作，為您嚴選最優質的當季農產品。
-            每一份食材，都承載著土地的溫度與農人的用心。
+            日沐嚴選最優質的在地農產，連結土地與餐桌。我們相信，好的食物不僅滋養身體，更能溫暖人心。每一口，都是陽光的味道。份食材，都承載著土地的溫度與農人的用心。
           </p>
 
           <!-- CTA Buttons -->
@@ -404,10 +403,15 @@
           <div>
             <h4 class="text-white font-semibold text-lg mb-4">聯絡我們</h4>
             <ul class="space-y-3">
-              <li class="flex items-center gap-2">
-                <UIcon name="i-heroicons-envelope" class="w-5 h-5 text-amber-400" />
-                <span class="text-amber-300/80">service@agri.com.tw</span>
-              </li>
+              <div class="flex items-center gap-2 mb-4">
+              <div class="w-10 h-10 bg-gradient-to-br from-harvest-500 to-earth-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
+                日
+              </div>
+              <span class="text-xl font-bold text-gray-900 dark:text-white">日沐 SunBathe</span>
+            </div>
+            <p class="text-gray-500 dark:text-gray-400 mb-6">
+              從產地到餐桌，傳遞土地的溫度與陽光的味道。
+            </p>
               <li class="flex items-center gap-2">
                 <UIcon name="i-heroicons-phone" class="w-5 h-5 text-amber-400" />
                 <span class="text-amber-300/80">02-1234-5678</span>

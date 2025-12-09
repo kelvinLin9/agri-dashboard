@@ -48,6 +48,8 @@
               v-if="selectedImage || product.mainImage"
               :src="selectedImage || product.mainImage"
               :alt="product.name"
+              decoding="async"
+              fetchpriority="high"
               class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
             />
             <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-800">
@@ -68,7 +70,7 @@
               ]"
               @click="selectedImage = image"
             >
-              <img :src="image" :alt="`${product.name} ${index + 1}`" class="w-full h-full object-cover" />
+              <img :src="image" :alt="`${product.name} ${index + 1}`" loading="lazy" decoding="async" class="w-full h-full object-cover" />
             </div>
           </div>
         </div>

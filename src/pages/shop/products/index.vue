@@ -332,6 +332,8 @@
               v-if="product.mainImage"
               :src="product.mainImage"
               :alt="product.name"
+              loading="lazy"
+              decoding="async"
               class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
             />
             <div v-else class="w-full h-full flex items-center justify-center">

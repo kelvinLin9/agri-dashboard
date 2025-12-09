@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900 p-4">
-    <UCard class="w-full max-w-md">
+  <div class="min-h-screen flex items-center justify-center page-warm-light p-4">
+    <UCard class="w-full max-w-md card-glass ring-0 shadow-warm">
       <!-- Logo and Title -->
       <div class="text-center mb-8">
         <div class="flex justify-center mb-4">
@@ -94,6 +94,7 @@
           block
           :loading="isLoading"
           :disabled="!isFormValid"
+          class="btn-warm-shadow"
         >
           <template #leading>
             <UIcon name="i-heroicons-arrow-right-on-rectangle" />

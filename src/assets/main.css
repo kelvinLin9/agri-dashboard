@@ -63,3 +63,208 @@
 [role="tooltip"] {
   z-index: 9999 !important;
 }
+
+/* ===================================
+   農產品網站設計系統 - 全域工具類
+   =================================== */
+
+/* 頁面背景 - 統一暖色系漸層 */
+.page-warm {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right,
+      rgb(255 251 235 / 0.8),
+      /* amber-50 */
+      rgb(255 237 213 / 0.5),
+      /* orange-50 */
+      rgb(236 253 245 / 0.3)
+      /* emerald-50 */
+    );
+}
+
+.page-warm-light {
+  min-height: 100vh;
+  background: linear-gradient(to bottom,
+      rgb(255 251 235 / 0.5),
+      /* amber-50 */
+      rgb(255 255 255)
+      /* white */
+    );
+}
+
+/* 深色模式頁面背景 */
+@media (prefers-color-scheme: dark) {
+
+  .page-warm,
+  .page-warm-light {
+    background: linear-gradient(to bottom right,
+        rgb(17 24 39),
+        /* gray-900 */
+        rgb(17 24 39),
+        /* gray-900 */
+        rgb(31 41 55)
+        /* gray-800 */
+      );
+  }
+}
+
+/* 玻璃擬態卡片 */
+.card-glass {
+  background: rgb(255 255 255 / 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 1.5rem;
+  border: 1px solid rgb(255 255 255 / 0.5);
+  box-shadow:
+    0 20px 25px -5px rgb(217 119 6 / 0.05),
+    0 8px 10px -6px rgb(217 119 6 / 0.05);
+  transition: all 0.3s ease;
+}
+
+.card-glass:hover {
+  box-shadow:
+    0 25px 50px -12px rgb(217 119 6 / 0.15);
+  transform: translateY(-2px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .card-glass {
+    background: rgb(31 41 55 / 0.7);
+    border-color: rgb(55 65 81 / 0.5);
+  }
+}
+
+/* Hero Banner 暖色系 */
+.hero-warm {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(to right,
+      var(--color-harvest-600),
+      var(--color-earth-500),
+      var(--color-harvest-500));
+  color: white;
+}
+
+/* 暖色陰影 */
+.shadow-warm {
+  box-shadow:
+    0 20px 25px -5px rgb(217 119 6 / 0.1),
+    0 8px 10px -6px rgb(217 119 6 / 0.1);
+}
+
+.shadow-warm-lg {
+  box-shadow:
+    0 25px 50px -12px rgb(217 119 6 / 0.25);
+}
+
+/* 浮動動畫 - 裝飾元素 */
+@keyframes agri-float {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-20px) rotate(5deg);
+  }
+}
+
+.animate-agri-float {
+  animation: agri-float 4s ease-in-out infinite;
+}
+
+/* 脈衝光暈動畫 */
+@keyframes agri-glow {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+}
+
+.animate-agri-glow {
+  animation: agri-glow 3s ease-in-out infinite;
+}
+
+/* 滾動提示動畫 */
+@keyframes agri-scroll {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: translateY(8px);
+  }
+}
+
+.animate-agri-scroll {
+  animation: agri-scroll 2s ease-in-out infinite;
+}
+
+/* 價格文字漸層 */
+.text-price {
+  background: linear-gradient(to right,
+      var(--color-harvest-600),
+      var(--color-earth-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 標題文字漸層 */
+.text-heading-gradient {
+  background: linear-gradient(to right,
+      var(--color-harvest-600),
+      var(--color-earth-500),
+      var(--color-nature-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 統一按鈕陰影 */
+.btn-warm-shadow {
+  box-shadow: 0 10px 15px -3px rgb(217 119 6 / 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-warm-shadow:hover {
+  box-shadow: 0 20px 25px -5px rgb(217 119 6 / 0.4);
+  transform: translateY(-2px);
+}
+
+/* 信任徽章/標籤背景 */
+.badge-warm {
+  background: rgb(255 251 235);
+  color: rgb(180 83 9);
+  border: 1px solid rgb(254 243 199);
+}
+
+@media (prefers-color-scheme: dark) {
+  .badge-warm {
+    background: rgb(120 53 15 / 0.2);
+    color: rgb(251 191 36);
+    border-color: rgb(120 53 15 / 0.3);
+  }
+}
+
+/* 區塊間距標準化 */
+.section-padding {
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+}
+
+.section-padding-sm {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}

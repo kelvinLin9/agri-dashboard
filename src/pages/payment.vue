@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900 py-8">
+  <div class="page-warm-light py-8">
     <div class="container mx-auto px-6 max-w-3xl">
       <!-- Loading State -->
       <div v-if="isLoading" class="text-center py-12">
@@ -17,7 +17,7 @@
       <!-- Payment Content -->
       <div v-else-if="order" class="space-y-6">
         <!-- Order Info Card -->
-        <UCard>
+        <UCard class="card-glass shadow-warm">
           <template #header>
             <h1 class="text-2xl font-bold">支付訂單</h1>
           </template>
@@ -56,7 +56,7 @@
         </UCard>
 
         <!-- Payment Method Card -->
-        <UCard>
+        <UCard class="card-glass shadow-warm">
           <template #header>
             <h2 class="text-xl font-semibold">選擇支付方式</h2>
           </template>

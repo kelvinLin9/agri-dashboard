@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900 py-8">
+  <div class="page-warm-light py-8">
     <div class="container mx-auto px-6">
       <!-- Header -->
       <div class="mb-8">
@@ -48,7 +48,7 @@
         <UCard
           v-for="order in orderStore.orders"
           :key="order.id"
-          class="hover:shadow-lg transition-shadow cursor-pointer"
+          class="card-glass hover:shadow-warm-lg transition-all cursor-pointer"
           @click="viewOrder(order.id)"
         >
           <!-- Order Header -->

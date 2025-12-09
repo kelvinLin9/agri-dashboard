@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900 py-8">
+  <div class="page-warm-light py-8">
     <div class="container mx-auto px-6">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">結帳</h1>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Checkout Form -->
         <div class="lg:col-span-2">
-          <UCard>
+          <UCard class="card-glass shadow-warm">
             <template #header>
               <h2 class="text-xl font-semibold">收件人資訊</h2>
             </template>
@@ -61,7 +61,7 @@
 
         <!-- Order Summary -->
         <div class="lg:col-span-1">
-          <UCard>
+          <UCard class="card-glass shadow-warm">
             <template #header>
               <h2 class="text-lg font-semibold">訂單摘要</h2>
             </template>

@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900 flex items-center justify-center py-8">
+  <div class="page-warm-light flex items-center justify-center py-8">
     <div class="container mx-auto px-6 max-w-md">
-      <UCard>
+      <UCard class="card-glass shadow-warm">
         <div class="text-center py-8">
           <div class="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full mx-auto mb-6 flex items-center justify-center">
             <UIcon name="i-heroicons-x-circle" class="w-12 h-12 text-red-600" />

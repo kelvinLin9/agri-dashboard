@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50/20 to-green-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+  <div class="page-warm">
     <div class="container mx-auto px-6 py-8">
       <!-- Back Button -->
       <UButton

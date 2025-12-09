@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900 py-8">
+  <div class="page-warm-light py-8">
     <div class="container mx-auto px-6 max-w-4xl">
       <!-- Back Button -->
       <UButton
@@ -21,7 +21,7 @@
       <!-- Order Detail -->
       <div v-else-if="order" class="space-y-6">
         <!-- Order Header Card -->
-        <UCard>
+        <UCard class="card-glass shadow-warm">
           <div class="flex justify-between items-start">
             <div>
               <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -35,7 +35,7 @@
         </UCard>
 
         <!-- Order Progress (Timeline) -->
-        <UCard v-if="order.status !== 'cancelled'">
+        <UCard v-if="order.status !== 'cancelled'" class="card-glass shadow-warm">
           <template #header>
             <h2 class="text-lg font-semibold">訂單進度</h2>
           </template>
@@ -61,7 +61,7 @@
         </UCard>
 
         <!-- Recipient Info -->
-        <UCard>
+        <UCard class="card-glass shadow-warm">
           <template #header>
             <h2 class="text-lg font-semibold">收件人資訊</h2>
           </template>
@@ -84,7 +84,7 @@
         </UCard>
 
         <!-- Order Items -->
-        <UCard>
+        <UCard class="card-glass shadow-warm">
           <template #header>
             <h2 class="text-lg font-semibold">訂單商品</h2>
           </template>
@@ -113,7 +113,7 @@
         </UCard>
 
         <!-- Payment Summary -->
-        <UCard>
+        <UCard class="card-glass shadow-warm">
           <template #header>
             <h2 class="text-lg font-semibold">金額明細</h2>
           </template>
@@ -145,14 +145,14 @@
 
         <!-- Payment & Shipping Info -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <UCard>
+          <UCard class="card-glass shadow-warm">
             <template #header>
               <h3 class="font-semibold">付款方式</h3>
             </template>
             <p>{{ getPaymentMethodLabel(order.paymentMethod) }}</p>
           </UCard>
 
-          <UCard>
+          <UCard class="card-glass shadow-warm">
             <template #header>
               <h3 class="font-semibold">配送方式</h3>
             </template>
@@ -161,7 +161,7 @@
         </div>
 
         <!-- Customer Note -->
-        <UCard v-if="order.customerNote">
+        <UCard v-if="order.customerNote" class="card-glass shadow-warm">
           <template #header>
             <h3 class="font-semibold">訂單備註</h3>
           </template>

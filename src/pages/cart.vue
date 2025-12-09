@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900">
+  <div class="page-warm-light">
     <div class="container mx-auto px-6 py-8">
       <!-- Header -->
       <div class="mb-8">
@@ -156,8 +156,8 @@
         </div>
 
         <!-- Order Summary -->
-        <div class="lg:col-span-1">
-          <UCard>
+        <div class="lg:col-span-2">
+          <UCard class="card-glass shadow-warm">
             <template #header>
               <h2 class="text-lg font-semibold">訂單摘要</h2>
             </template>

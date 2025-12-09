@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50/30 to-green-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+  <div class="page-warm">
     <!-- Hero Banner with animated background -->
-    <div class="relative overflow-hidden bg-gradient-to-r from-harvest-600 via-earth-500 to-harvest-500 text-white py-16 md:py-20">
+    <div class="hero-warm py-16 md:py-20">
       <!-- Animated background elements -->
       <div class="absolute inset-0 overflow-hidden">
         <div class="absolute -top-1/2 -left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
@@ -51,7 +51,7 @@
     <div class="container mx-auto px-6 py-10">
       <!-- Search and Filters with glassmorphism -->
       <div class="relative mb-10 -mt-8">
-        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl shadow-amber-500/5 border border-white/50 dark:border-gray-700/50 p-6">
+        <div class="card-glass p-6">
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-6">
             <!-- Search -->
             <div class="md:col-span-2">
@@ -231,7 +231,7 @@
 
       <!-- Pagination -->
       <div v-if="products.length > 0" class="flex justify-center mt-12">
-        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl shadow-amber-500/5 border border-white/50 dark:border-gray-700/50 p-4">
+        <div class="card-glass p-4">
           <UPagination
             v-model:page="page"
             :items-per-page="limit"

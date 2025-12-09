@@ -4,9 +4,11 @@
       <!-- Logo and Title -->
       <div class="text-center mb-8">
         <div class="flex justify-center mb-4">
-          <div class="w-16 h-16 bg-gradient-to-br from-harvest-500 to-earth-600 rounded-2xl flex items-center justify-center">
-            <UIcon name="i-heroicons-building-storefront" class="w-10 h-10 text-white" />
-          </div>
+          <img 
+            src="@/assets/logo.png" 
+            alt="日沐 SunBathe Logo" 
+            class="w-20 h-20 object-contain"
+          />
         </div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
           日沐 SunBathe
@@ -26,7 +28,12 @@
             size="lg"
             placeholder="請輸入帳號或 Email"
             :disabled="isLoading"
-          />
+            :ui="{ trailing: 'pointer-events-none' }"
+          >
+            <template #trailing>
+              <span class="w-5 h-5"></span>
+            </template>
+          </UInput>
         </UFormField>
 
         <!-- Password -->
@@ -56,15 +63,6 @@
               />
             </template>
           </UInput>
-        </UFormField>
-
-        <!-- Remember Me -->
-        <UFormField>
-          <UCheckbox
-            v-model="rememberMe"
-            label="記住我"
-            :disabled="isLoading"
-          />
         </UFormField>
 
         <!-- Validation Error Message -->
@@ -170,6 +168,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authApi } from '@/api'
 import { trackLogin } from '@/utils/analytics'
+import * as v from 'valibot'
+import { LoginFormSchema, type LoginFormInput } from '@/schemas/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -180,7 +180,7 @@ const loginForm = ref({
   password: '',
 })
 
-const rememberMe = ref(false)
+const rememberMe = ref(false) // 保留但未使用，未來可實作
 const isLoading = ref(false)
 const isGoogleLoading = ref(false)
 const errorMessage = ref('')
@@ -196,69 +196,35 @@ onMounted(() => {
   }
 })
 
-// 輸入驗證輔助函數
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
-
-const isValidUsername = (username: string): boolean => {
-  // 用戶名：3-20個字符，只能包含字母、數字、底線
-  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/
-  return usernameRegex.test(username)
+// 使用 Valibot 驗證
+const validateForm = () => {
+  return v.safeParse(LoginFormSchema, loginForm.value)
 }
 
 // Computed
 const isFormValid = computed(() => {
-  const { usernameOrEmail, password } = loginForm.value
-
-  // 檢查欄位非空
-  if (!usernameOrEmail.trim() || !password.trim()) {
-    return false
-  }
-
-  // 密碼最少 6 個字符
-  if (password.length < 6) {
-    return false
-  }
-
-  // 用戶名或 Email 格式驗證
-  const input = usernameOrEmail.trim()
-  // 如果包含 @，則視為 email，否則視為 username
-  if (input.includes('@')) {
-    return isValidEmail(input) && password.length >= 6
-  } else {
-    return isValidUsername(input) && password.length >= 6
-  }
+  const result = validateForm()
+  return result.success
 })
 
 // 表單驗證提示
-const getInputError = (): string => {
+const inputError = computed(() => {
   const { usernameOrEmail, password } = loginForm.value
-
-  if (!usernameOrEmail.trim()) {
+  
+  // 如果欄位都是空的，不顯示錯誤
+  if (!usernameOrEmail && !password) {
     return ''
   }
-
-  const input = usernameOrEmail.trim()
-  if (input.includes('@')) {
-    if (!isValidEmail(input)) {
-      return 'Email 格式不正確'
-    }
-  } else {
-    if (!isValidUsername(input)) {
-      return '用戶名格式不正確（3-20個字符，只能包含字母、數字、底線）'
-    }
+  
+  const result = validateForm()
+  if (result.success) {
+    return ''
   }
-
-  if (password && password.length > 0 && password.length < 6) {
-    return '密碼至少需要 6 個字符'
-  }
-
-  return ''
-}
-
-const inputError = computed(() => getInputError())
+  
+  // 取得第一個錯誤訊息
+  const firstIssue = result.issues[0]
+  return firstIssue?.message || ''
+})
 
 // Methods
 const handleLogin = async () => {

@@ -4,9 +4,11 @@
       <!-- Logo and Title -->
       <div class="text-center mb-8">
         <div class="flex justify-center mb-4">
-          <div class="w-16 h-16 bg-gradient-to-br from-harvest-500 to-earth-600 rounded-2xl flex items-center justify-center">
-            <UIcon name="i-heroicons-building-storefront" class="w-10 h-10 text-white" />
-          </div>
+          <img 
+            src="@/assets/logo.png" 
+            alt="日沐 SunBathe Logo" 
+            class="w-20 h-20 object-contain"
+          />
         </div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
           加入日沐 SunBathe
@@ -26,7 +28,12 @@
             size="lg"
             placeholder="請輸入用戶名"
             :disabled="isLoading"
-          />
+            :ui="{ trailing: 'pointer-events-none' }"
+          >
+            <template #trailing>
+              <span class="w-5 h-5"></span>
+            </template>
+          </UInput>
         </UFormField>
 
         <!-- Email -->
@@ -38,7 +45,12 @@
             size="lg"
             placeholder="請輸入 Email"
             :disabled="isLoading"
-          />
+            :ui="{ trailing: 'pointer-events-none' }"
+          >
+            <template #trailing>
+              <span class="w-5 h-5"></span>
+            </template>
+          </UInput>
         </UFormField>
 
         <!-- Nickname (Optional) -->
@@ -49,7 +61,12 @@
             size="lg"
             placeholder="請輸入暱稱"
             :disabled="isLoading"
-          />
+            :ui="{ trailing: 'pointer-events-none' }"
+          >
+            <template #trailing>
+              <span class="w-5 h-5"></span>
+            </template>
+          </UInput>
         </UFormField>
 
         <!-- Password -->
@@ -225,6 +242,8 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '@/api'
 import { trackSignUp } from '@/utils/analytics'
+import * as v from 'valibot'
+import { RegisterFormSchema } from '@/schemas/auth'
 
 const router = useRouter()
 
@@ -246,72 +265,40 @@ const errors = ref<Record<string, string>>({})
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 
-// Validation Functions
-const validateUsername = (username: string): string => {
-  if (!username.trim()) return '請輸入用戶名'
-  if (username.length < 3) return '用戶名至少需要 3 個字元'
-  if (username.length > 20) return '用戶名不能超過 20 個字元'
-  if (!/^[a-zA-Z0-9_]+$/.test(username)) return '用戶名只能包含字母、數字和底線'
-  return ''
-}
-
-const validateEmail = (email: string): string => {
-  if (!email.trim()) return '請輸入 Email'
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email)) return 'Email 格式不正確'
-  return ''
-}
-
-const validatePassword = (password: string): string => {
-  if (!password) return '請輸入密碼'
-  if (password.length < 8) return '密碼至少需要 8 個字元'
-  if (!/[a-z]/.test(password)) return '密碼必須包含小寫字母'
-  if (!/[A-Z]/.test(password)) return '密碼必須包含大寫字母'
-  if (!/[0-9]/.test(password)) return '密碼必須包含數字'
-  if (!/[!@#$%^&*]/.test(password)) return '密碼必須包含特殊符號 (!@#$%^&*)'
-  return ''
-}
-
-const validateConfirmPassword = (password: string, confirmPassword: string): string => {
-  if (!confirmPassword) return '請確認密碼'
-  if (password !== confirmPassword) return '兩次輸入的密碼不一致'
-  return ''
+// 使用 Valibot 驗證
+const validateFormWithValibot = () => {
+  // 組合表單數據與 agreedToTerms
+  const formData = {
+    ...registerForm.value,
+    agreedToTerms: agreedToTerms.value,
+  }
+  return v.safeParse(RegisterFormSchema, formData)
 }
 
 // Computed
 const isFormValid = computed(() => {
-  return registerForm.value.username.trim() !== '' &&
-         registerForm.value.email.trim() !== '' &&
-         registerForm.value.password.trim() !== '' &&
-         registerForm.value.confirmPassword.trim() !== '' &&
-         agreedToTerms.value &&
-         Object.keys(errors.value).length === 0
+  const result = validateFormWithValibot()
+  return result.success
 })
 
 // Methods
 const validateForm = (): boolean => {
   errors.value = {}
-
-  const usernameError = validateUsername(registerForm.value.username)
-  if (usernameError) errors.value.username = usernameError
-
-  const emailError = validateEmail(registerForm.value.email)
-  if (emailError) errors.value.email = emailError
-
-  const passwordError = validatePassword(registerForm.value.password)
-  if (passwordError) errors.value.password = passwordError
-
-  const confirmPasswordError = validateConfirmPassword(
-    registerForm.value.password,
-    registerForm.value.confirmPassword
-  )
-  if (confirmPasswordError) errors.value.confirmPassword = confirmPasswordError
-
-  if (!agreedToTerms.value) {
-    errors.value.terms = '請同意服務條款和隱私政策'
+  
+  const result = validateFormWithValibot()
+  
+  if (!result.success) {
+    // 將 Valibot 錯誤映射到各欄位
+    for (const issue of result.issues) {
+      const path = issue.path?.[0]?.key as string
+      if (path && !errors.value[path]) {
+        errors.value[path] = issue.message
+      }
+    }
+    return false
   }
-
-  return Object.keys(errors.value).length === 0
+  
+  return true
 }
 
 const handleRegister = async () => {

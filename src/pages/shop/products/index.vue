@@ -305,12 +305,26 @@
           </div>
 
           <!-- New Badge -->
-          <div v-if="product.isNew" class="absolute top-4 right-4 z-20">
+          <div v-if="product.isNew" class="absolute top-4 right-14 z-20">
             <div class="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
               <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
               新品
             </div>
           </div>
+
+          <!-- Wishlist Heart Button -->
+          <button
+            class="absolute top-4 right-4 z-20 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300"
+            :class="wishlist.isInWishlist(product.id)
+              ? 'bg-red-500 text-white shadow-lg scale-110'
+              : 'bg-white/80 dark:bg-gray-800/80 text-gray-400 hover:text-red-500 hover:bg-white dark:hover:bg-gray-800 backdrop-blur-sm'"
+            @click.stop="handleToggleWishlist(product.id)"
+          >
+            <UIcon
+              :name="wishlist.isInWishlist(product.id) ? 'i-heroicons-heart-solid' : 'i-heroicons-heart'"
+              class="w-5 h-5"
+            />
+          </button>
 
           <!-- Product Image -->
           <div class="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-700 dark:to-gray-800 overflow-hidden">
@@ -436,10 +450,12 @@ import { useToast } from '@/composables/useToast'
 import EmptyState from '@/components/common/EmptyState.vue'
 import SearchBox from '@/components/common/SearchBox.vue'
 import { trackAddToCart, trackSearch } from '@/utils/analytics'
+import { useWishlist } from '@/composables/useWishlist'
 
 const router = useRouter()
 const cartStore = useCartStore()
 const toast = useToast()
+const wishlist = useWishlist()
 
 // Data
 const products = ref<Product[]>([])
@@ -589,6 +605,19 @@ const clearFilters = () => {
   filterIsFeatured.value = false
   filterOnSale.value = false
   handleFilterChange()
+}
+
+const handleToggleWishlist = async (productId: number | string) => {
+  try {
+    const isNowInWishlist = await wishlist.toggleWishlist(productId)
+    toast.success(
+      isNowInWishlist ? '已加入收藏' : '已取消收藏',
+      isNowInWishlist ? '可在收藏頁面查看' : ''
+    )
+  } catch (error) {
+    console.error('收藏操作失敗:', error)
+    toast.error('操作失敗', '請稍後再試')
+  }
 }
 
 const viewProduct = (product: Product) => {

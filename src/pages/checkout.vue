@@ -67,6 +67,49 @@
             </template>
 
             <div class="space-y-4">
+              <!-- Coupon Input -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">優惠碼</label>
+                <div class="flex gap-2">
+                  <UInput
+                    v-model="couponCode"
+                    placeholder="輸入優惠碼"
+                    size="sm"
+                    :disabled="isValidatingCoupon || appliedCoupon !== null"
+                    class="flex-1"
+                    @keyup.enter="validateCoupon"
+                  />
+                  <UButton
+                    v-if="!appliedCoupon"
+                    size="sm"
+                    variant="outline"
+                    :loading="isValidatingCoupon"
+                    :disabled="!couponCode.trim()"
+                    @click="validateCoupon"
+                  >
+                    套用
+                  </UButton>
+                  <UButton
+                    v-else
+                    size="sm"
+                    color="error"
+                    variant="ghost"
+                    @click="removeCoupon"
+                  >
+                    移除
+                  </UButton>
+                </div>
+                <!-- Coupon Status -->
+                <div v-if="couponError" class="text-sm text-red-500 flex items-center gap-1">
+                  <UIcon name="i-heroicons-x-circle" class="w-4 h-4" />
+                  {{ couponError }}
+                </div>
+                <div v-if="appliedCoupon" class="text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+                  <UIcon name="i-heroicons-check-circle" class="w-4 h-4" />
+                  已套用: {{ appliedCoupon.name }} (-${{ discountAmount.toLocaleString() }})
+                </div>
+              </div>
+
               <div class="space-y-2">
                 <div class="flex justify-between text-sm">
                   <span class="text-gray-600">商品小計</span>
@@ -76,12 +119,16 @@
                   <span class="text-gray-600">運費</span>
                   <span>$60</span>
                 </div>
+                <div v-if="discountAmount > 0" class="flex justify-between text-sm text-green-600 dark:text-green-400">
+                  <span>優惠折扣</span>
+                  <span>-${{ discountAmount.toLocaleString() }}</span>
+                </div>
               </div>
 
               <div class="border-t pt-4">
                 <div class="flex justify-between text-xl font-bold">
                   <span>總計</span>
-                  <span class="text-harvest-600">${{ (cartStore.subtotal + 60).toLocaleString() }}</span>
+                  <span class="text-harvest-600">${{ totalAmount.toLocaleString() }}</span>
                 </div>
               </div>
 
@@ -105,6 +152,7 @@ import { useToast } from '@/composables/useToast'
 import * as v from 'valibot'
 import { CheckoutFormSchema, type CheckoutFormInput } from '@/schemas/checkout'
 import { trackPurchase } from '@/utils/analytics'
+import { couponsApi } from '@/api/coupons'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -112,6 +160,15 @@ const orderStore = useOrderStore()
 const toast = useToast()
 
 const isSubmitting = ref(false)
+const isValidatingCoupon = ref(false)
+const couponCode = ref('')
+const couponError = ref('')
+const appliedCoupon = ref<{ code: string; name: string } | null>(null)
+const discountAmount = ref(0)
+
+const totalAmount = computed(() => {
+  return cartStore.subtotal + 60 - discountAmount.value
+})
 
 const form = ref<CheckoutFormInput>({
   recipientName: '',
@@ -162,6 +219,42 @@ const validateForm = (): boolean => {
   return true
 }
 
+// 優惠碼驗證
+const validateCoupon = async () => {
+  if (!couponCode.value.trim()) return
+
+  isValidatingCoupon.value = true
+  couponError.value = ''
+
+  try {
+    const result = await couponsApi.validate(couponCode.value, cartStore.subtotal)
+
+    if (result.isValid && result.coupon && result.discountAmount !== undefined) {
+      appliedCoupon.value = {
+        code: result.coupon.code,
+        name: result.coupon.name,
+      }
+      discountAmount.value = result.discountAmount
+      toast.success('優惠碼已套用', `折扣 $${result.discountAmount}`)
+    } else {
+      couponError.value = result.message || '優惠碼無效'
+    }
+  } catch (error) {
+    console.error('驗證優惠碼失敗:', error)
+    couponError.value = '驗證失敗，請稍後再試'
+  } finally {
+    isValidatingCoupon.value = false
+  }
+}
+
+// 移除優惠碼
+const removeCoupon = () => {
+  appliedCoupon.value = null
+  discountAmount.value = 0
+  couponCode.value = ''
+  couponError.value = ''
+}
+
 const submitOrder = async () => {
   // 先驗證表單
   if (!validateForm()) {
@@ -170,11 +263,17 @@ const submitOrder = async () => {
 
   isSubmitting.value = true
   try {
-    const order = await orderStore.createOrderFromCart(form.value)
+    // 建立訂單時包含優惠碼資訊
+    const orderData = {
+      ...form.value,
+      couponCode: appliedCoupon.value?.code || undefined,
+      discountAmount: discountAmount.value || 0,
+    }
+    const order = await orderStore.createOrderFromCart(orderData)
     // GA4: 追蹤購買完成
     trackPurchase({
       transactionId: order.orderNumber || order.id.toString(),
-      value: order.totalAmount || cartStore.subtotal + 60,
+      value: order.totalAmount || totalAmount.value,
       items: cartStore.items.map(item => ({
         id: item.productId,
         name: item.product?.name || item.productName || '商品',

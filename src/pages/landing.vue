@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/50 to-green-50/30">
+  <div class="page-warm">
     <!-- Hero Section -->
     <section class="relative overflow-hidden min-h-[90vh] flex items-center">
       <!-- Animated Background Elements -->
@@ -8,7 +8,7 @@
         <div class="absolute -bottom-1/4 -right-1/4 w-[500px] h-[500px] bg-green-200/40 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
         <div class="absolute top-1/3 right-1/4 w-[300px] h-[300px] bg-orange-200/30 rounded-full blur-2xl animate-pulse" style="animation-delay: 0.5s;"></div>
       </div>
-      
+
       <!-- Decorative Elements -->
       <div class="absolute inset-0 opacity-20 pointer-events-none">
         <div class="absolute top-20 left-[10%] text-7xl animate-float">🌾</div>
@@ -25,14 +25,14 @@
             <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
             嚴選台灣在地・新鮮直送
           </div>
-          
+
           <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-amber-950 leading-tight mb-6">
             日沐 SunBathe
             <span class="block text-transparent bg-clip-text bg-gradient-to-r from-harvest-600 to-earth-500 mt-2">
               溫暖您的每一餐
             </span>
           </h1>
-          
+
           <p class="text-xl md:text-2xl text-amber-800/80 leading-relaxed mb-10 max-w-2xl">
             日沐嚴選最優質的在地農產，連結土地與餐桌。我們相信，好的食物不僅滋養身體，更能溫暖人心。每一口，都是陽光的味道。份食材，都承載著土地的溫度與農人的用心。
           </p>
@@ -202,7 +202,7 @@
                 <UIcon name="i-heroicons-tag" class="w-3 h-3" />
                 {{ product.category?.name || '農產品' }}
               </div>
-              
+
               <h3 class="font-bold text-lg text-amber-950 mb-2 group-hover:text-orange-600 transition-colors line-clamp-2">
                 {{ product.name }}
               </h3>
@@ -258,17 +258,17 @@
               <UIcon name="i-heroicons-heart" class="w-4 h-4" />
               我們的故事
             </div>
-            
+
             <h2 class="text-4xl md:text-5xl font-bold text-amber-950 mb-6 leading-tight">
               用心耕耘
               <span class="block text-orange-600">每一寸土地</span>
             </h2>
-            
+
             <p class="text-lg text-amber-700/80 leading-relaxed mb-6">
               我們相信，好的食物來自於對土地的尊重與用心。從 2020 年創立至今，我們走訪台灣各地，
               與堅持友善耕作的農友們建立合作關係。
             </p>
-            
+
             <p class="text-lg text-amber-700/80 leading-relaxed mb-8">
               每一項產品都經過嚴格篩選，從種植到採收、從包裝到配送，我們用心把關每個環節，
               只為讓您享用最純粹的農產品。
@@ -311,11 +311,11 @@
             <div class="flex gap-1 mb-4">
               <UIcon v-for="i in 5" :key="i" name="i-heroicons-star-solid" class="w-5 h-5 text-amber-400" />
             </div>
-            
+
             <p class="text-amber-800 leading-relaxed mb-6 italic">
               "{{ testimonial.content }}"
             </p>
-            
+
             <div class="flex items-center gap-4">
               <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 flex items-center justify-center text-white font-bold text-lg">
                 {{ testimonial.name.charAt(0) }}
@@ -348,7 +348,7 @@
         <p class="text-xl text-amber-100 mb-10 max-w-2xl mx-auto">
           立即加入會員，享受專屬優惠與第一手農產資訊。讓新鮮美味，成為您日常的一部分。
         </p>
-        
+
         <div class="flex flex-wrap justify-center gap-4">
           <UButton
             size="xl"

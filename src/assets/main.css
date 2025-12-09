@@ -91,20 +91,17 @@
     );
 }
 
-/* 深色模式頁面背景 */
-@media (prefers-color-scheme: dark) {
-
-  .page-warm,
-  .page-warm-light {
-    background: linear-gradient(to bottom right,
-        rgb(17 24 39),
-        /* gray-900 */
-        rgb(17 24 39),
-        /* gray-900 */
-        rgb(31 41 55)
-        /* gray-800 */
-      );
-  }
+/* 深色模式頁面背景 - 使用 .dark class 以配合 VueUse useColorMode */
+.dark .page-warm,
+.dark .page-warm-light {
+  background: linear-gradient(to bottom right,
+      rgb(17 24 39),
+      /* gray-900 */
+      rgb(17 24 39),
+      /* gray-900 */
+      rgb(31 41 55)
+      /* gray-800 */
+    );
 }
 
 /* 玻璃擬態卡片 */
@@ -126,11 +123,9 @@
   transform: translateY(-2px);
 }
 
-@media (prefers-color-scheme: dark) {
-  .card-glass {
-    background: rgb(31 41 55 / 0.7);
-    border-color: rgb(55 65 81 / 0.5);
-  }
+.dark .card-glass {
+  background: rgb(31 41 55 / 0.7);
+  border-color: rgb(55 65 81 / 0.5);
 }
 
 /* Hero Banner 暖色系 */
@@ -250,12 +245,10 @@
   border: 1px solid rgb(254 243 199);
 }
 
-@media (prefers-color-scheme: dark) {
-  .badge-warm {
-    background: rgb(120 53 15 / 0.2);
-    color: rgb(251 191 36);
-    border-color: rgb(120 53 15 / 0.3);
-  }
+.dark .badge-warm {
+  background: rgb(120 53 15 / 0.2);
+  color: rgb(251 191 36);
+  border-color: rgb(120 53 15 / 0.3);
 }
 
 /* 區塊間距標準化 */

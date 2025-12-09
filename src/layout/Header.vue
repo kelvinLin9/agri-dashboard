@@ -25,7 +25,7 @@
       <div class="flex items-center gap-2">
         <!-- Notification Bell -->
         <NotificationBell />
-        
+
         <!-- Dark Mode Toggle -->
         <UButton
           :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
@@ -35,7 +35,7 @@
           @click="toggleColorMode"
           :aria-label="isDark ? '切換到淺色模式' : '切換到深色模式'"
         />
-        
+
         <!-- User Avatar Menu (Desktop & Mobile) -->
         <UDropdownMenu :items="userMenuItems">
           <UButton
@@ -135,12 +135,12 @@ const userAvatar = computed(() => user.value?.avatar || '')
 const userInitials = computed(() => {
   const name = userName.value
   if (!name) return '?'
-  
+
   // 如果是中文名取第一個字
   if (/[\u4e00-\u9fa5]/.test(name)) {
     return name.charAt(0)
   }
-  
+
   // 英文名取首字母
   const words = name.split(' ')
   if (words.length >= 2) {
@@ -171,42 +171,101 @@ const navItems = computed<NavigationMenuItem[]>(() =>
 )
 
 
+// ========== 登入狀態檢查 ==========
+const isLoggedIn = computed(() => !!user.value)
+
+const isAdmin = computed(() => {
+  const role = user.value?.role
+  return ['super_admin', 'admin', 'operator', 'customer_service'].includes(role)
+})
+
 // ========== 用戶下拉菜單 ==========
-const userMenuItems = computed<DropdownMenuItem[][]>(() => [
-  [
-    {
-      label: userName.value,
-      type: 'label',
-      disabled: true,
-      icon: 'i-heroicons-user-circle',
-    },
-    {
-      label: userRole.value,
-      type: 'label',
-      disabled: true,
-      class: 'text-xs text-gray-500 dark:text-gray-400'
-    }
-  ],
-  [
-    {
-      label: '個人設定',
-      icon: 'i-heroicons-cog-6-tooth',
-      kbds: ['⌘', 'K'],
-      onSelect: () => {
-        // TODO: 導航到個人設定頁面
-        console.log('個人設定')
+const userMenuItems = computed<DropdownMenuItem[][]>(() => {
+  // 未登入狀態
+  if (!isLoggedIn.value) {
+    return [
+      [
+        {
+          label: '登入',
+          icon: 'i-heroicons-arrow-right-on-rectangle',
+          onSelect: () => router.push('/login')
+        },
+        {
+          label: '註冊會員',
+          icon: 'i-heroicons-user-plus',
+          onSelect: () => router.push('/register')
+        }
+      ],
+      [
+        {
+          label: '商店首頁',
+          icon: 'i-heroicons-shopping-bag',
+          onSelect: () => router.push('/shop/products')
+        }
+      ]
+    ]
+  }
+
+  // 已登入狀態 - 根據權限顯示不同選項
+  const baseItems: DropdownMenuItem[][] = [
+    // 用戶資訊
+    [
+      {
+        label: userName.value,
+        avatar: userAvatar.value ? { src: userAvatar.value } : undefined,
+        icon: userAvatar.value ? undefined : 'i-heroicons-user-circle',
+        disabled: true,
       }
-    }
-  ],
-  [
+    ]
+  ]
+
+  // 管理員專屬選項
+  if (isAdmin.value) {
+    baseItems.push([
+      {
+        label: '管理後台',
+        icon: 'i-heroicons-cog-8-tooth',
+        onSelect: () => router.push('/dashboard')
+      },
+      {
+        label: '商店首頁',
+        icon: 'i-heroicons-shopping-bag',
+        onSelect: () => router.push('/shop/products')
+      }
+    ])
+  } else {
+    // 一般用戶選項
+    baseItems.push([
+      {
+        label: '我的訂單',
+        icon: 'i-heroicons-clipboard-document-list',
+        onSelect: () => router.push('/my-orders')
+      },
+      {
+        label: '購物車',
+        icon: 'i-heroicons-shopping-cart',
+        onSelect: () => router.push('/cart')
+      },
+      {
+        label: '商店首頁',
+        icon: 'i-heroicons-shopping-bag',
+        onSelect: () => router.push('/shop/products')
+      }
+    ])
+  }
+
+  // 登出選項（所有已登入用戶都有）
+  baseItems.push([
     {
       label: '登出',
       icon: 'i-heroicons-arrow-right-on-rectangle',
       onSelect: handleLogout,
-      class: 'text-red-600 dark:text-red-400'
+      color: 'error' as const
     }
-  ]
-])
+  ])
+
+  return baseItems
+})
 
 // ========== 深色模式 ==========
 const colorMode = useColorMode()
@@ -221,14 +280,14 @@ const handleLogout = async () => {
   try {
     // 調用後端登出 API
     await authApi.logout()
-    
+
     // 清除所有本地存儲（防止遺漏）
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
-    
+
     // 跳轉到登入頁面
     router.push('/login')
   } catch (error) {

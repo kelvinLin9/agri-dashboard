@@ -549,20 +549,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, h, resolveComponent } from 'vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
-import { 
-  ordersApi, 
-  paymentApi, 
+import {
+  ordersApi,
+  paymentApi,
   refundApi,
-  type Order, 
-  type OrderQueryParams, 
+  type Order,
+  type OrderQueryParams,
   type Payment,
   type Refund,
-  OrderStatus, 
+  OrderStatus,
   PaymentStatus,
   RefundStatus,
-  SortOrder, 
-  type PaginatedResponse, 
-  type ApiResponse 
+  SortOrder,
+  type PaginatedResponse,
+  type ApiResponse
 } from '@/api'
 import SearchBox from '@/components/common/SearchBox.vue'
 
@@ -700,7 +700,7 @@ const columns = [
     accessorKey: 'totalAmount',
     header: '金額',
     cell: ({ row }: any) => {
-      return h('span', { class: 'font-semibold text-green-600' }, 
+      return h('span', { class: 'font-semibold text-green-600' },
         formatCurrency(row.original.totalAmount)
       )
     }
@@ -723,7 +723,7 @@ const columns = [
     accessorKey: 'createdAt',
     header: '建立時間',
     cell: ({ row }: any) => {
-      return h('span', { class: 'text-sm text-gray-600' }, 
+      return h('span', { class: 'text-sm text-gray-600' },
         formatDateTime(row.original.createdAt)
       )
     }
@@ -734,7 +734,7 @@ const columns = [
     cell: ({ row }: any) => {
       const UButton = resolveComponent('UButton')
       const UTooltip = resolveComponent('UTooltip')
-      
+
       return h('div', { class: 'flex items-center gap-2' }, [
         h(UTooltip, { text: '查看詳情' }, () =>
           h(UButton, {
@@ -782,7 +782,7 @@ const completedCount = computed(() => {
 // Refund related computed
 const canApplyRefund = computed(() => {
   if (!viewingOrder.value || refundInfo.value) return false
-  
+
   // 檢查訂單狀態是否為已付款或更後面的狀態
   const validStatuses = [
     OrderStatus.PAID,
@@ -795,7 +795,7 @@ const canApplyRefund = computed(() => {
 })
 
 const canSubmitRefund = computed(() => {
-  return refundForm.value.amount > 0 && 
+  return refundForm.value.amount > 0 &&
          refundForm.value.amount <= (viewingOrder.value?.totalAmount || 0) &&
          refundForm.value.reason.trim().length > 0
 })
@@ -803,95 +803,68 @@ const canSubmitRefund = computed(() => {
 // Methods
 const fetchOrders = async () => {
   isLoading.value = true
-  try {
-    const userStr = localStorage.getItem('user')
-    const user = userStr ? JSON.parse(userStr) : null
-    const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
+  const userStr = localStorage.getItem('user')
+  const user = userStr ? JSON.parse(userStr) : null
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
 
-    let response
-    
-    if (isAdmin) {
-      const params: OrderQueryParams = {
-        page: page.value,
-        limit: limit.value,
-        sortBy: 'createdAt',
-        sortOrder: SortOrder.DESC,
-      }
+  let response
 
-      if (search.value) params.search = search.value
-      if (filterStatus.value) params.status = filterStatus.value
-      if (filterPaymentMethod.value) params.paymentMethod = filterPaymentMethod.value
-      if (filterShippingMethod.value) params.shippingMethod = filterShippingMethod.value
-
-      response = await ordersApi.getAll(params)
-    } else {
-      // 一般用戶只能看自己的訂單
-      response = await ordersApi.getMyOrders()
+  if (isAdmin) {
+    const params: OrderQueryParams = {
+      page: page.value,
+      limit: limit.value,
+      sortBy: 'createdAt',
+      sortOrder: SortOrder.DESC,
     }
-    
-    // API 回應結構處理
-    // getAll 回傳 PaginatedResponse: { data: Order[], meta: {...} }
-    // getMyOrders 回傳 ApiResponse: { data: Order[] }
-    // 需要統一處理
-    
-    
-    if (isAdmin) {
-      // Admin API returns ApiResponse<PaginatedResponse<Order>>
-      // Need to access response.data to get the actual PaginatedResponse
-      const apiResponse = response as any
-      const paginatedData = apiResponse.data || apiResponse
-      orders.value = Array.isArray(paginatedData.data) ? paginatedData.data : []
-      total.value = paginatedData.meta?.total || paginatedData.total || 0
-    } else {
-      // User API returns ApiResponse<Order[]>
-      const apiResponse = response as ApiResponse<Order[]>
-      const myOrders = Array.isArray(apiResponse.data) ? apiResponse.data : []
-      orders.value = myOrders
-      total.value = myOrders.length
-    }
-  } catch (error: any) {
-    console.error('獲取訂單失敗:', error)
-    orders.value = []
-    total.value = 0
-    // TODO: Show error toast
-  } finally {
-    isLoading.value = false
+
+    if (search.value) params.search = search.value
+    if (filterStatus.value) params.status = filterStatus.value
+    if (filterPaymentMethod.value) params.paymentMethod = filterPaymentMethod.value
+    if (filterShippingMethod.value) params.shippingMethod = filterShippingMethod.value
+
+    response = await ordersApi.getAll(params)
+  } else {
+    // 一般用戶只能看自己的訂單
+    response = await ordersApi.getMyOrders()
   }
+
+  if (isAdmin) {
+    const apiResponse = response as any
+    const paginatedData = apiResponse.data || apiResponse
+    orders.value = Array.isArray(paginatedData.data) ? paginatedData.data : []
+    total.value = paginatedData.meta?.total || paginatedData.total || 0
+  } else {
+    const apiResponse = response as ApiResponse<Order[]>
+    const myOrders = Array.isArray(apiResponse.data) ? apiResponse.data : []
+    orders.value = myOrders
+    total.value = myOrders.length
+  }
+  isLoading.value = false
 }
 
 const viewOrder = async (order: Order) => {
   viewingOrder.value = order
   isViewModalOpen.value = true
-  
+
   // 重置支付和退款資訊
   paymentInfo.value = null
   refundInfo.value = null
-  
+
   // 獲取支付資訊
   await fetchPaymentInfo(order.id)
-  
+
   // 獲取退款資訊 (如果有)
   await fetchRefundInfo(order.id)
 }
 
 const fetchPaymentInfo = async (orderId: string) => {
-  try {
-    const payment = await paymentApi.getByOrderId(orderId)
-    paymentInfo.value = payment
-  } catch (error) {
-    console.error('獲取支付資訊失敗:', error)
-    // 沒有支付記錄也是正常的,不顯示錯誤
-  }
+  const payment = await paymentApi.getByOrderId(orderId)
+  paymentInfo.value = payment
 }
 
 const fetchRefundInfo = async (orderId: string) => {
-  try {
-    const refund = await refundApi.getByOrderId(orderId)
-    refundInfo.value = refund
-  } catch (error) {
-    console.error('獲取退款資訊失敗:', error)
-    // 沒有退款記錄也是正常的,不顯示錯誤
-  }
+  const refund = await refundApi.getByOrderId(orderId)
+  refundInfo.value = refund
 }
 
 const openRefundModal = () => {
@@ -904,27 +877,17 @@ const openRefundModal = () => {
 
 const submitRefund = async () => {
   if (!viewingOrder.value || !canSubmitRefund.value) return
-  
+
   isSubmittingRefund.value = true
-  try {
-    await refundApi.create({
-      orderId: viewingOrder.value.id,
-      amount: refundForm.value.amount,
-      reason: refundForm.value.reason
-    })
-    
-    // TODO: Show success toast
-    console.log('退款申請成功')
-    
-    // 關閉 modal 並刷新退款資訊
-    isRefundModalOpen.value = false
-    await fetchRefundInfo(viewingOrder.value.id)
-  } catch (error) {
-    console.error('退款申請失敗:', error)
-    // TODO: Show error toast
-  } finally {
-    isSubmittingRefund.value = false
-  }
+  await refundApi.create({
+    orderId: viewingOrder.value.id,
+    amount: refundForm.value.amount,
+    reason: refundForm.value.reason
+  })
+
+  isRefundModalOpen.value = false
+  isSubmittingRefund.value = false
+  await fetchRefundInfo(viewingOrder.value.id)
 }
 
 const editOrder = (order: Order) => {
@@ -943,17 +906,10 @@ const saveOrder = async () => {
   if (!editingOrder.value) return
 
   isSaving.value = true
-  try {
-    await ordersApi.update(editingOrder.value.id, orderForm.value)
-    // TODO: Show success toast
-    isEditModalOpen.value = false
-    fetchOrders()
-  } catch (error: any) {
-    console.error('更新訂單失敗:', error)
-    // TODO: Show error toast
-  } finally {
-    isSaving.value = false
-  }
+  await ordersApi.update(editingOrder.value.id, orderForm.value)
+  isEditModalOpen.value = false
+  isSaving.value = false
+  fetchOrders()
 }
 
 const handleFilterChange = () => {

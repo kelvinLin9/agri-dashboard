@@ -36,6 +36,12 @@ import CookieConsent from './components/common/CookieConsent.vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { useNotificationStore } from '@/stores/notification'
 import { isLoading } from '@/utils/loading'
+import { setToastInstance } from '@/utils/globalToast'
+import { useToast } from '@/composables/useToast'
+
+// 初始化全域 Toast（讓 API 攔截器可以使用）
+const toast = useToast()
+setToastInstance(toast)
 
 // 初始化通知功能
 const route = useRoute()

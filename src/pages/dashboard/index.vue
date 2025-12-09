@@ -127,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import LineChart from '@/components/charts/LineChart.vue'
 import PieChart from '@/components/charts/PieChart.vue'
@@ -218,11 +218,7 @@ function formatTime(date: Date): string {
 
 // 刷新數據
 async function handleRefresh() {
-  try {
-    await dashboardStore.refreshAll()
-  } catch (error) {
-    console.error('Refresh failed:', error)
-  }
+  await dashboardStore.refreshAll()
 }
 
 // 頁面載入時獲取數據

@@ -409,7 +409,7 @@
                 @click="openLevelBenefitsModal"
               />
             </div>
-            
+
             <!-- 右側操作按鈕 -->
             <div class="flex gap-3">
               <UButton
@@ -621,7 +621,7 @@ const pointsTypeOptions = [
 
 const pointsFormType = computed({
   get: () => pointsTypeOptions.find(opt => opt.value === pointsForm.value.type),
-  set: (val) => { 
+  set: (val) => {
     if (val?.value === 'add' || val?.value === 'deduct') {
       pointsForm.value.type = val.value
     }
@@ -683,16 +683,16 @@ const genderOptions = [
 
 // Table Columns
 const columns = [
-  { 
+  {
     id: 'user',
     accessorKey: 'user.username',
     header: '會員',
     cell: ({ row }: any) => {
       const user = row.original.user
       const UAvatar = resolveComponent('UAvatar')
-      
+
       return h('div', { class: 'flex items-center gap-3' }, [
-        h(UAvatar, { 
+        h(UAvatar, {
           alt: user?.username,
           size: 'md'
         }),
@@ -703,14 +703,14 @@ const columns = [
       ])
     }
   },
-  { 
+  {
     id: 'level',
     accessorKey: 'level',
     header: '等級',
     cell: ({ row }: any) => {
       const level = row.original.level
       const UBadge = resolveComponent('UBadge')
-      
+
       return h(UBadge, {
         color: getLevelColor(level),
         variant: 'soft',
@@ -718,14 +718,14 @@ const columns = [
       }, () => getLevelLabel(level))
     }
   },
-  { 
+  {
     id: 'status',
     accessorKey: 'user.status',
     header: '狀態',
     cell: ({ row }: any) => {
       const status = row.original.user?.status
       const UBadge = resolveComponent('UBadge')
-      
+
       return h(UBadge, {
         color: status === 'active' ? 'success' : 'error',
         variant: 'soft',
@@ -733,7 +733,7 @@ const columns = [
       }, () => status === 'active' ? '活躍' : '停用')
     }
   },
-  { 
+  {
     id: 'stats',
     accessorKey: 'totalSpent',
     header: '消費/點數',
@@ -757,10 +757,10 @@ const columns = [
     cell: ({ row }: any) => {
       const UButton = resolveComponent('UButton')
       const UTooltip = resolveComponent('UTooltip')
-      
+
       return h('div', { class: 'flex items-center gap-2' }, [
         // 查看按鈕
-        h(UTooltip, { text: '查看詳情' }, () => 
+        h(UTooltip, { text: '查看詳情' }, () =>
           h(UButton, {
             icon: 'i-heroicons-eye',
             size: 'sm',
@@ -832,89 +832,67 @@ const openPointsModal = () => {
 
 const openLevelBenefitsModal = async () => {
   if (!viewingMember.value) return
-  
+
   isLevelBenefitsModalOpen.value = true
   levelBenefits.value.loading = true
   levelBenefits.value.data = null
-  
-  try {
-    const benefits = await membersApi.getLevelBenefits(viewingMember.value.level)
-    levelBenefits.value.data = benefits
-  } catch (error) {
-    console.error('獲取等級福利失敗:', error)
-  } finally {
-    levelBenefits.value.loading = false
-  }
+
+  const benefits = await membersApi.getLevelBenefits(viewingMember.value.level)
+  levelBenefits.value.data = benefits
+  levelBenefits.value.loading = false
 }
 
 const submitPoints = async () => {
   if (!viewingMember.value || !canSubmitPoints.value) return
-  
+
   isAdjustingPoints.value = true
-  try {
-    if (pointsForm.value.type === 'add') {
-      await membersApi.addPoints(viewingMember.value.id, {
-        points: pointsForm.value.points,
-        reason: pointsForm.value.reason
-      })
-    } else {
-      await membersApi.deductPoints(viewingMember.value.id, {
-        points: pointsForm.value.points,
-        reason: pointsForm.value.reason
-      })
-    }
-    
-    // TODO: Show success toast
-    console.log(`點數${pointsForm.value.type === 'add' ? '增加' : '扣除'}成功`)
-    
-    // 關閉 Modal 並刷新會員列表
-    isPointsModalOpen.value = false
-    await fetchMembers()
-    
-    // 更新 viewingMember 的點數顯示
-    if (viewingMember.value) {
-      const updated = members.value.find(m => m.id === viewingMember.value?.id)
-      if (updated) viewingMember.value = updated
-    }
-  } catch (error) {
-    console.error('點數調整失敗:', error)
-    // TODO: Show error toast
-  } finally {
-    isAdjustingPoints.value = false
+  if (pointsForm.value.type === 'add') {
+    await membersApi.addPoints(viewingMember.value.id, {
+      points: pointsForm.value.points,
+      reason: pointsForm.value.reason
+    })
+  } else {
+    await membersApi.deductPoints(viewingMember.value.id, {
+      points: pointsForm.value.points,
+      reason: pointsForm.value.reason
+    })
+  }
+
+  isPointsModalOpen.value = false
+  isAdjustingPoints.value = false
+  await fetchMembers()
+
+  if (viewingMember.value) {
+    const updated = members.value.find(m => m.id === viewingMember.value?.id)
+    if (updated) viewingMember.value = updated
   }
 }
 
 const fetchMembers = async () => {
   isLoading.value = true
-  try {
-    const params: MemberQueryParams = {
-      page: pagination.value.page,
-      limit: pagination.value.limit,
-      sortBy: 'createdAt',
-      sortOrder: SortOrder.DESC,
-    }
-
-    if (searchQuery.value) {
-      params.search = searchQuery.value
-    }
-
-    if (filterLevel.value) {
-      params.level = filterLevel.value
-    }
-
-    const result = await membersApi.getAll(params)
-    members.value = result.data
-    pagination.value = {
-      ...pagination.value,
-      total: result.meta.total,
-      totalPages: result.meta.totalPages,
-    }
-  } catch (error: any) {
-    console.error('獲取會員失敗:', error)
-    // TODO: Show error toast
-  } finally {
-    isLoading.value = false
+  const params: MemberQueryParams = {
+    page: pagination.value.page,
+    limit: pagination.value.limit,
+    sortBy: 'createdAt',
+    sortOrder: SortOrder.DESC,
   }
+
+  if (searchQuery.value) {
+    params.search = searchQuery.value
+  }
+
+  if (filterLevel.value) {
+    params.level = filterLevel.value
+  }
+
+  const result = await membersApi.getAll(params)
+  members.value = result.data
+  pagination.value = {
+    ...pagination.value,
+    total: result.meta.total,
+    totalPages: result.meta.totalPages,
+  }
+  isLoading.value = false
 }
 
 const handleSearch = () => {
@@ -983,21 +961,14 @@ const editFromView = () => {
 
 const saveMember = async () => {
   isSaving.value = true
-  try {
-    if (editingMember.value) {
-      await membersApi.update(editingMember.value.id, memberForm.value)
-    } else {
-      await membersApi.create(memberForm.value)
-    }
-    isModalOpen.value = false
-    fetchMembers()
-    // TODO: Show success toast
-  } catch (error: any) {
-    console.error('儲存會員失敗:', error)
-    // TODO: Show error toast
-  } finally {
-    isSaving.value = false
+  if (editingMember.value) {
+    await membersApi.update(editingMember.value.id, memberForm.value)
+  } else {
+    await membersApi.create(memberForm.value)
   }
+  isModalOpen.value = false
+  isSaving.value = false
+  fetchMembers()
 }
 
 const confirmDelete = (member: Member) => {
@@ -1009,17 +980,10 @@ const deleteMember = async () => {
   if (!deletingMember.value) return
 
   isDeleting.value = true
-  try {
-    await membersApi.delete(deletingMember.value.id)
-    isDeleteModalOpen.value = false
-    fetchMembers()
-    // TODO: Show success toast
-  } catch (error: any) {
-    console.error('刪除會員失敗:', error)
-    // TODO: Show error toast
-  } finally {
-    isDeleting.value = false
-  }
+  await membersApi.delete(deletingMember.value.id)
+  isDeleteModalOpen.value = false
+  isDeleting.value = false
+  fetchMembers()
 }
 
 // Helper Functions

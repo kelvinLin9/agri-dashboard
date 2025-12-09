@@ -314,56 +314,43 @@ const allImages = computed(() => {
 // Methods
 const fetchProduct = async () => {
   isLoading.value = true
-  try {
-    const productId = route.params.id as string
-    product.value = await productsApi.getById(productId)
-    if (product.value?.mainImage) {
-      selectedImage.value = product.value.mainImage
-    }
-    // GA4: 追蹤商品瀏覽
-    if (product.value) {
-      trackViewItem({
-        id: product.value.id,
-        name: product.value.name,
-        category: product.value.category?.name,
-        price: product.value.salePrice || product.value.originalPrice
-      })
-    }
-  } catch (error: unknown) {
-    console.error('獲取商品失敗:', error)
-    toast.error('載入失敗', '無法載入商品資訊')
-  } finally {
-    isLoading.value = false
+  const productId = route.params.id as string
+  product.value = await productsApi.getById(productId)
+  if (product.value?.mainImage) {
+    selectedImage.value = product.value.mainImage
   }
+  // GA4: 追蹤商品瀏覽
+  if (product.value) {
+    trackViewItem({
+      id: product.value.id,
+      name: product.value.name,
+      category: product.value.category?.name,
+      price: product.value.salePrice || product.value.originalPrice
+    })
+  }
+  isLoading.value = false
 }
 
 const addToCart = async (): Promise<boolean> => {
   if (!product.value) return false
 
   isAddingToCart.value = true
-  try {
-    await cartStore.addItem({
-      productId: product.value.id,
-      quantity: quantity.value
-    })
-    // GA4: 追蹤加入購物車
-    trackAddToCart({
-      id: product.value.id,
-      name: product.value.name,
-      category: product.value.category?.name,
-      price: product.value.salePrice || product.value.originalPrice,
-      quantity: quantity.value
-    })
-    toast.success('已加入購物車', `${product.value.name} x ${quantity.value}`)
-    quantity.value = 1
-    return true
-  } catch (error: unknown) {
-    console.error('加入購物車失敗:', error)
-    toast.error('加入失敗', '無法加入購物車，請稍後再試')
-    return false
-  } finally {
-    isAddingToCart.value = false
-  }
+  await cartStore.addItem({
+    productId: product.value.id,
+    quantity: quantity.value
+  })
+  // GA4: 追蹤加入購物車
+  trackAddToCart({
+    id: product.value.id,
+    name: product.value.name,
+    category: product.value.category?.name,
+    price: product.value.salePrice || product.value.originalPrice,
+    quantity: quantity.value
+  })
+  toast.success('已加入購物車', `${product.value.name} x ${quantity.value}`)
+  quantity.value = 1
+  isAddingToCart.value = false
+  return true
 }
 
 const buyNow = async () => {

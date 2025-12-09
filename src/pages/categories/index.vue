@@ -244,8 +244,8 @@
               <h4 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3">
                 分類圖片
               </h4>
-              <img 
-                :src="viewingCategory.imageUrl" 
+              <img
+                :src="viewingCategory.imageUrl"
                 :alt="viewingCategory.name"
                 class="w-full h-48 object-cover rounded-lg"
               />
@@ -377,14 +377,14 @@ const totalCount = computed(() => allCategories.value.length)
 
 const rootCount = computed(() => categoryTree.value.length)
 
-const activeCount = computed(() => 
+const activeCount = computed(() =>
   allCategories.value.filter(c => c.isActive).length
 )
 
 const parentOptions = computed(() => {
   // 過濾掉自身和自身的子孫
   const excludeIds = new Set<string>()
-  
+
   if (editingCategory.value) {
     excludeIds.add(editingCategory.value.id)
     // TODO: 添加所有子孫ID到 excludeIds
@@ -416,18 +416,13 @@ const parentOptions = computed(() => {
 // Methods
 const fetchCategoryTree = async () => {
   isLoading.value = true
-  try {
-    const response = await categoriesApi.getTree()
-    categoryTree.value = Array.isArray(response) ? response : (response.data || [])
-    
-    // 同時獲取平面列表用於統計
-    const allResponse = await categoriesApi.getAll()
-    allCategories.value = Array.isArray(allResponse) ? allResponse : (allResponse.data || [])
-  } catch (error) {
-    console.error('獲取分類樹失敗:', error)
-  } finally {
-    isLoading.value = false
-  }
+  const response = await categoriesApi.getTree()
+  categoryTree.value = Array.isArray(response) ? response : (response.data || [])
+
+  // 同時獲取平面列表用於統計
+  const allResponse = await categoriesApi.getAll()
+  allCategories.value = Array.isArray(allResponse) ? allResponse : (allResponse.data || [])
+  isLoading.value = false
 }
 
 const openCreateModal = () => {
@@ -461,14 +456,14 @@ const editCategory = (category: any) => {
     isActive: category.isActive ?? true,
     sortOrder: category.sortOrder || 0,
   }
-  
+
   if (category.parentId) {
     const parent = findCategoryById(categoryTree.value, category.parentId)
     selectedParent.value = parent ? { label: parent.name, value: parent.id } : null
   } else {
     selectedParent.value = null
   }
-  
+
   isModalOpen.value = true
 }
 
@@ -481,25 +476,20 @@ const editFromView = () => {
 
 const saveCategory = async () => {
   isSaving.value = true
-  try {
-    const dto = {
-      ...categoryForm.value,
-      parentId: selectedParent.value?.value || undefined
-    }
-
-    if (editingCategory.value) {
-      await categoriesApi.update(editingCategory.value.id, dto)
-    } else {
-      await categoriesApi.create(dto)
-    }
-
-    isModalOpen.value = false
-    await fetchCategoryTree()
-  } catch (error) {
-    console.error('儲存分類失敗:', error)
-  } finally {
-    isSaving.value = false
+  const dto = {
+    ...categoryForm.value,
+    parentId: selectedParent.value?.value || undefined
   }
+
+  if (editingCategory.value) {
+    await categoriesApi.update(editingCategory.value.id, dto)
+  } else {
+    await categoriesApi.create(dto)
+  }
+
+  isModalOpen.value = false
+  isSaving.value = false
+  await fetchCategoryTree()
 }
 
 const confirmDelete = (category: any) => {
@@ -511,15 +501,10 @@ const deleteCategory = async () => {
   if (!deletingCategory.value) return
 
   isDeleting.value = true
-  try {
-    await categoriesApi.delete(deletingCategory.value.id)
-    isDeleteModalOpen.value = false
-    await fetchCategoryTree()
-  } catch (error) {
-    console.error('刪除分類失敗:', error)
-  } finally {
-    isDeleting.value = false
-  }
+  await categoriesApi.delete(deletingCategory.value.id)
+  isDeleteModalOpen.value = false
+  isDeleting.value = false
+  await fetchCategoryTree()
 }
 
 // Helper Functions

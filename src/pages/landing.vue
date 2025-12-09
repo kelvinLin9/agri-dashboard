@@ -479,20 +479,15 @@ const testimonials = [
 // Methods
 const fetchFeaturedProducts = async () => {
   isLoading.value = true
-  try {
-    const response = await productsApi.getAll({
-      page: 1,
-      limit: 4,
-      status: 'active',
-      sortBy: 'createdAt',
-      sortOrder: SortOrder.DESC
-    })
-    featuredProducts.value = response.data
-  } catch (error) {
-    console.error('獲取商品失敗:', error)
-  } finally {
-    isLoading.value = false
-  }
+  const response = await productsApi.getAll({
+    page: 1,
+    limit: 4,
+    status: 'active',
+    sortBy: 'createdAt',
+    sortOrder: SortOrder.DESC
+  })
+  featuredProducts.value = response.data
+  isLoading.value = false
 }
 
 const goToShop = () => {
@@ -515,16 +510,11 @@ const viewProduct = (product: Product) => {
 }
 
 const addToCart = async (product: Product) => {
-  try {
-    await cartStore.addItem({
-      productId: product.id,
-      quantity: 1
-    })
-    toast.success('已加入購物車', product.name)
-  } catch (error) {
-    console.error('加入購物車失敗:', error)
-    toast.error('加入失敗', '無法加入購物車，請稍後再試')
-  }
+  await cartStore.addItem({
+    productId: product.id,
+    quantity: 1
+  })
+  toast.success('已加入購物車', product.name)
 }
 
 // Lifecycle

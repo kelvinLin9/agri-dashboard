@@ -284,28 +284,16 @@ const updateQuantity = async (itemId: string, quantity: number) => {
   if (quantity < 1) return
 
   isUpdating.value = true
-  try {
-    await cartStore.updateItemQuantity(itemId, quantity)
-    // 不顯示 toast 避免頻繁提示
-  } catch (error: unknown) {
-    console.error('更新失敗:', error)
-    toast.error('更新失敗', '無法更新數量，請稍後再試')
-  } finally {
-    isUpdating.value = false
-  }
+  await cartStore.updateItemQuantity(itemId, quantity)
+  // 不顯示 toast 避免頻繁提示
+  isUpdating.value = false
 }
 
 const removeItem = async (itemId: string) => {
   isUpdating.value = true
-  try {
-    await cartStore.removeItem(itemId)
-    toast.success('已移除', '商品已從購物車移除')
-  } catch (error: unknown) {
-    console.error('移除失敗:', error)
-    toast.error('移除失敗', '無法移除商品，請稍後再試')
-  } finally {
-    isUpdating.value = false
-  }
+  await cartStore.removeItem(itemId)
+  toast.success('已移除', '商品已從購物車移除')
+  isUpdating.value = false
 }
 
 const confirmClearCart = () => {
@@ -314,57 +302,41 @@ const confirmClearCart = () => {
 
 const clearCart = async () => {
   isClearing.value = true
-  try {
-    await cartStore.clearCart()
-    toast.success('已清空', '購物車已清空')
-    isClearModalOpen.value = false
-  } catch (error: unknown) {
-    console.error('清空失敗:', error)
-    toast.error('清空失敗', '無法清空購物車，請稍後再試')
-  } finally {
-    isClearing.value = false
-  }
+  await cartStore.clearCart()
+  toast.success('已清空', '購物車已清空')
+  isClearModalOpen.value = false
+  isClearing.value = false
 }
 
 const goToCheckout = async () => {
-  try {
-    const validation = await cartStore.validateCart()
-    if (!validation.isValid) {
-      // 顯示詳細的驗證問題
-      if (validation.issues && validation.issues.length > 0) {
-        const issueMessages = validation.issues.map(issue => issue.issue).join('、')
-        toast.warning('無法結帳', issueMessages)
-      } else {
-        toast.warning('無法結帳', '請檢查商品庫存或價格')
-      }
-      // 重新載入購物車以獲取最新狀態
-      await cartStore.fetchCart()
-      return
+  const validation = await cartStore.validateCart()
+  if (!validation.isValid) {
+    // 顯示詳細的驗證問題
+    if (validation.issues && validation.issues.length > 0) {
+      const issueMessages = validation.issues.map(issue => issue.issue).join('、')
+      toast.warning('無法結帳', issueMessages)
+    } else {
+      toast.warning('無法結帳', '請檢查商品庫存或價格')
     }
-    // GA4: 追蹤開始結帳
-    trackBeginCheckout(
-      cartStore.items.map(item => ({
-        id: item.productId,
-        name: item.product?.name || item.productName || '商品',
-        price: item.unitPrice || item.price || 0,
-        quantity: item.quantity
-      })),
-      cartStore.subtotal
-    )
-    router.push('/checkout')
-  } catch (error: unknown) {
-    console.error('驗證失敗:', error)
-    toast.error('驗證失敗', '無法驗證購物車，請稍後再試')
+    // 重新載入購物車以獲取最新狀態
+    await cartStore.fetchCart()
+    return
   }
+  // GA4: 追蹤開始結帳
+  trackBeginCheckout(
+    cartStore.items.map(item => ({
+      id: item.productId,
+      name: item.product?.name || item.productName || '商品',
+      price: item.unitPrice || item.price || 0,
+      quantity: item.quantity
+    })),
+    cartStore.subtotal
+  )
+  router.push('/checkout')
 }
 
 // Lifecycle
 onMounted(async () => {
-  try {
-    await cartStore.fetchCart()
-  } catch (error: unknown) {
-    console.error('載入購物車失敗:', error)
-    toast.error('載入失敗', '無法載入購物車，請重新整理頁面')
-  }
+  await cartStore.fetchCart()
 })
 </script>

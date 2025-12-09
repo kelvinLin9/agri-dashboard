@@ -201,12 +201,8 @@ const statusFilters = computed(() => [
 
 // Methods
 const fetchMyOrders = async () => {
-  try {
-    await orderStore.fetchMyOrders()
-    totalOrders.value = orderStore.orders.length // TODO: 需要從 API 獲取總數
-  } catch (error) {
-    console.error('獲取訂單失敗:', error)
-  }
+  await orderStore.fetchMyOrders()
+  totalOrders.value = orderStore.orders.length // TODO: 需要從 API 獲取總數
 }
 
 const viewOrder = (orderId: string) => {
@@ -224,20 +220,14 @@ const cancelOrder = async (orderId: string) => {
 
 const handleCancelConfirm = async () => {
   if (!cancellingOrderId.value) return
-  
+
   isCancelling.value = true
-  try {
-    await orderStore.cancelOrder(cancellingOrderId.value)
-    toast.success('訂單已取消')
-    confirmState.isOpen.value = false
-    fetchMyOrders()
-  } catch (error) {
-    console.error('取消訂單失敗:', error)
-    toast.error('取消失敗', '無法取消訂單，請稍後再試')
-  } finally {
-    isCancelling.value = false
-    cancellingOrderId.value = null
-  }
+  await orderStore.cancelOrder(cancellingOrderId.value)
+  toast.success('訂單已取消')
+  confirmState.isOpen.value = false
+  isCancelling.value = false
+  cancellingOrderId.value = null
+  fetchMyOrders()
 }
 
 const canCancel = (status: OrderStatus): boolean => {

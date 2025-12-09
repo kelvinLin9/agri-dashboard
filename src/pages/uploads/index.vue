@@ -495,7 +495,7 @@ const columns = [
     cell: ({ row }: any) => {
       const upload = row.original
       const UIcon = resolveComponent('UIcon')
-      
+
       if (upload.type === 'image') {
         return h('img', {
           src: upload.url,
@@ -543,7 +543,7 @@ const columns = [
     cell: ({ row }: any) => {
       const UButton = resolveComponent('UButton')
       const UTooltip = resolveComponent('UTooltip')
-      
+
       return h('div', { class: 'flex items-center gap-2' }, [
         h(UTooltip, { text: '查看' }, () =>
           h(UButton, {
@@ -571,60 +571,44 @@ const columns = [
 // Methods
 const fetchUploads = async () => {
   isLoading.value = true
-  try {
-    // getAll() doesn't take parameters, it returns all uploads
-    const data: Upload[] = await uploadApi.getAll()
-    uploads.value = Array.isArray(data) ? data : []
-    
-    pagination.value.total = uploads.value.length
-    
-    // Client-side filtering if needed
-    let filteredUploads = [...uploads.value]
-    
-    if (searchQuery.value) {
-      filteredUploads = filteredUploads.filter(u => 
-        u.originalName.toLowerCase().includes(searchQuery.value.toLowerCase())
-      )
-    }
-    
-    if (selectedType.value?.value) {
-      filteredUploads = filteredUploads.filter(u => u.type === selectedType.value?.value)
-    }
-    
-    // Apply pagination
-    const start = (pagination.value.page - 1) * pagination.value.limit
-    const end = start + pagination.value.limit
-    uploads.value = filteredUploads.slice(start, end)
-    pagination.value.total = filteredUploads.length
+  // getAll() doesn't take parameters, it returns all uploads
+  const data: Upload[] = await uploadApi.getAll()
+  uploads.value = Array.isArray(data) ? data : []
 
-    // Fetch statistics
-    await fetchStatistics()
-  } catch (error) {
-    console.error('獲取上傳列表失敗:', error)
-  } finally {
-    isLoading.value = false
+  pagination.value.total = uploads.value.length
+
+  // Client-side filtering if needed
+  let filteredUploads = [...uploads.value]
+
+  if (searchQuery.value) {
+    filteredUploads = filteredUploads.filter(u =>
+      u.originalName.toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
   }
+
+  if (selectedType.value?.value) {
+    filteredUploads = filteredUploads.filter(u => u.type === selectedType.value?.value)
+  }
+
+  // Apply pagination
+  const start = (pagination.value.page - 1) * pagination.value.limit
+  const end = start + pagination.value.limit
+  uploads.value = filteredUploads.slice(start, end)
+  pagination.value.total = filteredUploads.length
+
+  // Fetch statistics
+  await fetchStatistics()
+  isLoading.value = false
 }
 
 const fetchStatistics = async () => {
-  try {
-    // getStatistics() doesn't take parameters
-    const statsData = await uploadApi.getStatistics()
-    stats.value = {
-      totalFiles: statsData.totalFiles || uploads.value.length,
-      imageCount: statsData.imageCount || uploads.value.filter(u => u.type === 'image').length,
-      videoCount: statsData.videoCount || uploads.value.filter(u => u.type === 'video').length,
-      totalSize: statsData.totalSize || uploads.value.reduce((sum, u) => sum + (u.size || 0), 0),
-    }
-  } catch (error) {
-    console.error('獲取統計失敗:', error)
-    // Fallback to local calculation
-    stats.value = {
-      totalFiles: uploads.value.length,
-      imageCount: uploads.value.filter(u => u.type === 'image').length,
-      videoCount: uploads.value.filter(u => u.type === 'video').length,
-      totalSize: uploads.value.reduce((sum, u) => sum + (u.size || 0), 0),
-    }
+  // getStatistics() doesn't take parameters
+  const statsData = await uploadApi.getStatistics()
+  stats.value = {
+    totalFiles: statsData.totalFiles || uploads.value.length,
+    imageCount: statsData.imageCount || uploads.value.filter(u => u.type === 'image').length,
+    videoCount: statsData.videoCount || uploads.value.filter(u => u.type === 'video').length,
+    totalSize: statsData.totalSize || uploads.value.reduce((sum, u) => sum + (u.size || 0), 0),
   }
 }
 
@@ -663,27 +647,22 @@ const submitUpload = async () => {
   }
 
   isUploading.value = true
-  try {
-    if (uploadForm.value.multiple && uploadForm.value.files.length > 1) {
-      await uploadApi.uploadMultiple(uploadForm.value.files)
-    } else {
-      const file = uploadForm.value.files[0]
-      if (!file) return
-      
-      if (uploadForm.value.type?.value === 'image') {
-        await uploadApi.uploadImage(file)
-      } else {
-        await uploadApi.uploadVideo(file)
-      }
-    }
+  if (uploadForm.value.multiple && uploadForm.value.files.length > 1) {
+    await uploadApi.uploadMultiple(uploadForm.value.files)
+  } else {
+    const file = uploadForm.value.files[0]
+    if (!file) return
 
-    isUploadModalOpen.value = false
-    await fetchUploads()
-  } catch (error) {
-    console.error('上傳失敗:', error)
-  } finally {
-    isUploading.value = false
+    if (uploadForm.value.type?.value === 'image') {
+      await uploadApi.uploadImage(file)
+    } else {
+      await uploadApi.uploadVideo(file)
+    }
   }
+
+  isUploadModalOpen.value = false
+  isUploading.value = false
+  await fetchUploads()
 }
 
 const viewUpload = (upload: Upload) => {
@@ -708,15 +687,10 @@ const deleteUpload = async () => {
   if (!deletingUpload.value) return
 
   isDeleting.value = true
-  try {
-    await uploadApi.delete(deletingUpload.value.id)
-    isDeleteModalOpen.value = false
-    await fetchUploads()
-  } catch (error) {
-    console.error('刪除失敗:', error)
-  } finally {
-    isDeleting.value = false
-  }
+  await uploadApi.delete(deletingUpload.value.id)
+  isDeleteModalOpen.value = false
+  isDeleting.value = false
+  await fetchUploads()
 }
 
 const copyUrl = (url: string) => {

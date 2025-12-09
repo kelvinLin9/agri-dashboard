@@ -1,12 +1,15 @@
 import axios from 'axios'
 import type { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import { openLoading, closeLoading } from '@/utils/loading'
+import { showError } from '@/utils/globalToast'
 import type { ApiError } from './types'
 
-// 擴充 AxiosRequestConfig 類型以包含 _retry 屬性
+// 擴充 AxiosRequestConfig 類型以包含自定義屬性
 declare module 'axios' {
   export interface InternalAxiosRequestConfig {
     _retry?: boolean
+    _noToast?: boolean  // 禁止顯示錯誤 Toast
+    _silent?: boolean   // 靜默請求（不顯示 loading 也不顯示 toast）
   }
 }
 
@@ -88,13 +91,21 @@ apiClient.interceptors.response.use(
   async (error: AxiosError<ApiError>) => {
     hideLoading()
 
+    // 檢查是否應該顯示 Toast
+    const originalRequest = error.config
+    const shouldShowToast = originalRequest?._noToast || originalRequest?._silent
+
     // 處理錯誤響應
     if (error.response) {
       const { status, data } = error.response
 
+      // 格式化錯誤訊息
+      const errorMessage = Array.isArray(data.message)
+        ? data.message.join(', ')
+        : data.message || '發生未知錯誤'
+
       // 401 Unauthorized - Token 過期或無效
       if (status === 401) {
-        const originalRequest = error.config
 
         // 如果是刷新 token 的請求本身失敗，則直接登出
         if (originalRequest?.url?.includes('/auth/refresh')) {
@@ -183,43 +194,62 @@ apiClient.interceptors.response.use(
       // 403 Forbidden - 無權限
       if (status === 403) {
         console.error('無權限訪問:', data.message)
+        if (!shouldShowToast) {
+          showError('無權限', '您沒有權限執行此操作')
+        }
       }
 
       // 404 Not Found
       if (status === 404) {
         console.error('資源不存在:', data.message)
+        // 404 通常不需要顯示 toast，因為可能是正常的查詢結果
       }
 
       // 409 Conflict
       if (status === 409) {
         console.error('數據衝突:', data.message)
+        if (!shouldShowToast) {
+          showError('操作失敗', errorMessage || '數據衝突，請刷新後重試')
+        }
       }
 
       // 422 Validation Error
       if (status === 422) {
         console.error('驗證錯誤:', data.message)
+        if (!shouldShowToast) {
+          showError('資料驗證失敗', errorMessage || '請檢查輸入內容')
+        }
       }
 
       // 429 Too Many Requests
       if (status === 429) {
         console.error('請求過於頻繁，請稍後再試')
+        if (!shouldShowToast) {
+          showError('請求過於頻繁', '請稍後再試')
+        }
       }
 
       // 500+ Server Error
       if (status >= 500) {
         console.error('伺服器錯誤:', data.message || '請稍後再試')
+        if (!shouldShowToast) {
+          showError('伺服器錯誤', '系統發生問題，請稍後再試')
+        }
       }
 
       // 返回格式化的錯誤
       return Promise.reject({
         status,
-        message: Array.isArray(data.message) ? data.message.join(', ') : data.message,
+        message: errorMessage,
         error: data.error,
         data: data,
       })
     } else if (error.request) {
       // 請求已發送但沒有收到響應
       console.error('網路錯誤，請檢查網路連線')
+      if (!shouldShowToast) {
+        showError('網路錯誤', '請檢查網路連線')
+      }
       return Promise.reject({
         status: 0,
         message: '網路錯誤，請檢查網路連線',

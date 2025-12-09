@@ -70,8 +70,8 @@
               {{ isConnected ? '已連線' : '未連線' }}
             </p>
           </div>
-          <UIcon 
-            :name="isConnected ? 'i-heroicons-signal' : 'i-heroicons-signal-slash'" 
+          <UIcon
+            :name="isConnected ? 'i-heroicons-signal' : 'i-heroicons-signal-slash'"
             class="w-8 h-8"
             :class="isConnected ? 'text-green-500' : 'text-red-500'"
           />
@@ -239,16 +239,16 @@
 
             <!-- Title -->
             <UFormField label="標題" required>
-              <UInput 
-                v-model="createForm.title" 
+              <UInput
+                v-model="createForm.title"
                 placeholder="輸入通知標題"
               />
             </UFormField>
 
             <!-- Content -->
             <UFormField label="內容" required>
-              <UTextarea 
-                v-model="createForm.content" 
+              <UTextarea
+                v-model="createForm.content"
                 placeholder="輸入通知內容"
                 :rows="4"
               />
@@ -256,8 +256,8 @@
 
             <!-- Action URL -->
             <UFormField label="操作連結（選填）">
-              <UInput 
-                v-model="createForm.actionUrl" 
+              <UInput
+                v-model="createForm.actionUrl"
                 placeholder="https://example.com/action"
               />
             </UFormField>
@@ -275,14 +275,14 @@
 
           <template #footer>
             <div class="flex justify-end gap-2">
-              <UButton 
-                label="取消" 
-                color="neutral" 
+              <UButton
+                label="取消"
+                color="neutral"
                 variant="ghost"
                 @click="isCreateModalOpen = false"
               />
-              <UButton 
-                label="建立" 
+              <UButton
+                label="建立"
                 color="primary"
                 :loading="isCreating"
                 @click="handleCreateNotification"
@@ -569,21 +569,17 @@ const userOptions = ref<Array<{ value: string; label: string }>>([])
 
 // 載入用戶列表
 const loadUsers = async () => {
-  try {
-    const response = await apiClient.get('/members', {
-      params: { limit: 100 }
-    })
-    
-    // 響應結構: { data: { data: [...], total: N } }
-    const members = response.data.data?.data || response.data.data || []
-    
-    userOptions.value = members.map((member: any) => ({
-      value: member.userId,
-      label: `${member.user?.username || member.realName || '未知'} (${member.user?.email || ''})`,
-    }))
-  } catch (error) {
-    console.error('載入用戶列表失敗:', error)
-  }
+  const response = await apiClient.get('/members', {
+    params: { limit: 100 }
+  })
+
+  // 響應結構: { data: { data: [...], total: N } }
+  const members = response.data.data?.data || response.data.data || []
+
+  userOptions.value = members.map((member: any) => ({
+    value: member.userId,
+    label: `${member.user?.username || member.realName || '未知'} (${member.user?.email || ''})`,
+  }))
 }
 
 

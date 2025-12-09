@@ -166,7 +166,7 @@
     </UCard>
 
     <!-- Create/Edit Modal -->
-    <UModal 
+    <UModal
       v-model:open="isModalOpen"
       :title="editingProduct ? '編輯產品' : '新增產品'"
       :ui="{ content: 'sm:max-w-5xl' }"
@@ -288,12 +288,12 @@
                     <!-- 主圖片 -->
                     <div>
                       <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">主圖片</p>
-                      <div 
+                      <div
                         class="aspect-[4/3] bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600 relative group"
                       >
-                        <img 
-                          v-if="productForm.mainImage" 
-                          :src="productForm.mainImage" 
+                        <img
+                          v-if="productForm.mainImage"
+                          :src="productForm.mainImage"
                           class="w-full h-full object-contain"
                           @error="(e: Event) => (e.target as HTMLImageElement).style.display = 'none'"
                         />
@@ -302,14 +302,14 @@
                           <p class="text-xs">尚無主圖片</p>
                         </div>
                         <!-- 主圖片操作按鈕 -->
-                        <div 
+                        <div
                           v-if="productForm.mainImage"
                           class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
                         >
-                          <UButton 
-                            icon="i-heroicons-trash" 
-                            size="sm" 
-                            color="error" 
+                          <UButton
+                            icon="i-heroicons-trash"
+                            size="sm"
+                            color="error"
                             variant="solid"
                             @click="productForm.mainImage = ''"
                           />
@@ -333,10 +333,10 @@
                         class="hidden"
                         @change="onImageSelect"
                       />
-                      <UIcon 
-                        :name="isUploadingImage ? 'i-heroicons-arrow-path' : 'i-heroicons-cloud-arrow-up'" 
+                      <UIcon
+                        :name="isUploadingImage ? 'i-heroicons-arrow-path' : 'i-heroicons-cloud-arrow-up'"
                         :class="isUploadingImage ? 'animate-spin' : ''"
-                        class="w-8 h-8 mx-auto mb-2 text-gray-400" 
+                        class="w-8 h-8 mx-auto mb-2 text-gray-400"
                       />
                       <p class="text-sm text-gray-500 dark:text-gray-400">
                         {{ isUploadingImage ? '上傳中...' : '點擊或拖曳圖片上傳' }}
@@ -350,33 +350,33 @@
                         <span class="text-gray-400">· 點擊設為主圖</span>
                       </p>
                       <div class="grid grid-cols-3 gap-2">
-                        <div 
-                          v-for="(img, index) in allImages" 
+                        <div
+                          v-for="(img, index) in allImages"
                           :key="index"
                           class="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden relative group cursor-pointer"
                           :class="{ 'ring-2 ring-primary ring-offset-2': img === productForm.mainImage }"
                           @click="setAsMainImage(img)"
                         >
-                          <img 
-                            :src="img" 
+                          <img
+                            :src="img"
                             class="w-full h-full object-cover"
                             @error="(e: Event) => (e.target as HTMLImageElement).style.display = 'none'"
                           />
                           <!-- 主圖標記 -->
-                          <div 
+                          <div
                             v-if="img === productForm.mainImage"
                             class="absolute top-1 left-1 bg-primary text-white text-xs px-1.5 py-0.5 rounded"
                           >
                             主圖
                           </div>
                           <!-- 刪除按鈕 -->
-                          <div 
+                          <div
                             class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                           >
-                            <UButton 
-                              icon="i-heroicons-trash" 
-                              size="xs" 
-                              color="error" 
+                            <UButton
+                              icon="i-heroicons-trash"
+                              size="xs"
+                              color="error"
                               variant="solid"
                               @click.stop="removeImage(index)"
                             />
@@ -384,7 +384,7 @@
                         </div>
                       </div>
                     </div>
-                    
+
                     <!-- 提示文字 -->
                     <p class="text-xs text-gray-400 dark:text-gray-500">
                       建議圖片尺寸：800x800 像素以上，支援 JPG、PNG 格式
@@ -413,7 +413,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- 表單按鈕 (移入 UForm 內以便驗證) -->
           <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-4">
             <UButton
@@ -433,7 +433,7 @@
     </UModal>
 
     <!-- View Product Modal -->
-    <UModal 
+    <UModal
       v-model:open="isViewModalOpen"
       title="產品詳情"
     >
@@ -571,7 +571,7 @@
     </UModal>
 
     <!-- Delete Confirmation Modal -->
-    <UModal 
+    <UModal
       v-model:open="isDeleteModalOpen"
       title="確認刪除"
     >
@@ -724,9 +724,9 @@ const triggerImageUpload = () => {
 
 const handleUploadImages = async (files: File[]) => {
   if (files.length === 0) return
-  
+
   isUploadingImage.value = true
-  
+
   try {
     // 驗證檔案
     for (const file of files) {
@@ -735,7 +735,7 @@ const handleUploadImages = async (files: File[]) => {
         throw new Error(validation.error)
       }
     }
-    
+
     // 上傳並添加到表單
     const urls = await imageUpload.uploadFiles(files)
     for (const url of urls) {
@@ -746,7 +746,7 @@ const handleUploadImages = async (files: File[]) => {
         productForm.value.mainImage = url
       }
     }
-    
+
     toast.add({
       title: '上傳成功',
       description: `成功上傳 ${files.length} 張圖片`,
@@ -792,22 +792,22 @@ const statusOptions = [
 // Helper function to flatten category tree with indentation
 const flattenCategoryTree = (tree: any[], level = 0, parentPath = ''): { label: string, value: string, level: number }[] => {
   const result: { label: string, value: string, level: number }[] = []
-  
+
   tree.forEach(category => {
     const currentPath = parentPath ? `${parentPath} > ${category.name}` : category.name
     const indent = '　'.repeat(level) // 全形空格用於縮排
-    
+
     result.push({
       label: `${indent}${category.name}`,
       value: category.id.toString(), // 確保是字串
       level
     })
-    
+
     if (category.children && Array.isArray(category.children) && category.children.length > 0) {
       result.push(...flattenCategoryTree(category.children, level + 1, currentPath))
     }
   })
-  
+
   return result
 }
 
@@ -888,8 +888,8 @@ const columns = [
     cell: ({ row }: any) => {
       const UBadge = resolveComponent('UBadge')
       if (row.original.category) {
-        return h(UBadge, { 
-          color: 'gray', 
+        return h(UBadge, {
+          color: 'gray',
           variant: 'soft',
           size: 'md'
         }, () => row.original.category.name)
@@ -934,10 +934,10 @@ const columns = [
     cell: ({ row }: any) => {
       const UButton = resolveComponent('UButton')
       const UTooltip = resolveComponent('UTooltip')
-      
+
       return h('div', { class: 'flex items-center gap-2' }, [
         // 查看按鈕
-        h(UTooltip, { text: '查看詳情' }, () => 
+        h(UTooltip, { text: '查看詳情' }, () =>
           h(UButton, {
             icon: 'i-heroicons-eye',
             size: 'sm',
@@ -981,7 +981,7 @@ const activeCount = computed(() => {
 })
 
 const lowStockCount = computed(() => {
-  return products.value.filter(p => 
+  return products.value.filter(p =>
     p.stockQuantity <= (p.lowStockThreshold || 10)
   ).length
 })
@@ -992,49 +992,34 @@ const featuredCount = computed(() => {
 
 // Methods
 const fetchCategoryTree = async () => {
-  try {
-    const response = await categoriesApi.getTree()
-    // getTree returns ApiResponse<Category[]>, need to extract .data
-    categoryTree.value = Array.isArray(response) ? response : (response.data || [])
-  } catch (error) {
-    console.error('獲取分類樹失敗:', error)
-    categoryTree.value = []
-  }
+  const response = await categoriesApi.getTree()
+  // getTree returns ApiResponse<Category[]>, need to extract .data
+  categoryTree.value = Array.isArray(response) ? response : (response.data || [])
 }
 
 const fetchCategories = async () => {
-  try {
-    const response = await categoriesApi.getAll()
-    // @ts-ignore - API response type mismatch handling
-    categories.value = Array.isArray(response) ? response : (response.data || [])
-  } catch (error) {
-    console.error('獲取分類失敗:', error)
-  }
+  const response = await categoriesApi.getAll()
+  // @ts-ignore - API response type mismatch handling
+  categories.value = Array.isArray(response) ? response : (response.data || [])
 }
 
 const fetchProducts = async () => {
   isLoading.value = true
-  try {
-    const params: any = {
-      page: page.value,
-      limit: limit.value,
-      sortBy: 'createdAt',
-      sortOrder: 'DESC',
-    }
-
-    if (search.value) params.search = search.value
-    if (filterCategory.value) params.categoryId = filterCategory.value
-    if (filterStatus.value) params.status = filterStatus.value
-
-    const response = await productsApi.getAll(params)
-    products.value = response.data
-    total.value = response.meta.total
-  } catch (error: any) {
-    console.error('獲取產品失敗:', error)
-    // TODO: Show error toast
-  } finally {
-    isLoading.value = false
+  const params: any = {
+    page: page.value,
+    limit: limit.value,
+    sortBy: 'createdAt',
+    sortOrder: 'DESC',
   }
+
+  if (search.value) params.search = search.value
+  if (filterCategory.value) params.categoryId = filterCategory.value
+  if (filterStatus.value) params.status = filterStatus.value
+
+  const response = await productsApi.getAll(params)
+  products.value = response.data
+  total.value = response.meta.total
+  isLoading.value = false
 }
 
 
@@ -1108,7 +1093,7 @@ const saveProduct = async () => {
   isSaving.value = true
   try {
     const data: any = { ...productForm.value }
-    
+
     if (editingProduct.value) {
       await productsApi.update(editingProduct.value.id, data)
       toast.add({ title: '更新成功', description: '產品已成功更新', color: 'success' })
@@ -1135,17 +1120,10 @@ const deleteProduct = async () => {
   if (!deletingProduct.value) return
 
   isDeleting.value = true
-  try {
-    await productsApi.delete(deletingProduct.value.id)
-    isDeleteModalOpen.value = false
-    fetchProducts()
-    // TODO: Show success toast
-  } catch (error: any) {
-    console.error('刪除產品失敗:', error)
-    // TODO: Show error toast
-  } finally {
-    isDeleting.value = false
-  }
+  await productsApi.delete(deletingProduct.value.id)
+  isDeleteModalOpen.value = false
+  isDeleting.value = false
+  fetchProducts()
 }
 
 // Helper Functions

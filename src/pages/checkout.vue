@@ -226,25 +226,20 @@ const validateCoupon = async () => {
   isValidatingCoupon.value = true
   couponError.value = ''
 
-  try {
-    const result = await couponsApi.validate(couponCode.value, cartStore.subtotal)
+  const result = await couponsApi.validate(couponCode.value, cartStore.subtotal)
 
-    if (result.isValid && result.coupon && result.discountAmount !== undefined) {
-      appliedCoupon.value = {
-        code: result.coupon.code,
-        name: result.coupon.name,
-      }
-      discountAmount.value = result.discountAmount
-      toast.success('優惠碼已套用', `折扣 $${result.discountAmount}`)
-    } else {
-      couponError.value = result.message || '優惠碼無效'
+  if (result.isValid && result.coupon && result.discountAmount !== undefined) {
+    appliedCoupon.value = {
+      code: result.coupon.code,
+      name: result.coupon.name,
     }
-  } catch (error) {
-    console.error('驗證優惠碼失敗:', error)
-    couponError.value = '驗證失敗，請稍後再試'
-  } finally {
-    isValidatingCoupon.value = false
+    discountAmount.value = result.discountAmount
+    toast.success('優惠碼已套用', `折扣 $${result.discountAmount}`)
+  } else {
+    couponError.value = result.message || '優惠碼無效'
   }
+
+  isValidatingCoupon.value = false
 }
 
 // 移除優惠碼
@@ -262,32 +257,26 @@ const submitOrder = async () => {
   }
 
   isSubmitting.value = true
-  try {
-    // 建立訂單時包含優惠碼資訊
-    const orderData = {
-      ...form.value,
-      couponCode: appliedCoupon.value?.code || undefined,
-      discountAmount: discountAmount.value || 0,
-    }
-    const order = await orderStore.createOrderFromCart(orderData)
-    // GA4: 追蹤購買完成
-    trackPurchase({
-      transactionId: order.orderNumber || order.id.toString(),
-      value: order.totalAmount || totalAmount.value,
-      items: cartStore.items.map(item => ({
-        id: item.productId,
-        name: item.product?.name || item.productName || '商品',
-        price: item.unitPrice || item.price || 0,
-        quantity: item.quantity
-      }))
-    })
-    toast.success('訂單已建立', `訂單編號: ${order.orderNumber}`)
-    router.push(`/payment?orderId=${order.id}`)
-  } catch (error: unknown) {
-    console.error('建立訂單失敗:', error)
-    toast.error('建立訂單失敗', '無法建立訂單，請稍後再試')
-  } finally {
-    isSubmitting.value = false
+  // 建立訂單時包含優惠碼資訊
+  const orderData = {
+    ...form.value,
+    couponCode: appliedCoupon.value?.code || undefined,
+    discountAmount: discountAmount.value || 0,
   }
+  const order = await orderStore.createOrderFromCart(orderData)
+  // GA4: 追蹤購買完成
+  trackPurchase({
+    transactionId: order.orderNumber || order.id.toString(),
+    value: order.totalAmount || totalAmount.value,
+    items: cartStore.items.map(item => ({
+      id: item.productId,
+      name: item.product?.name || item.productName || '商品',
+      price: item.unitPrice || item.price || 0,
+      quantity: item.quantity
+    }))
+  })
+  toast.success('訂單已建立', `訂單編號: ${order.orderNumber}`)
+  isSubmitting.value = false
+  router.push(`/payment?orderId=${order.id}`)
 }
 </script>

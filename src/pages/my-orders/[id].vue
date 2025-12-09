@@ -288,11 +288,7 @@ const canCancel = computed(() => {
 
 // Methods
 const fetchOrder = async () => {
-  try {
-    await orderStore.fetchOrderById(orderId)
-  } catch (error) {
-    console.error('獲取訂單失敗:', error)
-  }
+  await orderStore.fetchOrderById(orderId)
 }
 
 const goToPayment = () => {
@@ -305,17 +301,11 @@ const confirmCancel = () => {
 
 const cancelOrder = async () => {
   isCancelling.value = true
-  try {
-    await orderStore.cancelOrder(orderId)
-    toast.success('訂單已取消')
-    showCancelDialog.value = false
-    fetchOrder()
-  } catch (error) {
-    console.error('取消訂單失敗:', error)
-    toast.error('取消失敗', '無法取消訂單，請稍後再試')
-  } finally {
-    isCancelling.value = false
-  }
+  await orderStore.cancelOrder(orderId)
+  toast.success('訂單已取消')
+  showCancelDialog.value = false
+  isCancelling.value = false
+  fetchOrder()
 }
 
 const getPaymentMethodLabel = (method: string): string => {

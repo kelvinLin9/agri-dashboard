@@ -510,59 +510,50 @@ const sortOptions = [
 
 // Methods
 const fetchCategories = async () => {
-  try {
-    const response = await categoriesApi.getAll()
-    categories.value = Array.isArray(response) ? response : (response.data || [])
-  } catch (error) {
-    console.error('獲取分類失敗:', error)
-  }
+  const response = await categoriesApi.getAll()
+  categories.value = Array.isArray(response) ? response : (response.data || [])
 }
 
 const fetchProducts = async () => {
   isLoading.value = true
-  try {
-    const params: any = {
-      page: page.value,
-      limit: limit.value,
-      status: 'active', // Only show active products
-    }
-
-    if (search.value) params.search = search.value
-    if (filterCategory.value) params.categoryId = filterCategory.value
-    if (minPrice.value !== undefined && minPrice.value > 0) params.minPrice = minPrice.value
-    if (maxPrice.value !== undefined && maxPrice.value > 0) params.maxPrice = maxPrice.value
-    if (filterIsNew.value) params.isNew = true
-    if (filterIsFeatured.value) params.isFeatured = true
-
-    // Sort
-    if (filterSort.value === 'newest') {
-      params.sortBy = 'createdAt'
-      params.sortOrder = 'DESC'
-    } else if (filterSort.value === 'price_asc') {
-      params.sortBy = 'originalPrice'
-      params.sortOrder = 'ASC'
-    } else if (filterSort.value === 'price_desc') {
-      params.sortBy = 'originalPrice'
-      params.sortOrder = 'DESC'
-    }
-
-    const response = await productsApi.getAll(params)
-    let filteredProducts = response.data
-
-    // 特價篩選（前端過濾：有 salePrice 且小於 originalPrice）
-    if (filterOnSale.value) {
-      filteredProducts = filteredProducts.filter(
-        (p: Product) => p.salePrice && p.originalPrice && p.salePrice < p.originalPrice
-      )
-    }
-
-    products.value = filteredProducts
-    total.value = filterOnSale.value ? filteredProducts.length : response.meta.total
-  } catch (error: any) {
-    console.error('獲取商品失敗:', error)
-  } finally {
-    isLoading.value = false
+  const params: Record<string, unknown> = {
+    page: page.value,
+    limit: limit.value,
+    status: 'active', // Only show active products
   }
+
+  if (search.value) params.search = search.value
+  if (filterCategory.value) params.categoryId = filterCategory.value
+  if (minPrice.value !== undefined && minPrice.value > 0) params.minPrice = minPrice.value
+  if (maxPrice.value !== undefined && maxPrice.value > 0) params.maxPrice = maxPrice.value
+  if (filterIsNew.value) params.isNew = true
+  if (filterIsFeatured.value) params.isFeatured = true
+
+  // Sort
+  if (filterSort.value === 'newest') {
+    params.sortBy = 'createdAt'
+    params.sortOrder = 'DESC'
+  } else if (filterSort.value === 'price_asc') {
+    params.sortBy = 'originalPrice'
+    params.sortOrder = 'ASC'
+  } else if (filterSort.value === 'price_desc') {
+    params.sortBy = 'originalPrice'
+    params.sortOrder = 'DESC'
+  }
+
+  const response = await productsApi.getAll(params)
+  let filteredProducts = response.data
+
+  // 特價篩選（前端過濾：有 salePrice 且小於 originalPrice）
+  if (filterOnSale.value) {
+    filteredProducts = filteredProducts.filter(
+      (p: Product) => p.salePrice && p.originalPrice && p.salePrice < p.originalPrice
+    )
+  }
+
+  products.value = filteredProducts
+  total.value = filterOnSale.value ? filteredProducts.length : response.meta.total
+  isLoading.value = false
 }
 
 const handleSearch = () => {
@@ -610,16 +601,11 @@ const clearFilters = () => {
 }
 
 const handleToggleWishlist = async (productId: number | string) => {
-  try {
-    const isNowInWishlist = await wishlist.toggleWishlist(productId)
-    toast.success(
-      isNowInWishlist ? '已加入收藏' : '已取消收藏',
-      isNowInWishlist ? '可在收藏頁面查看' : ''
-    )
-  } catch (error) {
-    console.error('收藏操作失敗:', error)
-    toast.error('操作失敗', '請稍後再試')
-  }
+  const isNowInWishlist = await wishlist.toggleWishlist(productId)
+  toast.success(
+    isNowInWishlist ? '已加入收藏' : '已取消收藏',
+    isNowInWishlist ? '可在收藏頁面查看' : ''
+  )
 }
 
 const viewProduct = (product: Product) => {
@@ -627,24 +613,19 @@ const viewProduct = (product: Product) => {
 }
 
 const addToCart = async (product: Product) => {
-  try {
-    await cartStore.addItem({
-      productId: product.id,
-      quantity: 1
-    })
-    // GA4: 追蹤加入購物車
-    trackAddToCart({
-      id: product.id,
-      name: product.name,
-      category: product.category?.name,
-      price: product.salePrice || product.originalPrice,
-      quantity: 1
-    })
-    toast.success('已加入購物車', product.name)
-  } catch (error: any) {
-    console.error('加入購物車失敗:', error)
-    toast.error('加入失敗', '無法加入購物車，請稍後再試')
-  }
+  await cartStore.addItem({
+    productId: product.id,
+    quantity: 1
+  })
+  // GA4: 追蹤加入購物車
+  trackAddToCart({
+    id: product.id,
+    name: product.name,
+    category: product.category?.name,
+    price: product.salePrice || product.originalPrice,
+    quantity: 1
+  })
+  toast.success('已加入購物車', product.name)
 }
 
 // Lifecycle

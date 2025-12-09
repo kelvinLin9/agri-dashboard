@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-8">
+  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900 flex items-center justify-center py-8">
     <div class="container mx-auto px-6 max-w-md">
       <UCard>
         <div class="text-center py-8">

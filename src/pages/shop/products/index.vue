@@ -1,12 +1,12 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-green-50/30 to-emerald-50/50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+  <div class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50/30 to-green-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
     <!-- Hero Banner with animated background -->
-    <div class="relative overflow-hidden bg-gradient-to-r from-green-600 via-emerald-500 to-teal-500 text-white py-16 md:py-20">
+    <div class="relative overflow-hidden bg-gradient-to-r from-harvest-600 via-earth-500 to-harvest-500 text-white py-16 md:py-20">
       <!-- Animated background elements -->
       <div class="absolute inset-0 overflow-hidden">
         <div class="absolute -top-1/2 -left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-        <div class="absolute -bottom-1/2 -right-1/4 w-96 h-96 bg-emerald-300/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
-        <div class="absolute top-1/4 right-1/4 w-64 h-64 bg-teal-400/15 rounded-full blur-2xl animate-pulse" style="animation-delay: 0.5s;"></div>
+        <div class="absolute -bottom-1/2 -right-1/4 w-96 h-96 bg-orange-300/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+        <div class="absolute top-1/4 right-1/4 w-64 h-64 bg-amber-400/15 rounded-full blur-2xl animate-pulse" style="animation-delay: 0.5s;"></div>
       </div>
       
       <!-- Decorative leaf patterns -->
@@ -19,13 +19,13 @@
       <div class="container mx-auto px-6 relative z-10">
         <div class="max-w-2xl">
           <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium mb-6">
-            <span class="w-2 h-2 bg-green-300 rounded-full animate-pulse"></span>
+            <span class="w-2 h-2 bg-amber-300 rounded-full animate-pulse"></span>
             新鮮直送・每日精選
           </div>
           <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 tracking-tight">
             農產品商店
           </h1>
-          <p class="text-lg md:text-xl text-green-100 leading-relaxed max-w-lg">
+          <p class="text-lg md:text-xl text-amber-100 leading-relaxed max-w-lg">
             嚴選台灣在地優質農產，從產地直送到您家，享受最新鮮的美味
           </p>
           
@@ -51,7 +51,7 @@
     <div class="container mx-auto px-6 py-10">
       <!-- Search and Filters with glassmorphism -->
       <div class="relative mb-10 -mt-8">
-        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl shadow-green-500/5 border border-white/50 dark:border-gray-700/50 p-6">
+        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl shadow-amber-500/5 border border-white/50 dark:border-gray-700/50 p-6">
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-6">
             <!-- Search -->
             <div class="md:col-span-2">
@@ -110,7 +110,7 @@
         <div
           v-for="(product, index) in products"
           :key="product.id"
-          class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-green-500/10 transition-all duration-500 cursor-pointer transform hover:-translate-y-2"
+          class="group relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-500 cursor-pointer transform hover:-translate-y-2"
           :style="{ animationDelay: `${index * 50}ms` }"
           @click="viewProduct(product)"
         >
@@ -160,12 +160,12 @@
           <!-- Product Info -->
           <div class="p-5 space-y-3">
             <!-- Category tag -->
-            <div v-if="product.category" class="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+            <div v-if="product.category" class="inline-flex items-center gap-1 text-xs text-harvest-600 dark:text-harvest-400 font-medium">
               <UIcon name="i-heroicons-tag" class="w-3 h-3" />
               {{ product.category?.name || '農產品' }}
             </div>
             
-            <h3 class="font-bold text-lg text-gray-900 dark:text-white line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+            <h3 class="font-bold text-lg text-gray-900 dark:text-white line-clamp-2 group-hover:text-harvest-600 dark:group-hover:text-harvest-400 transition-colors">
               {{ product.name }}
             </h3>
 
@@ -175,7 +175,7 @@
 
             <!-- Price -->
             <div class="flex items-baseline gap-2 pt-2">
-              <span v-if="product.salePrice" class="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
+              <span v-if="product.salePrice" class="text-2xl font-bold bg-gradient-to-r from-harvest-600 to-earth-500 bg-clip-text text-transparent">
                 ${{ product.salePrice.toLocaleString() }}
               </span>
               <span
@@ -231,7 +231,7 @@
 
       <!-- Pagination -->
       <div v-if="products.length > 0" class="flex justify-center mt-12">
-        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl shadow-green-500/5 border border-white/50 dark:border-gray-700/50 p-4">
+        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl shadow-amber-500/5 border border-white/50 dark:border-gray-700/50 p-4">
           <UPagination
             v-model:page="page"
             :items-per-page="limit"

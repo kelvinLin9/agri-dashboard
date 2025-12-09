@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900">
     <div class="container mx-auto px-6 py-8">
       <!-- Header -->
       <div class="mb-8">
@@ -181,7 +181,7 @@
               <!-- Total -->
               <div class="flex justify-between text-xl font-bold">
                 <span>總計</span>
-                <span class="text-green-600">${{ cartStore.subtotal.toLocaleString() }}</span>
+                <span class="text-harvest-600">${{ cartStore.subtotal.toLocaleString() }}</span>
               </div>
 
               <!-- Checkout Button -->
@@ -209,17 +209,17 @@
           </UCard>
 
           <!-- Trust Badges -->
-          <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div class="mt-6 p-4 bg-harvest-50 dark:bg-harvest-900/20 rounded-lg">
             <div class="space-y-3 text-sm">
-              <div class="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <div class="flex items-center gap-2 text-harvest-700 dark:text-harvest-300">
                 <UIcon name="i-heroicons-shield-check" />
                 <span>安全結帳</span>
               </div>
-              <div class="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <div class="flex items-center gap-2 text-harvest-700 dark:text-harvest-300">
                 <UIcon name="i-heroicons-truck" />
                 <span>快速配送</span>
               </div>
-              <div class="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <div class="flex items-center gap-2 text-harvest-700 dark:text-harvest-300">
                 <UIcon name="i-heroicons-arrow-path" />
                 <span>7天鑑賞期</span>
               </div>

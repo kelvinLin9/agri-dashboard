@@ -4,7 +4,7 @@
       <!-- Logo and Title -->
       <div class="text-center mb-8">
         <div class="flex justify-center mb-4">
-          <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center">
+          <div class="w-16 h-16 bg-gradient-to-br from-harvest-500 to-earth-600 rounded-2xl flex items-center justify-center">
             <UIcon name="i-heroicons-building-storefront" class="w-10 h-10 text-white" />
           </div>
         </div>
@@ -32,7 +32,7 @@
         <!-- Password -->
         <UFormField label="密碼">
           <template #hint>
-            <a href="#" class="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400">
+            <a href="#" class="text-sm text-harvest-600 hover:text-harvest-500 dark:text-harvest-400">
               忘記密碼？
             </a>
           </template>
@@ -148,7 +148,7 @@
       <div class="mt-6 text-center">
         <p class="text-sm text-gray-600 dark:text-gray-400">
           還沒有帳號？
-          <router-link to="/register" class="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium">
+          <router-link to="/register" class="text-harvest-600 hover:text-harvest-500 dark:text-harvest-400 font-medium">
             立即註冊
           </router-link>
         </p>

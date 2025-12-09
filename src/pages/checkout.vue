@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900 py-8">
     <div class="container mx-auto px-6">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">結帳</h1>
 
@@ -81,7 +81,7 @@
               <div class="border-t pt-4">
                 <div class="flex justify-between text-xl font-bold">
                   <span>總計</span>
-                  <span class="text-green-600">${{ (cartStore.subtotal + 60).toLocaleString() }}</span>
+                  <span class="text-harvest-600">${{ (cartStore.subtotal + 60).toLocaleString() }}</span>
                 </div>
               </div>
 

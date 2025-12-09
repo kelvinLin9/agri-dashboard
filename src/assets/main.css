@@ -1,7 +1,50 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
 
-@theme static {}
+@theme static {
+  /* ===================================
+     農產品網站設計系統 - 自訂色板
+     =================================== */
+
+  /* Harvest 豐收暖橙系 - 主色調，用於按鈕、連結、強調 */
+  --color-harvest-50: #FFFBEB;
+  --color-harvest-100: #FEF3C7;
+  --color-harvest-200: #FDE68A;
+  --color-harvest-300: #FCD34D;
+  --color-harvest-400: #FBBF24;
+  --color-harvest-500: #F59E0B;
+  --color-harvest-600: #D97706;
+  --color-harvest-700: #B45309;
+  --color-harvest-800: #92400E;
+  --color-harvest-900: #78350F;
+  --color-harvest-950: #451A03;
+
+  /* Earth 大地土壤系 - 次要強調，用於漸層、輔助元素 */
+  --color-earth-50: #FFF7ED;
+  --color-earth-100: #FFEDD5;
+  --color-earth-200: #FED7AA;
+  --color-earth-300: #FDBA74;
+  --color-earth-400: #FB923C;
+  --color-earth-500: #F97316;
+  --color-earth-600: #EA580C;
+  --color-earth-700: #C2410C;
+  --color-earth-800: #9A3412;
+  --color-earth-900: #7C2D12;
+  --color-earth-950: #431407;
+
+  /* Nature 自然綠意系 - 成功狀態、價格、農產主題 */
+  --color-nature-50: #ECFDF5;
+  --color-nature-100: #D1FAE5;
+  --color-nature-200: #A7F3D0;
+  --color-nature-300: #6EE7B7;
+  --color-nature-400: #34D399;
+  --color-nature-500: #10B981;
+  --color-nature-600: #059669;
+  --color-nature-700: #047857;
+  --color-nature-800: #065F46;
+  --color-nature-900: #064E3B;
+  --color-nature-950: #022C22;
+}
 
 /* Z-index 層級修復 - 確保 Modal 和下拉選單正確顯示在最上層 */
 [data-radix-popper-content-wrapper],

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-green-50/20 to-emerald-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+  <div class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50/20 to-green-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
     <div class="container mx-auto px-6 py-8">
       <!-- Back Button -->
       <UButton
@@ -63,7 +63,7 @@
               class="aspect-square bg-white dark:bg-gray-800 rounded-xl overflow-hidden cursor-pointer ring-2 transition-all duration-300"
               :class="[
                 selectedImage === image 
-                  ? 'ring-emerald-500 shadow-lg shadow-emerald-500/20' 
+                  ? 'ring-harvest-500 shadow-lg shadow-harvest-500/20' 
                   : 'ring-transparent hover:ring-gray-300 dark:hover:ring-gray-600'
               ]"
               @click="selectedImage = image"
@@ -110,7 +110,7 @@
           <!-- Price Card -->
           <div class="bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-800/50 rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-700">
             <div class="flex items-baseline gap-4">
-              <span v-if="product.salePrice" class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 to-emerald-500 bg-clip-text text-transparent">
+              <span v-if="product.salePrice" class="text-4xl md:text-5xl font-bold bg-gradient-to-r from-harvest-600 to-earth-500 bg-clip-text text-transparent">
                 ${{ product.salePrice.toLocaleString() }}
               </span>
               <span
@@ -124,7 +124,7 @@
               </span>
             </div>
             <div v-if="product.salePrice" class="flex items-center gap-2 mt-3">
-              <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
+              <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-nature-100 dark:bg-nature-900/30 text-nature-700 dark:text-nature-400 rounded-full text-sm font-medium">
                 <UIcon name="i-heroicons-gift" class="w-4 h-4" />
                 現省 ${{ (product.originalPrice - product.salePrice).toLocaleString() }}
               </div>
@@ -205,8 +205,8 @@
             </UButton>
             <UButton
               size="xl"
-              color="green"
-              class="flex-1 py-4 text-lg font-semibold shadow-lg shadow-green-500/25 hover:shadow-xl hover:shadow-green-500/30 transition-all duration-300"
+              color="primary"
+              class="flex-1 py-4 text-lg font-semibold shadow-lg shadow-earth-500/25 hover:shadow-xl hover:shadow-earth-500/30 transition-all duration-300"
               :disabled="product.stockQuantity <= 0 || isAddingToCart"
               @click="buyNow"
             >
@@ -218,13 +218,13 @@
           <!-- Product Details -->
           <div v-if="product.origin || product.shelfLife" class="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-md border border-gray-100 dark:border-gray-700">
             <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <UIcon name="i-heroicons-information-circle" class="w-5 h-5 text-emerald-500" />
+              <UIcon name="i-heroicons-information-circle" class="w-5 h-5 text-harvest-500" />
               商品資訊
             </h3>
             <div class="grid grid-cols-2 gap-4">
               <div v-if="product.origin" class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
-                  <UIcon name="i-heroicons-map-pin" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <div class="w-10 h-10 bg-harvest-100 dark:bg-harvest-900/30 rounded-full flex items-center justify-center">
+                  <UIcon name="i-heroicons-map-pin" class="w-5 h-5 text-harvest-600 dark:text-harvest-400" />
                 </div>
                 <div>
                   <p class="text-xs text-gray-500 dark:text-gray-400">產地來源</p>
@@ -248,7 +248,7 @@
       <!-- Product Description -->
       <div v-if="product && product.description" class="mt-12">
         <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden">
-          <div class="bg-gradient-to-r from-green-600 to-emerald-500 px-8 py-5">
+          <div class="bg-gradient-to-r from-harvest-600 to-earth-500 px-8 py-5">
             <h2 class="text-2xl font-bold text-white flex items-center gap-3">
               <UIcon name="i-heroicons-document-text" class="w-6 h-6" />
               商品詳情

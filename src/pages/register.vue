@@ -4,7 +4,7 @@
       <!-- Logo and Title -->
       <div class="text-center mb-8">
         <div class="flex justify-center mb-4">
-          <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center">
+          <div class="w-16 h-16 bg-gradient-to-br from-harvest-500 to-earth-600 rounded-2xl flex items-center justify-center">
             <UIcon name="i-heroicons-building-storefront" class="w-10 h-10 text-white" />
           </div>
         </div>
@@ -114,9 +114,9 @@
             <template #label>
               <span class="text-sm text-gray-600 dark:text-gray-400">
                 我同意
-                <a href="#" class="text-blue-600 hover:text-blue-500 dark:text-blue-400">服務條款</a>
+                <a href="#" class="text-harvest-600 hover:text-harvest-500 dark:text-harvest-400">服務條款</a>
                 和
-                <a href="#" class="text-blue-600 hover:text-blue-500 dark:text-blue-400">隱私政策</a>
+                <a href="#" class="text-harvest-600 hover:text-harvest-500 dark:text-harvest-400">隱私政策</a>
               </span>
             </template>
           </UCheckbox>
@@ -203,7 +203,7 @@
       <div class="mt-6 text-center">
         <p class="text-sm text-gray-600 dark:text-gray-400">
           已經有帳號了？
-          <router-link to="/login" class="text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium">
+          <router-link to="/login" class="text-harvest-600 hover:text-harvest-500 dark:text-harvest-400 font-medium">
             立即登入
           </router-link>
         </p>

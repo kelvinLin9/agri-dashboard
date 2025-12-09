@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900 py-8">
     <div class="container mx-auto px-6 max-w-3xl">
       <!-- Loading State -->
       <div v-if="isLoading" class="text-center py-12">
@@ -32,7 +32,7 @@
             <!-- Order Amount -->
             <div class="flex justify-between items-center pb-4 border-b">
               <span class="text-gray-600 dark:text-gray-400">訂單金額</span>
-              <span class="text-3xl font-bold text-green-600">${{ Number(order.totalAmount).toLocaleString() }}</span>
+              <span class="text-3xl font-bold text-harvest-600">${{ Number(order.totalAmount).toLocaleString() }}</span>
             </div>
 
             <!-- Order Items Summary -->
@@ -64,10 +64,10 @@
           <div class="space-y-4">
             <URadioGroup v-model="selectedPaymentMethod" :options="paymentMethods" />
 
-            <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+            <div class="bg-harvest-50 dark:bg-harvest-900/20 p-4 rounded-lg">
               <div class="flex items-start">
-                <UIcon name="i-heroicons-information-circle" class="text-blue-500 mt-0.5 mr-2" />
-                <div class="text-sm text-blue-700 dark:text-blue-300">
+                <UIcon name="i-heroicons-information-circle" class="text-harvest-500 mt-0.5 mr-2" />
+                <div class="text-sm text-harvest-700 dark:text-harvest-300">
                   <p class="font-semibold mb-1">支付說明</p>
                   <p v-if="selectedPaymentMethod === 'credit_card'">
                     點擊「前往支付」後，將跳轉至綠界金流頁面完成信用卡支付

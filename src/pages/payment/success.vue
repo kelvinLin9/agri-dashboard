@@ -1,10 +1,10 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center py-8">
+  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900 flex items-center justify-center py-8">
     <div class="container mx-auto px-6 max-w-md">
       <UCard>
         <div class="text-center py-8">
-          <div class="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full mx-auto mb-6 flex items-center justify-center">
-            <UIcon name="i-heroicons-check-circle" class="w-12 h-12 text-green-600" />
+          <div class="w-20 h-20 bg-nature-100 dark:bg-nature-900/20 rounded-full mx-auto mb-6 flex items-center justify-center">
+            <UIcon name="i-heroicons-check-circle" class="w-12 h-12 text-nature-600" />
           </div>
           
           <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900 py-8">
     <div class="container mx-auto px-6 max-w-4xl">
       <!-- Back Button -->
       <UButton
@@ -45,7 +45,7 @@
               <div v-for="step in orderSteps" :key="step.status" class="relative flex gap-4">
                 <div
                   class="w-8 h8 rounded-full flex items-center justify-center z-10"
-                  :class="step.completed ? 'bg-green-500' : 'bg-gray-300'"
+                  :class="step.completed ? 'bg-harvest-500' : 'bg-gray-300'"
                 >
                   <UIcon :name="step.icon" class="w-5 h-5 text-white" />
                 </div>
@@ -137,7 +137,7 @@
             <div class="border-t border-gray-200 dark:border-gray-700 pt-3">
               <div class="flex justify-between text-xl font-bold">
                 <span>訂單總額</span>
-                <span class="text-green-600">${{ order.totalAmount.toLocaleString() }}</span>
+                <span class="text-harvest-600">${{ order.totalAmount.toLocaleString() }}</span>
               </div>
             </div>
           </div>

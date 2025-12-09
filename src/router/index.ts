@@ -90,24 +90,33 @@ const router = createRouter({
         layout: 'blank'
       },
     },
+    {
+      path: '/welcome',
+      name: 'landing',
+      component: () => import('../pages/landing.vue'),
+      meta: {
+        requiresAuth: false,
+        layout: 'blank'
+      },
+    },
     // Shopping Flow Routes (Customer-facing)
     {
       path: '/shop',
       name: 'shop',
       redirect: '/shop/products',
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: false },  // 訪客可瀏覽
     },
     {
       path: '/shop/products',
       name: 'shop-products',
       component: () => import('../pages/shop/products/index.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: false },  // 訪客可瀏覽
     },
     {
       path: '/shop/products/:id',
       name: 'shop-product-detail',
       component: () => import('../pages/shop/products/[id].vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: false },  // 訪客可瀏覽
     },
     {
       path: '/cart',

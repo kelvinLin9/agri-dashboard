@@ -16,7 +16,14 @@ export default defineConfig({
         // dts: 'auto-imports.d.ts',
         // dirs: ['./src/utils/**', './src/stores/**', './src/api/**'],
       },
+      // 設定 semantic colors 使用自訂色板
       ui: {
+        colors: {
+          primary: 'harvest',    // 暖橙色 - 主要按鈕、連結
+          secondary: 'earth',    // 土橘色 - 次要強調
+          success: 'nature',     // 自然綠 - 成功狀態
+          neutral: 'stone',      // 石頭色 - 中性底色
+        },
         container: {
           base: 'w-full max-w-(--ui-container-2xl) mx-auto',
         },

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+  <div class="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-900 py-8">
     <div class="container mx-auto px-6">
       <!-- Header -->
       <div class="mb-8">
@@ -100,7 +100,7 @@
             </div>
             <div class="text-right">
               <p class="text-sm text-gray-600 dark:text-gray-400">訂單總額</p>
-              <p class="text-xl font-bold text-green-600">${{ Number(order.totalAmount).toLocaleString() }}</p>
+              <p class="text-xl font-bold text-harvest-600">${{ Number(order.totalAmount).toLocaleString() }}</p>
             </div>
           </div>
 

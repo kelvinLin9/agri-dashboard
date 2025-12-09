@@ -15,7 +15,7 @@ export const authApi = {
    * 使用 _noToast 標誌以便在頁面中自定錯誤處理
    */
   register: async (data: RegisterDto): Promise<AuthResponse> => {
-    const response = await apiClient.post<{ data: AuthResponse }>('/auth/register', data, { _noToast: true } as any)
+    const response = await apiClient.post<{ data: AuthResponse }>('/auth/register', data, { _noToast: true } as unknown as object)
     const authData = response.data.data
 
     // 儲存 token
@@ -32,7 +32,7 @@ export const authApi = {
    * 使用 _noToast 標誌以便在頁面中自定錯誤處理（安全考量：不顯示具體錯誤細節）
    */
   login: async (data: LoginDto): Promise<AuthResponse> => {
-    const response = await apiClient.post<{ data: AuthResponse }>('/auth/login', data, { _noToast: true } as any)
+    const response = await apiClient.post<{ data: AuthResponse }>('/auth/login', data, { _noToast: true } as unknown as object)
     // 後端使用 ResponseTransformInterceptor 包裝響應為 { data: {...} }
     const authData = response.data.data
 

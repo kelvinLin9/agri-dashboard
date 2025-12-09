@@ -159,7 +159,7 @@
     <!-- Footer -->
     <div class="absolute bottom-4 left-0 right-0 text-center">
       <p class="text-sm text-gray-500 dark:text-gray-400">
-        © 2025 農業管理系統. All rights reserved.
+        © 2025 日沐 SunBathe. All rights reserved.
       </p>
     </div>
   </div>
@@ -210,17 +210,17 @@ const isValidUsername = (username: string): boolean => {
 // Computed
 const isFormValid = computed(() => {
   const { usernameOrEmail, password } = loginForm.value
-  
+
   // 檢查欄位非空
   if (!usernameOrEmail.trim() || !password.trim()) {
     return false
   }
-  
+
   // 密碼最少 6 個字符
   if (password.length < 6) {
     return false
   }
-  
+
   // 用戶名或 Email 格式驗證
   const input = usernameOrEmail.trim()
   // 如果包含 @，則視為 email，否則視為 username
@@ -234,11 +234,11 @@ const isFormValid = computed(() => {
 // 表單驗證提示
 const getInputError = (): string => {
   const { usernameOrEmail, password } = loginForm.value
-  
+
   if (!usernameOrEmail.trim()) {
     return ''
   }
-  
+
   const input = usernameOrEmail.trim()
   if (input.includes('@')) {
     if (!isValidEmail(input)) {
@@ -249,11 +249,11 @@ const getInputError = (): string => {
       return '用戶名格式不正確（3-20個字符，只能包含字母、數字、底線）'
     }
   }
-  
+
   if (password && password.length > 0 && password.length < 6) {
     return '密碼至少需要 6 個字符'
   }
-  
+
   return ''
 }
 
@@ -273,7 +273,7 @@ const handleLogin = async () => {
     })
 
     // 登入成功
-    
+
     // 檢查權限：只有管理員可以登入後台
     const userRole = response.user.role
     if (userRole !== 'admin' && userRole !== 'super_admin') {
@@ -281,10 +281,10 @@ const handleLogin = async () => {
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
       localStorage.removeItem('user')
-      
+
       throw new Error('權限不足：只有管理員可以登入後台管理系統')
     }
-    
+
     // 檢查是否有重定向目標
     const redirect = route.query.redirect as string
     if (redirect && redirect !== '/login') {
@@ -312,7 +312,7 @@ const handleGoogleLogin = () => {
   const backendUrl = import.meta.env.VITE_API_URL || 'https://agri-backend-660672910950.asia-east1.run.app/api'
   const redirectUri = encodeURIComponent(currentOrigin)
   const fullUrl = `${backendUrl}/auth/google?redirect_uri=${redirectUri}`
-  
+
   window.location.href = fullUrl
 }
 

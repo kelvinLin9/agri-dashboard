@@ -55,16 +55,16 @@
                 <h3 class="font-semibold text-gray-900 dark:text-white mb-1">
                   {{ item.product?.name || item.productName || '商品' }}
                 </h3>
-                
+
                 <!-- 價格資訊與變動提示 -->
                 <div class="flex items-center gap-2 mb-2">
                   <p class="text-sm text-gray-500">
                     單價: ${{ (item.unitPrice || item.price || 0).toLocaleString() }}
                   </p>
                   <!-- 價格變動提示 -->
-                  <UBadge 
-                    v-if="item.priceChanged" 
-                    color="warning" 
+                  <UBadge
+                    v-if="item.priceChanged"
+                    color="warning"
                     size="xs"
                     class="animate-pulse"
                   >
@@ -74,14 +74,14 @@
                 </div>
 
                 <!-- 庫存警告 -->
-                <div v-if="item.stockQuantity !== undefined && item.stockQuantity <= 5 && item.stockQuantity > 0" 
+                <div v-if="item.stockQuantity !== undefined && item.stockQuantity <= 5 && item.stockQuantity > 0"
                      class="flex items-center gap-1 text-orange-500 text-xs mb-2">
                   <UIcon name="i-heroicons-exclamation-triangle" />
                   <span>僅剩 {{ item.stockQuantity }} 件</span>
                 </div>
 
                 <!-- 無庫存警告 -->
-                <div v-if="item.isAvailable === false || (item.stockQuantity !== undefined && item.stockQuantity <= 0)" 
+                <div v-if="item.isAvailable === false || (item.stockQuantity !== undefined && item.stockQuantity <= 0)"
                      class="flex items-center gap-1 text-red-500 text-xs mb-2">
                   <UIcon name="i-heroicons-x-circle" />
                   <span>商品已無庫存</span>
@@ -156,7 +156,7 @@
         </div>
 
         <!-- Order Summary -->
-        <div class="lg:col-span-2">
+        <div class="lg:col-span-1">
           <UCard class="card-glass shadow-warm">
             <template #header>
               <h2 class="text-lg font-semibold">訂單摘要</h2>
@@ -285,9 +285,10 @@ const updateQuantity = async (itemId: string, quantity: number) => {
   isUpdating.value = true
   try {
     await cartStore.updateItemQuantity(itemId, quantity)
-    console.log('購物車已更新')
-  } catch (error: any) {
+    // 不顯示 toast 避免頻繁提示
+  } catch (error: unknown) {
     console.error('更新失敗:', error)
+    toast.error('更新失敗', '無法更新數量，請稍後再試')
   } finally {
     isUpdating.value = false
   }
@@ -298,8 +299,8 @@ const removeItem = async (itemId: string) => {
   try {
     await cartStore.removeItem(itemId)
     toast.success('已移除', '商品已從購物車移除')
-  } catch (error: any) {
-    console.error('移除失敗:', error.message || '無法移除商品')
+  } catch (error: unknown) {
+    console.error('移除失敗:', error)
     toast.error('移除失敗', '無法移除商品，請稍後再試')
   } finally {
     isUpdating.value = false
@@ -314,10 +315,11 @@ const clearCart = async () => {
   isClearing.value = true
   try {
     await cartStore.clearCart()
-    console.log('購物車已清空')
+    toast.success('已清空', '購物車已清空')
     isClearModalOpen.value = false
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('清空失敗:', error)
+    toast.error('清空失敗', '無法清空購物車，請稍後再試')
   } finally {
     isClearing.value = false
   }
@@ -339,7 +341,7 @@ const goToCheckout = async () => {
       return
     }
     router.push('/checkout')
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('驗證失敗:', error)
     toast.error('驗證失敗', '無法驗證購物車，請稍後再試')
   }
@@ -349,8 +351,9 @@ const goToCheckout = async () => {
 onMounted(async () => {
   try {
     await cartStore.fetchCart()
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('載入購物車失敗:', error)
+    toast.error('載入失敗', '無法載入購物車，請重新整理頁面')
   }
 })
 </script>

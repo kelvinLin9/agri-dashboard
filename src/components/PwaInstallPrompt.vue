@@ -16,11 +16,11 @@
         />
       </div>
     </template>
-    
+
     <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-      將農業管理系統安裝到您的裝置，享受更好的使用體驗！
+      將日沐 SunBathe安裝到您的裝置，享受更好的使用體驗！
     </p>
-    
+
     <ul class="text-xs text-gray-500 dark:text-gray-500 mb-4 space-y-1">
       <li class="flex items-center gap-2">
         <UIcon name="i-heroicons-check-circle" class="w-4 h-4 text-green-500" />
@@ -35,7 +35,7 @@
         接收即時推送通知
       </li>
     </ul>
-    
+
     <div class="flex gap-2">
       <UButton color="green" block @click="install">
         <template #leading>
@@ -57,11 +57,11 @@ onMounted(() => {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault()
     deferredPrompt = e
-    
+
     // 檢查是否已經提示過
     const hasPrompted = localStorage.getItem('pwa-install-prompted')
     const promptedAt = localStorage.getItem('pwa-install-prompted-at')
-    
+
     // 如果從未提示過，或距離上次提示超過 7 天，則顯示提示
     if (!hasPrompted || (promptedAt && Date.now() - parseInt(promptedAt) > 7 * 24 * 60 * 60 * 1000)) {
       // 延遲 3 秒後顯示，避免打擾用戶
@@ -70,7 +70,7 @@ onMounted(() => {
       }, 3000)
     }
   })
-  
+
   // 監聽安裝成功事件
   window.addEventListener('appinstalled', () => {
     console.log('✅ PWA 安裝成功')
@@ -80,21 +80,21 @@ onMounted(() => {
 
 const install = async () => {
   if (!deferredPrompt) return
-  
+
   deferredPrompt.prompt()
   const { outcome } = await deferredPrompt.userChoice
-  
+
   console.log(`用戶選擇：${outcome}`)
-  
+
   if (outcome === 'accepted') {
     console.log('用戶同意安裝 PWA')
   } else {
     console.log('用戶拒絕安裝 PWA')
   }
-  
+
   deferredPrompt = null
   showInstallPrompt.value = false
-  
+
   // 記錄提示時間
   localStorage.setItem('pwa-install-prompted', 'true')
   localStorage.setItem('pwa-install-prompted-at', Date.now().toString())

@@ -8,49 +8,49 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: () => import('../pages/index.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresAdmin: true },
       children: [
         {
           path: 'dashboard',
           name: 'dashboard',
           component: () => import('../pages/dashboard/index.vue'),
-          meta: { requiresAuth: true },
+          meta: { requiresAuth: true, requiresAdmin: true },
         },
         {
           path: 'members',
           name: 'members',
           component: () => import('../pages/members/index.vue'),
-          meta: { requiresAuth: true },
+          meta: { requiresAuth: true, requiresAdmin: true },
         },
         {
           path: 'orders',
           name: 'orders',
           component: () => import('../pages/orders/index.vue'),
-          meta: { requiresAuth: true },
+          meta: { requiresAuth: true, requiresAdmin: true },
         },
         {
           path: 'products',
           name: 'products',
           component: () => import('../pages/products/index.vue'),
-          meta: { requiresAuth: true },
+          meta: { requiresAuth: true, requiresAdmin: true },
         },
         {
           path: 'pages',
           name: 'pages',
           component: () => import('../pages/pages/index.vue'),
-          meta: { requiresAuth: true },
+          meta: { requiresAuth: true, requiresAdmin: true },
         },
         {
           path: 'logs',
           name: 'logs',
           component: () => import('../pages/logs/index.vue'),
-          meta: { requiresAuth: true },
+          meta: { requiresAuth: true, requiresAdmin: true },
         },
         {
           path: 'notifications',
           name: 'notifications',
           component: () => import('../pages/notifications/index.vue'),
-          meta: { requiresAuth: true },
+          meta: { requiresAuth: true, requiresAdmin: true },
         },
       ],
     },
@@ -167,16 +167,23 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   // 檢查路由是否需要認證
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin)
 
   // 取得 token
   const token = localStorage.getItem('access_token')
-  const user = localStorage.getItem('user')
+  const userStr = localStorage.getItem('user')
 
   // 如果不需要認證，直接放行
   if (!requiresAuth) {
-    // 如果已登入用戶訪問登入/註冊頁，重定向到首頁
+    // 如果已登入用戶訪問登入/註冊頁，根據角色重定向
     if (token && (to.name === 'login' || to.name === 'register')) {
-      return next({ name: 'home' })
+      if (userStr) {
+        const userData = JSON.parse(userStr)
+        const isAdmin = ['super_admin', 'admin', 'operator', 'customer_service'].includes(userData.role)
+        // 管理員導向 dashboard，一般用戶導向商店
+        return next({ name: isAdmin ? 'dashboard' : 'shop-products' })
+      }
+      return next({ name: 'shop-products' })
     }
     return next()
   }
@@ -191,44 +198,26 @@ router.beforeEach(async (to, from, next) => {
 
   // 有 token，驗證是否有效
   try {
-    // 如果已有用戶資料，先檢查角色權限
-    if (user) {
-      const userData = JSON.parse(user)
+    let userData = null
 
-      // 檢查是否為管理員
-      if (userData.role !== 'admin' && userData.role !== 'super_admin') {
-        // 清除 token
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
-        localStorage.removeItem('user')
-
-        return next({
-          name: 'login',
-          query: { error: 'permission_denied' },
-        })
-      }
+    // 如果已有用戶資料，解析它
+    if (userStr) {
+      userData = JSON.parse(userStr)
+    } else {
+      // 沒有用戶資料時，從 API 獲取
+      const userProfile = await authApi.getProfile()
+      userData = userProfile
+      localStorage.setItem('user', JSON.stringify(userProfile))
     }
 
-    // 驗證 token 是否仍然有效（每次路由都驗證可能過於頻繁）
-    // 可以考慮添加快取機制，例如每 5 分鐘驗證一次
-    // 這裡簡化處理，只在沒有用戶資料時驗證
-    if (!user) {
-      const userProfile = await authApi.getProfile()
+    // 檢查是否需要管理員權限
+    if (requiresAdmin) {
+      const isAdmin = ['super_admin', 'admin', 'operator', 'customer_service'].includes(userData.role)
 
-      // 檢查權限
-      if (userProfile.role !== 'admin' && userProfile.role !== 'super_admin') {
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
-        localStorage.removeItem('user')
-
-        return next({
-          name: 'login',
-          query: { error: 'permission_denied' },
-        })
+      if (!isAdmin) {
+        // 非管理員嘗試訪問管理頁面，重定向到商店
+        return next({ name: 'shop-products' })
       }
-
-      // 更新用戶資料
-      localStorage.setItem('user', JSON.stringify(userProfile))
     }
 
     // 驗證通過，放行

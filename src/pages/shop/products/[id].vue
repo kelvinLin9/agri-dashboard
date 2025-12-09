@@ -43,7 +43,7 @@
                 {{ Math.round((1 - product.salePrice / product.originalPrice) * 100) }}% OFF
               </div>
             </div>
-            
+
             <img
               v-if="selectedImage || product.mainImage"
               :src="selectedImage || product.mainImage"
@@ -62,8 +62,8 @@
               :key="index"
               class="aspect-square bg-white dark:bg-gray-800 rounded-xl overflow-hidden cursor-pointer ring-2 transition-all duration-300"
               :class="[
-                selectedImage === image 
-                  ? 'ring-harvest-500 shadow-lg shadow-harvest-500/20' 
+                selectedImage === image
+                  ? 'ring-harvest-500 shadow-lg shadow-harvest-500/20'
                   : 'ring-transparent hover:ring-gray-300 dark:hover:ring-gray-600'
               ]"
               @click="selectedImage = image"
@@ -96,7 +96,7 @@
               精選推薦
             </UBadge>
           </div>
-          
+
           <!-- Title -->
           <div>
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">
@@ -198,7 +198,7 @@
               class="flex-1 py-4 text-lg font-semibold shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30 transition-all duration-300"
               :disabled="product.stockQuantity <= 0 || isAddingToCart"
               :loading="isAddingToCart"
-              @click="addToCart"
+              @click="void addToCart()"
             >
               <UIcon name="i-heroicons-shopping-cart" class="w-5 h-5 mr-2" />
               {{ product.stockQuantity > 0 ? '加入購物車' : '目前缺貨' }}
@@ -317,15 +317,16 @@ const fetchProduct = async () => {
     if (product.value?.mainImage) {
       selectedImage.value = product.value.mainImage
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('獲取商品失敗:', error)
+    toast.error('載入失敗', '無法載入商品資訊')
   } finally {
     isLoading.value = false
   }
 }
 
-const addToCart = async () => {
-  if (!product.value) return
+const addToCart = async (): Promise<boolean> => {
+  if (!product.value) return false
 
   isAddingToCart.value = true
   try {
@@ -335,17 +336,19 @@ const addToCart = async () => {
     })
     toast.success('已加入購物車', `${product.value.name} x ${quantity.value}`)
     quantity.value = 1
-  } catch (error: any) {
+    return true
+  } catch (error: unknown) {
     console.error('加入購物車失敗:', error)
     toast.error('加入失敗', '無法加入購物車，請稍後再試')
+    return false
   } finally {
     isAddingToCart.value = false
   }
 }
 
 const buyNow = async () => {
-  await addToCart()
-  if (!isAddingToCart.value) {
+  const success = await addToCart()
+  if (success) {
     router.push('/cart')
   }
 }

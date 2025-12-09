@@ -151,25 +151,28 @@ const userInitials = computed(() => {
 
 
 // ========== 導航選單配置 ==========
-const navigationConfig: Array<{ label: string; routeName: string; icon?: string }> = [
-  { label: 'Dashboard', routeName: 'dashboard', icon: 'i-heroicons-chart-bar' },
-  { label: '會員資料', routeName: 'members', icon: 'i-heroicons-users' },
-  { label: '訂單資料', routeName: 'orders', icon: 'i-heroicons-shopping-cart' },
-  { label: '產品維護', routeName: 'products', icon: 'i-heroicons-cube' },
-  { label: '頁面維護', routeName: 'pages', icon: 'i-heroicons-document-text' },
-  { label: '操作log', routeName: 'logs', icon: 'i-heroicons-clipboard-document-list' },
-  { label: '推播通知', routeName: 'notifications', icon: 'i-heroicons-bell' },
+type NavConfig = {
+  label: string
+  routeName: string
+  icon?: string
+  adminOnly?: boolean  // 只有管理員可見
+}
+
+const adminNavigationConfig: NavConfig[] = [
+  { label: 'Dashboard', routeName: 'dashboard', icon: 'i-heroicons-chart-bar', adminOnly: true },
+  { label: '會員資料', routeName: 'members', icon: 'i-heroicons-users', adminOnly: true },
+  { label: '訂單資料', routeName: 'orders', icon: 'i-heroicons-shopping-cart', adminOnly: true },
+  { label: '產品維護', routeName: 'products', icon: 'i-heroicons-cube', adminOnly: true },
+  { label: '頁面維護', routeName: 'pages', icon: 'i-heroicons-document-text', adminOnly: true },
+  { label: '操作log', routeName: 'logs', icon: 'i-heroicons-clipboard-document-list', adminOnly: true },
+  { label: '推播通知', routeName: 'notifications', icon: 'i-heroicons-bell', adminOnly: true },
 ]
 
-const navItems = computed<NavigationMenuItem[]>(() =>
-  navigationConfig.map((item) => ({
-    label: item.label,
-    to: { name: item.routeName },
-    active: route.name === item.routeName,
-    icon: item.icon,
-  })),
-)
-
+const userNavigationConfig: NavConfig[] = [
+  { label: '商店', routeName: 'shop-products', icon: 'i-heroicons-shopping-bag' },
+  { label: '我的訂單', routeName: 'my-orders', icon: 'i-heroicons-clipboard-document-list' },
+  { label: '購物車', routeName: 'cart', icon: 'i-heroicons-shopping-cart' },
+]
 
 // ========== 登入狀態檢查 ==========
 const isLoggedIn = computed(() => !!user.value)
@@ -177,6 +180,18 @@ const isLoggedIn = computed(() => !!user.value)
 const isAdmin = computed(() => {
   const role = user.value?.role
   return ['super_admin', 'admin', 'operator', 'customer_service'].includes(role)
+})
+
+const navItems = computed<NavigationMenuItem[]>(() => {
+  // 根據權限選擇對應的導航項目
+  const config = isAdmin.value ? adminNavigationConfig : userNavigationConfig
+
+  return config.map((item) => ({
+    label: item.label,
+    to: { name: item.routeName },
+    active: route.name === item.routeName,
+    icon: item.icon,
+  }))
 })
 
 // ========== 用戶下拉菜單 ==========

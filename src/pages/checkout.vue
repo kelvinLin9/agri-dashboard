@@ -102,6 +102,8 @@ import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { useOrderStore } from '@/stores/orders'
 import { useToast } from '@/composables/useToast'
+import * as v from 'valibot'
+import { CheckoutFormSchema, type CheckoutFormInput } from '@/schemas/checkout'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -110,7 +112,7 @@ const toast = useToast()
 
 const isSubmitting = ref(false)
 
-const form = ref({
+const form = ref<CheckoutFormInput>({
   recipientName: '',
   recipientPhone: '',
   recipientEmail: '',
@@ -136,21 +138,41 @@ const paymentOptions = [
 
 const selectedShipping = computed({
   get: () => shippingOptions.find(opt => opt.value === form.value.shippingMethod),
-  set: (val) => { form.value.shippingMethod = val?.value || 'home_delivery' }
+  set: (val) => { form.value.shippingMethod = val?.value as 'home_delivery' | 'cvs_pickup' || 'home_delivery' }
 })
 
 const selectedPayment = computed({
   get: () => paymentOptions.find(opt => opt.value === form.value.paymentMethod),
-  set: (val) => { form.value.paymentMethod = val?.value || 'credit_card' }
+  set: (val) => { form.value.paymentMethod = val?.value as 'credit_card' | 'atm' | 'cvs' || 'credit_card' }
 })
 
+// 使用 Valibot 驗證表單
+const validateForm = (): boolean => {
+  const result = v.safeParse(CheckoutFormSchema, form.value)
+
+  if (!result.success) {
+    // 取得第一個錯誤訊息
+    const firstIssue = result.issues[0]
+    const errorMessage = firstIssue.message || '請檢查表單內容'
+    toast.error('請填寫必要欄位', errorMessage)
+    return false
+  }
+
+  return true
+}
+
 const submitOrder = async () => {
+  // 先驗證表單
+  if (!validateForm()) {
+    return
+  }
+
   isSubmitting.value = true
   try {
     const order = await orderStore.createOrderFromCart(form.value)
     toast.success('訂單已建立', `訂單編號: ${order.orderNumber}`)
     router.push(`/payment?orderId=${order.id}`)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('建立訂單失敗:', error)
     toast.error('建立訂單失敗', '無法建立訂單，請稍後再試')
   } finally {

@@ -53,9 +53,9 @@
         </UFormField>
 
         <!-- Password -->
-        <UFormField 
-          label="密碼" 
-          required 
+        <UFormField
+          label="密碼"
+          required
           :error="errors.password"
           help="密碼必須包含大小寫字母、數字和特殊符號"
         >
@@ -214,7 +214,7 @@
     <!-- Footer -->
     <div class="absolute bottom-4 left-0 right-0 text-center">
       <p class="text-sm text-gray-500 dark:text-gray-400">
-        © 2025 農業管理系統. All rights reserved.
+        © 2025 日沐 SunBathe. All rights reserved.
       </p>
     </div>
   </div>
@@ -331,7 +331,7 @@ const handleRegister = async () => {
     // 註冊成功
     console.log('註冊成功:', response)
     successMessage.value = '註冊成功！正在跳轉...'
-    
+
     // 延遲跳轉以顯示成功訊息
     setTimeout(() => {
       router.push('/')
@@ -349,7 +349,7 @@ const handleGoogleRegister = () => {
   const backendUrl = import.meta.env.VITE_API_URL || 'https://agri-backend-660672910950.asia-east1.run.app/api'
   const redirectUri = encodeURIComponent(currentOrigin)
   const fullUrl = `${backendUrl}/auth/google?redirect_uri=${redirectUri}`
-  
+
   window.location.href = fullUrl
 }
 

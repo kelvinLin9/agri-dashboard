@@ -39,7 +39,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: '農業管理系統',
+        name: '日沐 SunBathe',
         short_name: '農管系統',
         description: '智慧農業管理平台 - 產品、訂單、會員一站式管理',
         theme_color: '#10b981',

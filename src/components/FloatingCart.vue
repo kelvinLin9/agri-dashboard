@@ -27,9 +27,9 @@ const router = useRouter()
 const route = useRoute()
 const cartStore = useCartStore()
 
-// 只在商品列表頁面顯示
+// 在商品列表頁和商品詳情頁顯示
 const shouldShow = computed(() => {
-  return route.path === '/shop/products'
+  return route.path === '/shop/products' || route.path.startsWith('/shop/products/')
 })
 
 // 購物車商品數量
@@ -49,17 +49,18 @@ const goToCart = () => {
 onMounted(async () => {
   // 檢查是否已登入（有 token）
   const token = localStorage.getItem('access_token')
-  
+
   if (!token) {
     console.log('⏳ 未登入或 token 尚未載入，跳過購物車載入')
     return
   }
-  
+
   try {
     await cartStore.fetchCart()
-  } catch (error: any) {
+  } catch (error: unknown) {
     // 靜默處理 401 錯誤（可能是 token 還沒完全設定好）
-    if (error?.response?.status === 401) {
+    const axiosError = error as { response?: { status?: number } }
+    if (axiosError?.response?.status === 401) {
       console.log('⚠️ 認證失敗，可能正在登入中...')
     } else {
       console.error('❌ 載入購物車失敗:', error)
@@ -94,7 +95,7 @@ onMounted(async () => {
     bottom: 16px;
     right: 16px;
   }
-  
+
   .cart-button {
     width: 56px;
     height: 56px;

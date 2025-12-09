@@ -15,7 +15,7 @@ VITE_GOOGLE_CLIENT_ID=your-google-client-id-here.apps.googleusercontent.com
 
 1. 前往 [Google Cloud Console](https://console.cloud.google.com/)
 2. 點擊「選擇項目」→「新增項目」
-3. 輸入項目名稱（例如：農業管理系統）
+3. 輸入項目名稱（例如：日沐 SunBathe）
 4. 點擊「建立」
 
 ### 2. 啟用 Google+ API
@@ -30,13 +30,13 @@ VITE_GOOGLE_CLIENT_ID=your-google-client-id-here.apps.googleusercontent.com
 2. 點擊「建立憑證」→「OAuth 用戶端 ID」
 3. 如果提示設定同意畫面，請先完成設定：
    - 用戶類型：外部
-   - 應用程式名稱：農業管理系統
+   - 應用程式名稱：日沐 SunBathe
    - 用戶支援電子郵件：你的 email
    - 開發人員聯絡資訊：你的 email
    - 儲存並繼續
 
 4. 選擇應用程式類型：「網頁應用程式」
-5. 名稱：農業管理系統 - Web Client
+5. 名稱：日沐 SunBathe - Web Client
 6. 已授權的 JavaScript 來源：
    ```
    http://localhost:5173
@@ -75,10 +75,10 @@ GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
 創建 `backend/src/modules/auth/strategies/google.strategy.ts`:
 
 ```typescript
-import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, VerifyCallback } from 'passport-google-oauth20';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common'
+import { PassportStrategy } from '@nestjs/passport'
+import { Strategy, VerifyCallback } from 'passport-google-oauth20'
+import { ConfigService } from '@nestjs/config'
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -88,7 +88,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: configService.get('GOOGLE_CLIENT_SECRET'),
       callbackURL: configService.get('GOOGLE_CALLBACK_URL'),
       scope: ['email', 'profile'],
-    });
+    })
   }
 
   async validate(
@@ -97,17 +97,17 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
-    const { name, emails, photos } = profile;
-    
+    const { name, emails, photos } = profile
+
     const user = {
       email: emails[0].value,
       firstName: name.givenName,
       lastName: name.familyName,
       picture: photos[0].value,
       accessToken,
-    };
-    
-    done(null, user);
+    }
+
+    done(null, user)
   }
 }
 ```
@@ -127,11 +127,11 @@ googleAuth() {
 @UseGuards(AuthGuard('google'))
 async googleAuthCallback(@Req() req, @Res() res) {
   const user = req.user;
-  
+
   // 檢查用戶是否存在，不存在則創建
   // 生成 JWT token
   // 返回 token 給前端
-  
+
   res.redirect(`${frontendUrl}/auth/google/callback?token=${token}`);
 }
 ```

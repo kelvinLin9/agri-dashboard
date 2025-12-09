@@ -104,6 +104,7 @@ import { useOrderStore } from '@/stores/orders'
 import { useToast } from '@/composables/useToast'
 import * as v from 'valibot'
 import { CheckoutFormSchema, type CheckoutFormInput } from '@/schemas/checkout'
+import { trackPurchase } from '@/utils/analytics'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -170,6 +171,17 @@ const submitOrder = async () => {
   isSubmitting.value = true
   try {
     const order = await orderStore.createOrderFromCart(form.value)
+    // GA4: 追蹤購買完成
+    trackPurchase({
+      transactionId: order.orderNumber || order.id.toString(),
+      value: order.totalAmount || cartStore.subtotal + 60,
+      items: cartStore.items.map(item => ({
+        id: item.productId,
+        name: item.product?.name || item.productName || '商品',
+        price: item.unitPrice || item.price || 0,
+        quantity: item.quantity
+      }))
+    })
     toast.success('訂單已建立', `訂單編號: ${order.orderNumber}`)
     router.push(`/payment?orderId=${order.id}`)
   } catch (error: unknown) {

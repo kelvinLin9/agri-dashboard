@@ -268,6 +268,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
 import { useToast } from '@/composables/useToast'
+import { trackBeginCheckout } from '@/utils/analytics'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -340,6 +341,16 @@ const goToCheckout = async () => {
       await cartStore.fetchCart()
       return
     }
+    // GA4: 追蹤開始結帳
+    trackBeginCheckout(
+      cartStore.items.map(item => ({
+        id: item.productId,
+        name: item.product?.name || item.productName || '商品',
+        price: item.unitPrice || item.price || 0,
+        quantity: item.quantity
+      })),
+      cartStore.subtotal
+    )
     router.push('/checkout')
   } catch (error: unknown) {
     console.error('驗證失敗:', error)

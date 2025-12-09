@@ -224,6 +224,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { authApi } from '@/api'
+import { trackSignUp } from '@/utils/analytics'
 
 const router = useRouter()
 
@@ -331,7 +332,8 @@ const handleRegister = async () => {
     // 註冊成功
     console.log('註冊成功:', response)
     successMessage.value = '註冊成功！正在跳轉...'
-
+    // GA4: 追蹤註冊成功
+    trackSignUp('email')
     // 延遲跳轉以顯示成功訊息
     setTimeout(() => {
       router.push('/')
@@ -345,6 +347,8 @@ const handleRegister = async () => {
 }
 
 const handleGoogleRegister = () => {
+  // GA4: 追蹤 Google 註冊嘗試
+  trackSignUp('google')
   const currentOrigin = window.location.origin
   const backendUrl = import.meta.env.VITE_API_URL || 'https://agri-backend-660672910950.asia-east1.run.app/api'
   const redirectUri = encodeURIComponent(currentOrigin)

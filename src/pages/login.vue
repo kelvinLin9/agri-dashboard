@@ -169,6 +169,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { authApi } from '@/api'
+import { trackLogin } from '@/utils/analytics'
 
 const router = useRouter()
 const route = useRoute()
@@ -293,6 +294,8 @@ const handleLogin = async () => {
       // 跳轉到首頁或儀表板
       router.push('/')
     }
+    // GA4: 追蹤登入成功
+    trackLogin('email')
   } catch (error: any) {
     console.error('登入失敗:', error)
     // 統一錯誤訊息，不顯示具體錯誤細節以防止資訊洩漏
@@ -308,6 +311,8 @@ const handleLogin = async () => {
 }
 
 const handleGoogleLogin = () => {
+  // GA4: 追蹤 Google 登入嘗試
+  trackLogin('google')
   const currentOrigin = window.location.origin
   const backendUrl = import.meta.env.VITE_API_URL || 'https://agri-backend-660672910950.asia-east1.run.app/api'
   const redirectUri = encodeURIComponent(currentOrigin)

@@ -155,6 +155,7 @@
       <!-- Search and Filters with glassmorphism -->
       <div class="relative mb-10 -mt-8">
         <div class="card-glass p-6">
+          <!-- Row 1: Search + Category + Sort -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-6">
             <!-- Search -->
             <div class="md:col-span-2">
@@ -183,6 +184,85 @@
               size="lg"
               @change="handleFilterChange"
             />
+          </div>
+
+          <!-- Row 2: Price Range + Tags -->
+          <div class="mt-4 pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+            <div class="flex flex-wrap items-center gap-4">
+              <!-- Price Range -->
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-medium text-gray-600 dark:text-gray-400 whitespace-nowrap">價格區間:</span>
+                <div class="flex items-center gap-2">
+                  <UInput
+                    v-model.number="minPrice"
+                    type="number"
+                    placeholder="最低"
+                    size="sm"
+                    class="w-24"
+                    :min="0"
+                    @blur="handleFilterChange"
+                    @keyup.enter="handleFilterChange"
+                  />
+                  <span class="text-gray-400">-</span>
+                  <UInput
+                    v-model.number="maxPrice"
+                    type="number"
+                    placeholder="最高"
+                    size="sm"
+                    class="w-24"
+                    :min="0"
+                    @blur="handleFilterChange"
+                    @keyup.enter="handleFilterChange"
+                  />
+                </div>
+              </div>
+
+              <!-- Divider -->
+              <div class="hidden sm:block h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+
+              <!-- Tag Filters -->
+              <div class="flex flex-wrap items-center gap-2">
+                <UButton
+                  :color="filterIsNew ? 'primary' : 'neutral'"
+                  :variant="filterIsNew ? 'solid' : 'outline'"
+                  size="sm"
+                  @click="toggleFilter('isNew')"
+                >
+                  <UIcon name="i-heroicons-sparkles" class="w-4 h-4 mr-1" />
+                  新品
+                </UButton>
+                <UButton
+                  :color="filterIsFeatured ? 'primary' : 'neutral'"
+                  :variant="filterIsFeatured ? 'solid' : 'outline'"
+                  size="sm"
+                  @click="toggleFilter('isFeatured')"
+                >
+                  <UIcon name="i-heroicons-star" class="w-4 h-4 mr-1" />
+                  精選
+                </UButton>
+                <UButton
+                  :color="filterOnSale ? 'primary' : 'neutral'"
+                  :variant="filterOnSale ? 'solid' : 'outline'"
+                  size="sm"
+                  @click="toggleFilter('onSale')"
+                >
+                  <UIcon name="i-heroicons-fire" class="w-4 h-4 mr-1" />
+                  特價
+                </UButton>
+              </div>
+
+              <!-- Clear Filters -->
+              <UButton
+                v-if="hasActiveFilters"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                @click="clearFilters"
+              >
+                <UIcon name="i-heroicons-x-mark" class="w-4 h-4 mr-1" />
+                清除篩選
+              </UButton>
+            </div>
           </div>
         </div>
       </div>
@@ -355,6 +435,7 @@ import { useCartStore } from '@/stores/cart'
 import { useToast } from '@/composables/useToast'
 import EmptyState from '@/components/common/EmptyState.vue'
 import SearchBox from '@/components/common/SearchBox.vue'
+import { trackAddToCart, trackSearch } from '@/utils/analytics'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -374,6 +455,11 @@ const total = ref(0)
 const search = ref('')
 const filterCategory = ref<string | undefined>(undefined)
 const filterSort = ref<string | undefined>('newest')
+const minPrice = ref<number | undefined>(undefined)
+const maxPrice = ref<number | undefined>(undefined)
+const filterIsNew = ref(false)
+const filterIsFeatured = ref(false)
+const filterOnSale = ref(false)
 
 // Convert to SelectMenu options
 const selectedCategory = computed({
@@ -425,6 +511,10 @@ const fetchProducts = async () => {
 
     if (search.value) params.search = search.value
     if (filterCategory.value) params.categoryId = filterCategory.value
+    if (minPrice.value !== undefined && minPrice.value > 0) params.minPrice = minPrice.value
+    if (maxPrice.value !== undefined && maxPrice.value > 0) params.maxPrice = maxPrice.value
+    if (filterIsNew.value) params.isNew = true
+    if (filterIsFeatured.value) params.isFeatured = true
 
     // Sort
     if (filterSort.value === 'newest') {
@@ -439,8 +529,17 @@ const fetchProducts = async () => {
     }
 
     const response = await productsApi.getAll(params)
-    products.value = response.data
-    total.value = response.meta.total
+    let filteredProducts = response.data
+
+    // 特價篩選（前端過濾：有 salePrice 且小於 originalPrice）
+    if (filterOnSale.value) {
+      filteredProducts = filteredProducts.filter(
+        (p: Product) => p.salePrice && p.originalPrice && p.salePrice < p.originalPrice
+      )
+    }
+
+    products.value = filteredProducts
+    total.value = filterOnSale.value ? filteredProducts.length : response.meta.total
   } catch (error: any) {
     console.error('獲取商品失敗:', error)
   } finally {
@@ -450,12 +549,46 @@ const fetchProducts = async () => {
 
 const handleSearch = () => {
   page.value = 1
+  // GA4: 追蹤搜尋
+  if (search.value.trim()) {
+    trackSearch(search.value.trim())
+  }
   fetchProducts()
 }
 
 const handleFilterChange = () => {
   page.value = 1
   fetchProducts()
+}
+
+const toggleFilter = (filter: 'isNew' | 'isFeatured' | 'onSale') => {
+  if (filter === 'isNew') {
+    filterIsNew.value = !filterIsNew.value
+  } else if (filter === 'isFeatured') {
+    filterIsFeatured.value = !filterIsFeatured.value
+  } else if (filter === 'onSale') {
+    filterOnSale.value = !filterOnSale.value
+  }
+  handleFilterChange()
+}
+
+const hasActiveFilters = computed(() => {
+  return filterCategory.value !== undefined ||
+    (minPrice.value !== undefined && minPrice.value > 0) ||
+    (maxPrice.value !== undefined && maxPrice.value > 0) ||
+    filterIsNew.value ||
+    filterIsFeatured.value ||
+    filterOnSale.value
+})
+
+const clearFilters = () => {
+  filterCategory.value = undefined
+  minPrice.value = undefined
+  maxPrice.value = undefined
+  filterIsNew.value = false
+  filterIsFeatured.value = false
+  filterOnSale.value = false
+  handleFilterChange()
 }
 
 const viewProduct = (product: Product) => {
@@ -466,6 +599,14 @@ const addToCart = async (product: Product) => {
   try {
     await cartStore.addItem({
       productId: product.id,
+      quantity: 1
+    })
+    // GA4: 追蹤加入購物車
+    trackAddToCart({
+      id: product.id,
+      name: product.name,
+      category: product.category?.name,
+      price: product.salePrice || product.originalPrice,
       quantity: 1
     })
     toast.success('已加入購物車', product.name)

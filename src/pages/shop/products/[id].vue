@@ -284,6 +284,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { productsApi, type Product } from '@/api'
 import { useCartStore } from '@/stores/cart'
 import { useToast } from '@/composables/useToast'
+import { trackViewItem, trackAddToCart } from '@/utils/analytics'
 
 const route = useRoute()
 const router = useRouter()
@@ -317,6 +318,15 @@ const fetchProduct = async () => {
     if (product.value?.mainImage) {
       selectedImage.value = product.value.mainImage
     }
+    // GA4: 追蹤商品瀏覽
+    if (product.value) {
+      trackViewItem({
+        id: product.value.id,
+        name: product.value.name,
+        category: product.value.category?.name,
+        price: product.value.salePrice || product.value.originalPrice
+      })
+    }
   } catch (error: unknown) {
     console.error('獲取商品失敗:', error)
     toast.error('載入失敗', '無法載入商品資訊')
@@ -332,6 +342,14 @@ const addToCart = async (): Promise<boolean> => {
   try {
     await cartStore.addItem({
       productId: product.value.id,
+      quantity: quantity.value
+    })
+    // GA4: 追蹤加入購物車
+    trackAddToCart({
+      id: product.value.id,
+      name: product.value.name,
+      category: product.value.category?.name,
+      price: product.value.salePrice || product.value.originalPrice,
       quantity: quantity.value
     })
     toast.success('已加入購物車', `${product.value.name} x ${quantity.value}`)

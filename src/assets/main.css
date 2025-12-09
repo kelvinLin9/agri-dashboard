@@ -1,6 +1,18 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
 
+/* 全域字體設定 - 溫暖親切風 */
+html {
+  font-family:
+    "DM Sans",              /* 英文/數字 - 現代圓潤 */
+    "Noto Sans TC",         /* 中文 - 思源黑體 */
+    "PingFang TC",          /* macOS/iOS 備用 */
+    "Microsoft JhengHei",   /* Windows 備用 */
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+
 @theme static {
   /* ===================================
      農產品網站設計系統 - 自訂色板

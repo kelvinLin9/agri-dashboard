@@ -19,8 +19,8 @@
 
         <!-- Message Content -->
         <div class="py-4">
-          <p class="text-gray-600 dark:text-gray-400" v-html="message" />
-          
+          <p class="text-gray-600 dark:text-gray-400">{{ message }}</p>
+
           <!-- Warning box for danger type -->
           <div
             v-if="type === 'danger' && showWarning"

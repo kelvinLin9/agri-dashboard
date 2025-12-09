@@ -255,7 +255,7 @@
             </h2>
           </div>
           <div class="p-8">
-            <div class="prose dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-600 dark:prose-p:text-gray-300 prose-img:rounded-xl" v-html="product.description"></div>
+            <div class="prose dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-600 dark:prose-p:text-gray-300 prose-img:rounded-xl whitespace-pre-wrap">{{ product.description }}</div>
           </div>
         </div>
       </div>

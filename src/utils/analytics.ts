@@ -1,6 +1,9 @@
 /**
  * Google Analytics GA4 追蹤工具
  * 封裝電商追蹤事件
+ *
+ * 重要：所有追蹤函式都會先檢查 Cookie 同意狀態
+ * 若用戶未同意分析 Cookie，追蹤函式將不會執行
  */
 
 // 確保 gtag 函式存在
@@ -11,10 +14,33 @@ declare global {
   }
 }
 
+const COOKIE_CONSENT_KEY = 'cookie_consent'
+
+/**
+ * 檢查用戶是否同意分析 Cookie
+ */
+function hasAnalyticsConsent(): boolean {
+  try {
+    const consentStr = localStorage.getItem(COOKIE_CONSENT_KEY)
+    if (!consentStr) return false
+
+    const consent = JSON.parse(consentStr)
+    return consent.analytics === true
+  } catch {
+    return false
+  }
+}
+
 /**
  * 通用事件追蹤
  */
 export function trackEvent(eventName: string, params?: Record<string, any>) {
+  // 檢查同意狀態
+  if (!hasAnalyticsConsent()) {
+    console.log(`[GA4] Skipped: ${eventName} (no consent)`)
+    return
+  }
+
   if (typeof window.gtag === 'function') {
     window.gtag('event', eventName, params)
     console.log(`[GA4] Event: ${eventName}`, params)

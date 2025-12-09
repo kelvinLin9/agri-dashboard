@@ -2,13 +2,33 @@
 <html lang="zh-TW">
 
 <head>
-  <!-- Google Analytics GA4 -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GNM87PKS88"></script>
+  <!-- Google Analytics GA4 (Consent-aware) -->
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-GNM87PKS88');
+    // GA4 只在用戶同意分析 Cookie 時載入
+    (function() {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = gtag;
+      
+      // 檢查 Cookie 同意狀態
+      var consentStr = localStorage.getItem('cookie_consent');
+      var consent = consentStr ? JSON.parse(consentStr) : null;
+      
+      // 只在用戶明確同意分析 Cookie 時載入 GA4
+      if (consent && consent.analytics === true) {
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=G-GNM87PKS88';
+        document.head.appendChild(script);
+        
+        gtag('js', new Date());
+        gtag('config', 'G-GNM87PKS88');
+        console.log('[GA4] Analytics enabled - user consented');
+      } else {
+        // 用戶尚未同意或選擇僅必要 Cookie，不載入 GA4
+        console.log('[GA4] Analytics disabled - awaiting consent');
+      }
+    })();
   </script>
   
   <meta charset="UTF-8">

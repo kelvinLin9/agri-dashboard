@@ -257,11 +257,10 @@ const submitOrder = async () => {
   }
 
   isSubmitting.value = true
-  // 建立訂單時包含優惠碼資訊
+  // 建立訂單時包含優惠碼資訊（折扣金額由後端根據 couponCode 計算）
   const orderData = {
     ...form.value,
     couponCode: appliedCoupon.value?.code || undefined,
-    discountAmount: discountAmount.value || 0,
   }
   const order = await orderStore.createOrderFromCart(orderData)
   // GA4: 追蹤購買完成

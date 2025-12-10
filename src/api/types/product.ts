@@ -7,7 +7,7 @@ import type { Category } from './category'
 
 // 產品介面
 export interface Product {
-  id: string
+  id: number
   categoryId: number
   name: string
   sku: string
@@ -27,7 +27,7 @@ export interface Product {
   length?: number
   width?: number
   height?: number
-  status: 'active' | 'inactive' | 'out_of_stock'
+  status: 'draft' | 'active' | 'inactive' | 'out_of_stock'
   isFeatured: boolean
   isNew: boolean
   sortOrder?: number
@@ -45,8 +45,8 @@ export interface Product {
 
 // 產品查詢參數
 export interface ProductQueryParams extends SearchableQueryParams {
-  status?: 'active' | 'inactive' | 'out_of_stock'
-  categoryId?: string
+  status?: 'draft' | 'active' | 'inactive' | 'out_of_stock'
+  categoryId?: number
   isFeatured?: boolean
   isNew?: boolean
 }
@@ -56,12 +56,12 @@ export interface CreateProductDto {
   // 基本資訊 (必填)
   categoryId: number
   name: string
-  sku: string
   slug: string
   originalPrice: number
   stockQuantity: number
 
   // 基本資訊 (可選)
+  sku?: string // SKU 由後端自動產生，前端選填
   shortDescription?: string
   description?: string
 
@@ -85,7 +85,7 @@ export interface CreateProductDto {
   height?: number
 
   // 狀態與設定
-  status?: 'active' | 'inactive' | 'out_of_stock'
+  status?: 'draft' | 'active' | 'inactive' | 'out_of_stock'
   isFeatured?: boolean
   isNew?: boolean
   sortOrder?: number
@@ -101,5 +101,5 @@ export interface CreateProductDto {
   notes?: string
 }
 
-// 更新產品 DTO
-export interface UpdateProductDto extends Partial<CreateProductDto> { }
+// 更新產品 DTO (繼承 CreateProductDto 所有欄位為選填)
+export type UpdateProductDto = Partial<CreateProductDto>

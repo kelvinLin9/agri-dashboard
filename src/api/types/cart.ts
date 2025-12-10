@@ -7,7 +7,7 @@ import type { Product } from './product'
 // 購物車項目
 export interface CartItem {
   id: string
-  productId: string
+  productId: number
   cartId: string
   productName?: string      // API 返回的商品名稱
   productImage?: string     // API 返回的商品圖片
@@ -36,7 +36,7 @@ export interface Cart {
 
 // 新增購物車項目 DTO
 export interface AddCartItemDto {
-  productId: string
+  productId: number
   quantity: number
 }
 
@@ -49,7 +49,8 @@ export interface UpdateCartItemDto {
 export interface ValidateCartResponse {
   isValid: boolean  // 改為 isValid 匹配後端 API
   issues?: {
-    productId: string
+    productId: number
     issue: string
   }[]
 }
+

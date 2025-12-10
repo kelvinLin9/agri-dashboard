@@ -23,7 +23,7 @@ export const productsApi = {
   /**
    * 根據 ID 查詢產品
    */
-  getById: async (id: string): Promise<Product> => {
+  getById: async (id: number | string): Promise<Product> => {
     const response = await apiClient.get<{ data: Product }>(`/products/${id}`)
     return response.data.data
   },
@@ -47,7 +47,7 @@ export const productsApi = {
   /**
    * 更新產品
    */
-  update: async (id: string, data: UpdateProductDto): Promise<Product> => {
+  update: async (id: number | string, data: UpdateProductDto): Promise<Product> => {
     const response = await apiClient.put<{ data: Product }>(`/products/${id}`, data)
     return response.data.data
   },
@@ -55,7 +55,7 @@ export const productsApi = {
   /**
    * 更新產品庫存
    */
-  updateStock: async (id: string, quantity: number): Promise<Product> => {
+  updateStock: async (id: number | string, quantity: number): Promise<Product> => {
     const response = await apiClient.put<{ data: Product }>(`/products/${id}/stock`, {
       quantity,
     })
@@ -65,7 +65,7 @@ export const productsApi = {
   /**
    * 刪除產品
    */
-  delete: async (id: string): Promise<void> => {
+  delete: async (id: number | string): Promise<void> => {
     await apiClient.delete(`/products/${id}`)
   },
 }

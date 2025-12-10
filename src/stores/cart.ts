@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { cartApi } from '@/api'
-import type { Cart, CartItem, AddCartItemDto } from '@/api/types'
+import type { Cart, AddCartItemDto } from '@/api/types'
 
 /**
  * 購物車 Store

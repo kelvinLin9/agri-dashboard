@@ -29,4 +29,4 @@ export interface CreateCategoryDto {
 }
 
 // 更新分類 DTO
-export interface UpdateCategoryDto extends Partial<CreateCategoryDto> { }
+export type UpdateCategoryDto = Partial<CreateCategoryDto>

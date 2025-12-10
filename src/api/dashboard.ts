@@ -1,8 +1,6 @@
-import apiClient from './apiClient'
 import { ordersApi } from './orders'
 import { membersApi } from './members'
 import { productsApi } from './products'
-import type { Order, Member, Product } from './types'
 
 /**
  * Dashboard 總覽統計
@@ -85,7 +83,7 @@ class DashboardApi {
   async getOverview(): Promise<DashboardOverview> {
     try {
       // 並行獲取所有需要的數據
-      const [ordersData, membersStats, productsData] = await Promise.all([
+      const [ordersData, , productsData] = await Promise.all([
         ordersApi.getAll({ page: 1, limit: 100 }),
         membersApi.getStatistics(),
         productsApi.getAll({ page: 1, limit: 1000 }),
@@ -244,15 +242,10 @@ class DashboardApi {
   /**
    * 獲取熱銷商品 TOP N
    */
-  async getTopProducts(limit: number = 10): Promise<TopProductItem[]> {
-    try {
-      // 這需要訂單項目數據，目前簡化處理
-      // 實際應該從訂單項目中統計
-      return []
-    } catch (error) {
-      console.error('Failed to fetch top products:', error)
-      throw error
-    }
+  async getTopProducts(): Promise<TopProductItem[]> {
+    // 這需要訂單項目數據，目前簡化處理
+    // 實際應該從訂單項目中統計
+    return []
   }
 
   /**

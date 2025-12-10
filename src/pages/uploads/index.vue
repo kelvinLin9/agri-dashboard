@@ -425,7 +425,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, h, resolveComponent } from 'vue'
+import { ref, onMounted, h, resolveComponent } from 'vue'
 import { uploadApi, type Upload } from '@/api'
 import EmptyState from '@/components/common/EmptyState.vue'
 import SearchBox from '@/components/common/SearchBox.vue'

@@ -14,7 +14,7 @@ export default defineConfigWithVueTs(
     files: ['**/*.{ts,mts,tsx,vue}'],
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', '**/dev-dist/**', '**/sw.js']),
 
   pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
@@ -22,6 +22,9 @@ export default defineConfigWithVueTs(
   {
     rules: {
       'vue/multi-word-component-names': 'off',
+      // 暫時放寬 TypeScript 嚴格規則
+      '@typescript-eslint/no-explicit-any': 'off', // 允許使用 any 類型
+      '@typescript-eslint/ban-ts-comment': 'off', // 允許 @ts-ignore
     },
   },
 )

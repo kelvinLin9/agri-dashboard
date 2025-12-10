@@ -1009,9 +1009,7 @@ const getLevelColor = (level: MemberLevel): string => {
   return colors[level] || 'gray'
 }
 
-const getStatusLabel = (status: string): string => {
-  return status === 'active' ? '活躍' : '停用'
-}
+
 
 const getGenderLabel = (gender?: string): string => {
   const labels = {

@@ -53,8 +53,7 @@ let chartInstance: echarts.EChartsType | null = null
 
 const chartOption = computed(() => {
   const names = props.data.map((d) => d.name)
-  const values = props.data.map((d) => d.value)
-  const colors = props.data.map((d) => d.color || props.color)
+
 
   return {
     title: props.title
@@ -145,7 +144,7 @@ const chartOption = computed(() => {
     series: [
       {
         type: 'bar',
-        data: props.data.map((item, index) => ({
+        data: props.data.map((item) => ({
           value: item.value,
           itemStyle: {
             color: new echarts.graphic.LinearGradient(

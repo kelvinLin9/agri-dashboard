@@ -167,7 +167,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, h, resolveComponent } from 'vue'
-import { pagesApi, PageType, PageStatus, type Page, type CreatePageDto } from '@/api/pages'
+import { pagesApi, PageType, type Page } from '@/api/pages'
 import { useToast } from '@/composables/useToast'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 

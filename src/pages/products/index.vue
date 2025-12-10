@@ -606,7 +606,7 @@
 import { ref, computed, onMounted, h, resolveComponent } from 'vue'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import StatusBadge from '@/components/common/StatusBadge.vue'
-import { productsApi, categoriesApi, type Product, type ProductQueryParams, type Category, SortOrder } from '@/api'
+import { productsApi, categoriesApi, type Product, type Category } from '@/api'
 import SearchBox from '@/components/common/SearchBox.vue'
 import { useImageUpload } from '@/composables/useImageUpload'
 import { ProductFormSchema, type ProductFormData } from '@/schemas/product'
@@ -844,14 +844,7 @@ const formSelectedStatus = computed({
   set: (val) => { productForm.value.status = val?.value ?? 'active' }
 })
 
-const tabItems = [
-  { label: '基本資訊', slot: 'basic' },
-  { label: '價格設定', slot: 'pricing' },
-  { label: '庫存管理', slot: 'inventory' },
-  { label: '詳細資訊', slot: 'details' },
-  { label: '圖片管理', slot: 'images' },
-  { label: 'SEO 設定', slot: 'seo' },
-]
+// Tab items removed as not used in current implementation
 
 // Table Columns
 const columns = [
@@ -1127,18 +1120,6 @@ const deleteProduct = async () => {
 }
 
 // Helper Functions
-
-const getStatusLabel = (status: string | null): string => {
-  if (!status) return '全部狀態'
-  const option = statusOptions.find(o => o.value === status)
-  return option ? option.label : status
-}
-
-const getCategoryLabel = (categoryId: string | null): string => {
-  if (!categoryId) return '全部分類'
-  const category = categories.value.find(c => c.id === categoryId)
-  return category ? category.name : categoryId
-}
 
 const formatDateTime = (date: string | Date | undefined): string => {
   if (!date) return '-'

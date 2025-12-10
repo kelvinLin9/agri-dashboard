@@ -59,7 +59,7 @@ export interface CreatePageDto {
 /**
  * 更新頁面 DTO
  */
-export interface UpdatePageDto extends Partial<CreatePageDto> { }
+export type UpdatePageDto = Partial<CreatePageDto>
 
 /**
  * Pages API

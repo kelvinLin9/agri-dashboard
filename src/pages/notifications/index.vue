@@ -448,14 +448,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, h, resolveComponent } from 'vue'
 import { useNotificationStore } from '@/stores/notification'
-import { useNotifications } from '@/composables/useNotifications'
 import { notificationsApi } from '@/api/notifications'
 import apiClient from '@/api/apiClient'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import type { NotificationType, NotificationStatus, NotificationChannel, CreateNotificationDto } from '@/api/types'
 
 const notificationStore = useNotificationStore()
-const router = useRouter()
 const toast = useToast()
 
 // 筛選 (internal simple values)
@@ -537,10 +535,6 @@ const createForm = ref<{
 
 // 發送模式
 const sendMode = ref<'single' | 'broadcast'>('broadcast')
-const sendModeOptions = [
-  { value: 'single', label: '發送給單個用戶' },
-  { value: 'broadcast', label: '廣播給所有會員' }
-]
 
 // Computed for createForm SelectMenus
 const createFormChannel = computed({
@@ -550,19 +544,6 @@ const createFormChannel = computed({
 
 // 計算屬性 - 從 Store 讀取連線狀態
 const isConnected = computed(() => notificationStore.isConnected)
-
-// 計算屬性 - 獲取當前用戶
-const currentUser = computed(() => {
-  const userStr = localStorage.getItem('user')
-  if (userStr) {
-    try {
-      return JSON.parse(userStr)
-    } catch {
-      return null
-    }
-  }
-  return null
-})
 
 // 用戶選項
 const userOptions = ref<Array<{ value: string; label: string }>>([])
@@ -866,7 +847,7 @@ const handleTemplateSend = async () => {
   let variables: Record<string, any>
   try {
     variables = JSON.parse(templateForm.value.variablesJson)
-  } catch (error) {
+  } catch {
     toast.add({
       title: '錯誤',
       description: '變數格式不正確，請輸入有效的 JSON',
@@ -1004,17 +985,7 @@ const getTypeLabel = (type: string | null) => {
   return labels[type] || type
 }
 
-const getStatusLabel = (status: string | null) => {
-  if (!status) return '全部狀態'
-  const labels: Record<string, string> = {
-    pending: '待發送',
-    sent: '已發送',
-    delivered: '已送達',
-    read: '已讀',
-    failed: '失敗',
-  }
-  return labels[status] || status
-}
+
 
 const getPriorityLabel = (priority: number) => {
   if (priority >= 3) return '緊急'

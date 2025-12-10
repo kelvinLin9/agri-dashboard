@@ -1,5 +1,4 @@
-import { ref, h, render, getCurrentInstance } from 'vue'
-import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import { ref } from 'vue'
 
 export type ConfirmType = 'danger' | 'warning' | 'info' | 'success'
 

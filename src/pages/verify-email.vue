@@ -73,7 +73,6 @@ const isLoading = ref(true)
 const isSuccess = ref(false)
 const isResending = ref(false)
 const message = ref('')
-const userEmail = ref('')
 
 onMounted(async () => {
   const token = route.query.token as string
@@ -126,7 +125,7 @@ const resendEmail = async () => {
     } else {
       alert(data.message || '發送失敗，請稍後再試')
     }
-  } catch (error) {
+  } catch {
     alert('發送過程發生錯誤')
   } finally {
     isResending.value = false

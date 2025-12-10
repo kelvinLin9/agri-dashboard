@@ -199,7 +199,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { logsApi, OperationType, type AuditLog, type LogStatistics, type QueryLogsResponse } from '@/api/logs'
+import { logsApi, OperationType, type AuditLog, type LogStatistics } from '@/api/logs'
 
 const logs = ref<AuditLog[]>([])
 const statistics = ref<LogStatistics | null>(null)

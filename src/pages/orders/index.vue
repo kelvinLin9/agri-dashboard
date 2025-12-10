@@ -561,7 +561,6 @@ import {
   PaymentStatus,
   RefundStatus,
   SortOrder,
-  type PaginatedResponse,
   type ApiResponse
 } from '@/api'
 import SearchBox from '@/components/common/SearchBox.vue'

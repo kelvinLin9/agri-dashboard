@@ -95,7 +95,7 @@
     </section>
 
     <!-- Team Section -->
-    <section class="py-16">
+    <!-- <section class="py-16">
       <div class="container mx-auto px-4">
         <div class="max-w-4xl mx-auto">
           <h2 class="text-3xl font-bold text-gray-900 dark:text-white text-center mb-4">我們的團隊</h2>
@@ -107,7 +107,7 @@
               <div class="w-24 h-24 bg-gradient-to-br from-harvest-400 to-harvest-600 rounded-full mx-auto mb-4 flex items-center justify-center">
                 <span class="text-3xl text-white font-bold">林</span>
               </div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">林一休</h3>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">曉華</h3>
               <p class="text-harvest-600 dark:text-harvest-400 text-sm mb-2">創辦人 / 執行長</p>
               <p class="text-gray-500 dark:text-gray-400 text-sm">深耕農業領域十餘年</p>
             </div>
@@ -130,7 +130,7 @@
           </div>
         </div>
       </div>
-    </section>
+    </section> -->
 
     <!-- Contact CTA -->
     <section class="py-16 bg-gradient-to-br from-harvest-600 to-earth-600 text-white">

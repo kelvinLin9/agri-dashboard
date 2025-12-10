@@ -1,7 +1,7 @@
 <template>
-  <div class="category-tree-node">
+  <div class="category-tree-node relative">
     <!-- Node Content -->
-    <div 
+    <div
       class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
       :style="{ paddingLeft: `${level * 1.5 + 0.75}rem` }"
     >
@@ -11,7 +11,7 @@
         @click="toggleExpand"
         class="flex-shrink-0 w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
       >
-        <UIcon 
+        <UIcon
           :name="isExpanded ? 'i-heroicons-chevron-down' : 'i-heroicons-chevron-right'"
           class="w-4 h-4"
         />
@@ -19,7 +19,7 @@
       <div v-else class="w-6 flex-shrink-0" />
 
       <!-- Folder Icon -->
-      <UIcon 
+      <UIcon
         :name="hasChildren ? (isExpanded ? 'i-heroicons-folder-open' : 'i-heroicons-folder') : 'i-heroicons-document'"
         :class="category.isActive ? 'text-blue-500' : 'text-gray-400'"
         class="w-5 h-5 flex-shrink-0"
@@ -71,7 +71,7 @@
           />
         </UTooltip>
         <UTooltip text="刪除">
-          < UButton
+          <UButton
             icon="i-heroicons-trash"
             size="xs"
             color="error"
@@ -83,7 +83,7 @@
     </div>
 
     <!-- Children (Recursive) -->
-    <div v-if="hasChildren && isExpanded" class="children">
+    <div v-if="hasChildren && isExpanded" class="space-y-1">
       <CategoryTreeNode
         v-for="child in category.children"
         :key="child.id"
@@ -125,13 +125,3 @@ const toggleExpand = () => {
   isExpanded.value = !isExpanded.value
 }
 </script>
-
-<style scoped>
-.category-tree-node {
-  @apply relative;
-}
-
-.children {
-  @apply space-y-1;
-}
-</style>

@@ -28,7 +28,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { authApi } from '@/api'
 import apiClient from '@/api/apiClient'
 
 const router = useRouter()
@@ -51,9 +50,9 @@ onMounted(async () => {
     const response = await apiClient.post<{ data: {
       accessToken: string
       refreshToken: string
-      user: any
+      user: { role: string; [key: string]: unknown }
     } }>('/auth/oauth/token', { code })
-    
+
     const authData = response.data.data
 
     if (!authData.accessToken || !authData.refreshToken) {
@@ -63,36 +62,31 @@ onMounted(async () => {
     // 存儲 tokens 到 localStorage
     localStorage.setItem('access_token', authData.accessToken)
     localStorage.setItem('refresh_token', authData.refreshToken)
-
-    // 檢查權限：只有管理員可以登入後台
-    if (authData.user.role !== 'admin' && authData.user.role !== 'super_admin') {
-      // 清除 token
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
-      localStorage.removeItem('user')
-      
-      throw new Error('權限不足：只有管理員可以登入後台管理系統')
-    }
-    
     localStorage.setItem('user', JSON.stringify(authData.user))
 
     // 標記成功
     success.value = true
     isProcessing.value = false
 
+    // 根據角色導向不同頁面
+    const adminRoles = ['super_admin', 'admin', 'operator', 'customer_service']
+    const userRole = authData.user.role
+    const redirectTo = adminRoles.includes(userRole) ? '/dashboard' : '/welcome'
+
     // 延遲跳轉以顯示成功訊息
     setTimeout(() => {
-      router.push('/')
+      router.push(redirectTo)
     }, 1500)
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : '處理登入資訊時發生錯誤'
     console.error('Google 登入失敗:', err)
-    
+
     // 清除可能已存儲的 token
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
-    
-    error.value = err.message || '處理登入資訊時發生錯誤'
+
+    error.value = errMsg
     isProcessing.value = false
   }
 })

@@ -4,9 +4,9 @@
       <!-- Logo and Title -->
       <div class="text-center mb-8">
         <div class="flex justify-center mb-4">
-          <img 
-            src="@/assets/logo.png" 
-            alt="日沐 SunBathe Logo" 
+          <img
+            src="@/assets/logo.png"
+            alt="日沐 SunBathe Logo"
             class="w-20 h-20 object-contain"
           />
         </div>
@@ -170,7 +170,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { authApi } from '@/api'
 import { trackLogin } from '@/utils/analytics'
 import * as v from 'valibot'
-import { LoginFormSchema, type LoginFormInput } from '@/schemas/auth'
+import { LoginFormSchema } from '@/schemas/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -181,7 +181,6 @@ const loginForm = ref({
   password: '',
 })
 
-const rememberMe = ref(false) // 保留但未使用，未來可實作
 const isLoading = ref(false)
 const isGoogleLoading = ref(false)
 const errorMessage = ref('')
@@ -211,17 +210,17 @@ const isFormValid = computed(() => {
 // 表單驗證提示
 const inputError = computed(() => {
   const { email, password } = loginForm.value
-  
+
   // 如果欄位都是空的，不顯示錯誤
   if (!email && !password) {
     return ''
   }
-  
+
   const result = validateForm()
   if (result.success) {
     return ''
   }
-  
+
   // 取得第一個錯誤訊息
   const firstIssue = result.issues[0]
   return firstIssue?.message || ''
@@ -241,37 +240,31 @@ const handleLogin = async () => {
     })
 
     // 登入成功
-
-    // 檢查權限：只有管理員可以登入後台
     const userRole = response.user.role
-    if (userRole !== 'admin' && userRole !== 'super_admin') {
-      // 清除 token
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
-      localStorage.removeItem('user')
 
-      throw new Error('權限不足：只有管理員可以登入後台管理系統')
-    }
+    // GA4: 追蹤登入成功
+    trackLogin('email')
 
     // 檢查是否有重定向目標
     const redirect = route.query.redirect as string
-    if (redirect && redirect !== '/login') {
+    if (redirect && redirect !== '/login' && redirect !== '/') {
       router.push(redirect)
-    } else {
-      // 跳轉到首頁或儀表板
-      router.push('/')
+      return
     }
-    // GA4: 追蹤登入成功
-    trackLogin('email')
-  } catch (error: any) {
+
+    // 根據角色導向不同頁面
+    const adminRoles = ['super_admin', 'admin', 'operator', 'customer_service']
+    if (adminRoles.includes(userRole)) {
+      // 管理員導向後台
+      router.push('/dashboard')
+    } else {
+      // 一般用戶導向首頁
+      router.push('/welcome')
+    }
+  } catch (error: unknown) {
     console.error('登入失敗:', error)
     // 統一錯誤訊息，不顯示具體錯誤細節以防止資訊洩漏
-    // 例如不讓攻擊者知道帳號是否存在
-    if (error.message?.includes('權限不足')) {
-      errorMessage.value = error.message
-    } else {
-      errorMessage.value = '登入失敗，請檢查帳號或密碼是否正確'
-    }
+    errorMessage.value = '登入失敗，請檢查帳號或密碼是否正確'
   } finally {
     isLoading.value = false
   }

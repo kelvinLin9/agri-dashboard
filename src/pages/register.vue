@@ -4,9 +4,9 @@
       <!-- Logo and Title -->
       <div class="text-center mb-8">
         <div class="flex justify-center mb-4">
-          <img 
-            src="@/assets/logo.png" 
-            alt="日沐 SunBathe Logo" 
+          <img
+            src="@/assets/logo.png"
+            alt="日沐 SunBathe Logo"
             class="w-20 h-20 object-contain"
           />
         </div>
@@ -267,9 +267,9 @@ const isFormValid = computed(() => {
 // Methods
 const validateForm = (): boolean => {
   errors.value = {}
-  
+
   const result = validateFormWithValibot()
-  
+
   if (!result.success) {
     // 將 Valibot 錯誤映射到各欄位
     for (const issue of result.issues) {
@@ -280,7 +280,7 @@ const validateForm = (): boolean => {
     }
     return false
   }
-  
+
   return true
 }
 
@@ -303,13 +303,14 @@ const handleRegister = async () => {
     successMessage.value = '註冊成功！請檢查您的信箱驗證 Email...'
     // GA4: 追蹤註冊成功
     trackSignUp('email')
-    // 延遲跳轉以顯示成功訊息
+    // 延遲跳轉以顯示成功訊息（新註冊用戶導向首頁）
     setTimeout(() => {
-      router.push('/')
+      router.push('/welcome')
     }, 2000)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('註冊失敗:', error)
-    errorMessage.value = error.message || '註冊失敗，請稍後再試'
+    const message = error instanceof Error ? error.message : '註冊失敗，請稍後再試'
+    errorMessage.value = message
   } finally {
     isLoading.value = false
   }

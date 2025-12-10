@@ -191,8 +191,8 @@
                 :alt="product.name"
                 class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
               />
-              <div v-else class="w-full h-full flex items-center justify-center">
-                <UIcon name="i-heroicons-photo" class="w-16 h-16 text-amber-200" />
+              <div v-else class="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50">
+                <img src="@/assets/images/product-placeholder.png" alt="商品圖片" class="w-3/4 h-3/4 object-contain opacity-80" />
               </div>
             </div>
 
@@ -240,12 +240,11 @@
           <!-- Image Side -->
           <div class="relative">
             <div class="aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl shadow-amber-200/50">
-              <div class="w-full h-full bg-gradient-to-br from-amber-200 via-orange-200 to-green-200 flex items-center justify-center">
-                <div class="text-center">
-                  <span class="text-8xl">🌱</span>
-                  <p class="mt-4 text-2xl font-medium text-amber-800">從土地開始的故事</p>
-                </div>
-              </div>
+              <img
+                src="@/assets/images/story-farm.png"
+                alt="日沐農場故事"
+                class="w-full h-full object-cover"
+              />
             </div>
             <!-- Decorative -->
             <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-gradient-to-br from-orange-300 to-amber-400 rounded-2xl -z-10"></div>

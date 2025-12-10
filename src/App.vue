@@ -1,9 +1,9 @@
 <template>
   <UApp>
-    <Header v-if="route.meta.layout !== 'blank'" />
-    <UContainer>
+    <component :is="layoutComponent">
       <RouterView />
-    </UContainer>
+    </component>
+
     <LoadingOverlay :is-open="isLoading" />
 
     <!-- PWA 安裝提示 -->
@@ -11,40 +11,49 @@
 
     <!-- 推送通知訂閱提示 -->
     <PushNotificationPrompt />
-
-    <!-- 浮動購物車按鈕 -->
-    <FloatingCart />
-
-    <!-- 回到頂部按鈕 -->
-    <BackToTop />
-
-    <!-- Cookie 同意橫幅 -->
-    <CookieConsent />
   </UApp>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
-import Header from './layout/Header.vue'
 import LoadingOverlay from './components/LoadingOverlay.vue'
 import PwaInstallPrompt from './components/PwaInstallPrompt.vue'
 import PushNotificationPrompt from './components/PushNotificationPrompt.vue'
-import FloatingCart from './components/FloatingCart.vue'
-import BackToTop from './components/common/BackToTop.vue'
-import CookieConsent from './components/common/CookieConsent.vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { useNotificationStore } from '@/stores/notification'
 import { isLoading } from '@/utils/loading'
 import { setToastInstance } from '@/utils/globalToast'
 import { useToast } from '@/composables/useToast'
 
+// Layout Components (Lazy loaded)
+const BlankLayout = defineAsyncComponent(() => import('./layouts/BlankLayout.vue'))
+const CustomerLayout = defineAsyncComponent(() => import('./layouts/CustomerLayout.vue'))
+const AdminLayout = defineAsyncComponent(() => import('./layouts/AdminLayout.vue'))
+
 // 初始化全域 Toast（讓 API 攔截器可以使用）
 const toast = useToast()
 setToastInstance(toast)
 
-// 初始化通知功能
+// 路由
 const route = useRoute()
+
+// 動態佈局選擇
+const layoutComponent = computed(() => {
+  const layout = route.meta.layout as string | undefined
+
+  switch (layout) {
+    case 'blank':
+      return BlankLayout
+    case 'admin':
+      return AdminLayout
+    case 'customer':
+    default:
+      return CustomerLayout
+  }
+})
+
+// 初始化通知功能
 const { connect, disconnect, requestDesktopPermission } = useNotifications()
 const notificationStore = useNotificationStore()
 

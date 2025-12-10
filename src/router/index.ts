@@ -4,170 +4,218 @@ import { authApi } from '@/api'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // =====================
+    // Admin Routes (後台管理)
+    // =====================
     {
       path: '/',
       name: 'home',
-      component: () => import('../pages/index.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true },
-      children: [
-        {
-          path: 'dashboard',
-          name: 'dashboard',
-          component: () => import('../pages/dashboard/index.vue'),
-          meta: { requiresAuth: true, requiresAdmin: true },
-        },
-        {
-          path: 'members',
-          name: 'members',
-          component: () => import('../pages/members/index.vue'),
-          meta: { requiresAuth: true, requiresAdmin: true },
-        },
-        {
-          path: 'orders',
-          name: 'orders',
-          component: () => import('../pages/orders/index.vue'),
-          meta: { requiresAuth: true, requiresAdmin: true },
-        },
-        {
-          path: 'products',
-          name: 'products',
-          component: () => import('../pages/products/index.vue'),
-          meta: { requiresAuth: true, requiresAdmin: true },
-        },
-        {
-          path: 'pages',
-          name: 'pages',
-          component: () => import('../pages/pages/index.vue'),
-          meta: { requiresAuth: true, requiresAdmin: true },
-        },
-        {
-          path: 'logs',
-          name: 'logs',
-          component: () => import('../pages/logs/index.vue'),
-          meta: { requiresAuth: true, requiresAdmin: true },
-        },
-        {
-          path: 'notifications',
-          name: 'notifications',
-          component: () => import('../pages/notifications/index.vue'),
-          meta: { requiresAuth: true, requiresAdmin: true },
-        },
-      ],
+      redirect: '/dashboard',
+      meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
     },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('../pages/dashboard/index.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+    },
+    {
+      path: '/members',
+      name: 'members',
+      component: () => import('../pages/members/index.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+    },
+    {
+      path: '/orders',
+      name: 'orders',
+      component: () => import('../pages/orders/index.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+    },
+    {
+      path: '/products',
+      name: 'products',
+      component: () => import('../pages/products/index.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+    },
+    {
+      path: '/categories',
+      name: 'categories',
+      component: () => import('../pages/categories/index.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+    },
+    {
+      path: '/uploads',
+      name: 'uploads',
+      component: () => import('../pages/uploads/index.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+    },
+    {
+      path: '/pages',
+      name: 'pages',
+      component: () => import('../pages/pages/index.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+    },
+    {
+      path: '/logs',
+      name: 'logs',
+      component: () => import('../pages/logs/index.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+    },
+    {
+      path: '/notifications',
+      name: 'notifications',
+      component: () => import('../pages/notifications/index.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+    },
+
+    // =====================
+    // Auth Routes (認證相關 - 空白佈局)
+    // =====================
     {
       path: '/login',
       name: 'login',
       component: () => import('../pages/login.vue'),
-      meta: {
-        requiresAuth: false,
-        layout: 'blank'
-      },
+      meta: { requiresAuth: false, layout: 'blank' },
     },
     {
       path: '/register',
       name: 'register',
       component: () => import('../pages/register.vue'),
-      meta: {
-        requiresAuth: false,
-        layout: 'blank'
-      },
+      meta: { requiresAuth: false, layout: 'blank' },
     },
     {
       path: '/auth/callback',
       name: 'auth-callback',
       component: () => import('../pages/auth/callback.vue'),
-      meta: {
-        requiresAuth: false,
-        layout: 'blank'
-      },
-    },
-    {
-      path: '/debug',
-      name: 'debug',
-      component: () => import('../pages/debug.vue'),
-      meta: {
-        requiresAuth: false,
-        layout: 'blank'
-      },
-    },
-    {
-      path: '/welcome',
-      name: 'landing',
-      component: () => import('../pages/landing.vue'),
-      meta: {
-        requiresAuth: false,
-        layout: 'blank'
-      },
+      meta: { requiresAuth: false, layout: 'blank' },
     },
     {
       path: '/verify-email',
       name: 'verify-email',
       component: () => import('../pages/verify-email.vue'),
-      meta: {
-        requiresAuth: false,
-        layout: 'blank'
-      },
+      meta: { requiresAuth: false, layout: 'blank' },
     },
-    // Shopping Flow Routes (Customer-facing)
+    {
+      path: '/debug',
+      name: 'debug',
+      component: () => import('../pages/debug.vue'),
+      meta: { requiresAuth: false, layout: 'blank' },
+    },
+
+    // =====================
+    // Customer Routes (客戶端 - 購物體驗)
+    // =====================
+    {
+      path: '/welcome',
+      name: 'landing',
+      component: () => import('../pages/landing.vue'),
+      meta: { requiresAuth: false, layout: 'customer' },
+    },
     {
       path: '/shop',
       name: 'shop',
       redirect: '/shop/products',
-      meta: { requiresAuth: false },  // 訪客可瀏覽
+      meta: { requiresAuth: false, layout: 'customer' },
     },
     {
       path: '/shop/products',
       name: 'shop-products',
       component: () => import('../pages/shop/products/index.vue'),
-      meta: { requiresAuth: false },  // 訪客可瀏覽
+      meta: { requiresAuth: false, layout: 'customer' },
     },
     {
       path: '/shop/products/:id',
       name: 'shop-product-detail',
       component: () => import('../pages/shop/products/[id].vue'),
-      meta: { requiresAuth: false },  // 訪客可瀏覽
+      meta: { requiresAuth: false, layout: 'customer' },
     },
     {
       path: '/cart',
       name: 'cart',
       component: () => import('../pages/cart.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, layout: 'customer' },
     },
     {
       path: '/checkout',
       name: 'checkout',
       component: () => import('../pages/checkout.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, layout: 'customer' },
     },
     {
       path: '/payment',
       name: 'payment',
       component: () => import('../pages/payment.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, layout: 'customer' },
     },
     {
       path: '/payment/success',
       name: 'payment-success',
       component: () => import('../pages/payment/success.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, layout: 'customer' },
     },
     {
       path: '/payment/failed',
       name: 'payment-failed',
       component: () => import('../pages/payment/failed.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, layout: 'customer' },
+    },
+    {
+      path: '/payment/result',
+      name: 'payment-result',
+      component: () => import('../pages/payment/result.vue'),
+      meta: { requiresAuth: true, layout: 'customer' },
     },
     {
       path: '/my-orders',
       name: 'my-orders',
       component: () => import('../pages/my-orders/index.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, layout: 'customer' },
     },
     {
       path: '/my-orders/:id',
       name: 'my-order-detail',
       component: () => import('../pages/my-orders/[id].vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, layout: 'customer' },
+    },
+
+    // =====================
+    // Static Pages (靜態頁面 - 客戶端)
+    // =====================
+    {
+      path: '/about',
+      name: 'about',
+      component: () => import('../pages/about.vue'),
+      meta: { requiresAuth: false, layout: 'customer' },
+    },
+    {
+      path: '/faq',
+      name: 'faq',
+      component: () => import('../pages/faq.vue'),
+      meta: { requiresAuth: false, layout: 'customer' },
+    },
+    {
+      path: '/shipping',
+      name: 'shipping',
+      component: () => import('../pages/shipping.vue'),
+      meta: { requiresAuth: false, layout: 'customer' },
+    },
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: () => import('../pages/privacy.vue'),
+      meta: { requiresAuth: false, layout: 'customer' },
+    },
+    {
+      path: '/terms',
+      name: 'terms',
+      component: () => import('../pages/terms.vue'),
+      meta: { requiresAuth: false, layout: 'customer' },
+    },
+    {
+      path: '/refund-policy',
+      name: 'refund-policy',
+      component: () => import('../pages/refund-policy.vue'),
+      meta: { requiresAuth: false, layout: 'customer' },
     },
   ],
 })

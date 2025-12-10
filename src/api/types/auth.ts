@@ -8,7 +8,7 @@ export interface User {
   username?: string
   email: string
   nickname?: string
-  role: 'super_admin' | 'admin' | 'operator' | 'customer_service'
+  role: 'super_admin' | 'admin' | 'operator' | 'customer_service' | 'customer'
   status: 'active' | 'inactive' | 'locked'
   avatar?: string
   emailVerified?: boolean

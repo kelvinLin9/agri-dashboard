@@ -32,7 +32,7 @@ export const LoginFormSchema = v.object({
   password: v.pipe(
     v.string('密碼必須是文字'),
     v.nonEmpty('請輸入密碼'),
-    v.minLength(6, '密碼至少 6 個字元')
+    v.minLength(8, '密碼至少 8 個字元')
   ),
 })
 

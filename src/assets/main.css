@@ -58,6 +58,140 @@ html {
   --color-nature-950: #022C22;
 }
 
+/* ===================================
+   深色模式覆蓋 (Dark Mode)
+   策略：色階反轉 (50 <-> 950, 100 <-> 900, ...)
+   =================================== */
+:root.dark {
+  /* Harvest 豐收暖橙系 (Dark) */
+  --color-harvest-50:  #451A03;
+  --color-harvest-100: #78350F;
+  --color-harvest-200: #92400E;
+  --color-harvest-300: #B45309;
+  --color-harvest-400: #D97706;
+  --color-harvest-500: #F59E0B; /* 500通常保持原樣或微調 */
+  --color-harvest-600: #FBBF24;
+  --color-harvest-700: #FCD34D;
+  --color-harvest-800: #FDE68A;
+  --color-harvest-900: #FEF3C7;
+  --color-harvest-950: #FFFBEB;
+
+  /* Earth 大地土壤系 (Dark) */
+  --color-earth-50:  #431407;
+  --color-earth-100: #7C2D12;
+  --color-earth-200: #9A3412;
+  --color-earth-300: #C2410C;
+  --color-earth-400: #EA580C;
+  --color-earth-500: #F97316;
+  --color-earth-600: #FB923C;
+  --color-earth-700: #FDBA74;
+  --color-earth-800: #FED7AA;
+  --color-earth-900: #FFEDD5;
+  --color-earth-950: #FFF7ED;
+
+  /* Nature 自然綠意系 (Dark) */
+  --color-nature-50:  #022C22;
+  --color-nature-100: #064E3B;
+  --color-nature-200: #065F46;
+  --color-nature-300: #047857;
+  --color-nature-400: #059669;
+  --color-nature-500: #10B981;
+  --color-nature-600: #34D399;
+  --color-nature-700: #6EE7B7;
+  --color-nature-800: #A7F3D0;
+  --color-nature-900: #D1FAE5;
+  --color-nature-950: #ECFDF5;
+}
+
+/* ===================================
+   日式主題覆蓋 (Japanese Theme)
+   =================================== */
+:root.theme-japanese {
+  /* 豐收色 (Harvest) -> 改為 柿色 (Persimmon) / 溫暖夕陽紅 */
+  --color-harvest-50:  #FFF3E0;
+  --color-harvest-100: #FFE0B2;
+  --color-harvest-200: #FFCC80;
+  --color-harvest-300: #FFB74D;
+  --color-harvest-400: #FFA726;
+  --color-harvest-500: #FF9800; /* 主色更柔和 */
+  --color-harvest-600: #FB8C00;
+  --color-harvest-700: #F57C00;
+  --color-harvest-800: #EF6C00;
+  --color-harvest-900: #E65100;
+  --color-harvest-950: #BF360C;
+
+  /* 大地色 (Earth) -> 改為 傳統茶色 / 灰棕色 */
+  --color-earth-50:  #F7F7F7;
+  --color-earth-100: #E0E0E0;
+  --color-earth-200: #BDBDBD;
+  --color-earth-300: #9E9E9E;
+  --color-earth-400: #757575;
+  --color-earth-500: #616161;
+  --color-earth-600: #424242;
+  --color-earth-700: #212121;
+  --color-earth-800: #191919;
+  --color-earth-900: #0D0D0D;
+  --color-earth-950: #000000;
+
+  /* 自然色 (Nature) -> 改為 抹茶綠 / 深沈森林綠 */
+  --color-nature-50:  #F1F8E9;
+  --color-nature-100: #DCEDC8;
+  --color-nature-200: #C5E1A5;
+  --color-nature-300: #AED581;
+  --color-nature-400: #9CCC65;
+  --color-nature-500: #8BC34A;
+  --color-nature-600: #7CB342;
+  --color-nature-700: #689F38;
+  --color-nature-800: #558B2F;
+  --color-nature-900: #33691E;
+  --color-nature-950: #1B5E20;
+}
+
+/* 日式主題的深色模式覆蓋 (Japanese Dark Mode) */
+:root.dark.theme-japanese {
+  /* Harvest (Persimmon) Dark */
+  --color-harvest-50:  #BF360C;
+  --color-harvest-100: #E65100;
+  --color-harvest-200: #EF6C00;
+  --color-harvest-300: #F57C00;
+  --color-harvest-400: #FB8C00;
+  --color-harvest-500: #FF9800;
+  --color-harvest-600: #FFA726;
+  --color-harvest-700: #FFB74D;
+  --color-harvest-800: #FFCC80;
+  --color-harvest-900: #FFE0B2;
+  --color-harvest-950: #FFF3E0;
+
+  /* Earth (Dark Brown) Dark */
+  --color-earth-50:  #000000;
+  --color-earth-100: #0D0D0D;
+  --color-earth-200: #191919;
+  --color-earth-300: #212121;
+  --color-earth-400: #424242;
+  --color-earth-500: #616161;
+  --color-earth-600: #757575;
+  --color-earth-700: #9E9E9E;
+  --color-earth-800: #BDBDBD;
+  --color-earth-900: #E0E0E0;
+  --color-earth-950: #F7F7F7;
+
+  /* Nature (Matcha) Dark */
+  --color-nature-50:  #1B5E20;
+  --color-nature-100: #33691E;
+  --color-nature-200: #558B2F;
+  --color-nature-300: #689F38;
+  --color-nature-400: #7CB342;
+  --color-nature-500: #8BC34A;
+  --color-nature-600: #9CCC65;
+  --color-nature-700: #AED581;
+  --color-nature-800: #C5E1A5;
+  --color-nature-900: #DCEDC8;
+  --color-nature-950: #F1F8E9;
+}
+  /* 字體覆蓋 (若有導入日文字體可在此設定) */
+  /* --font-sans: "Zen Maru Gothic", sans-serif; */
+
+
 /* Z-index 層級修復 - 確保 Modal 和下拉選單正確顯示在最上層 */
 [data-radix-popper-content-wrapper],
 [role="dialog"],

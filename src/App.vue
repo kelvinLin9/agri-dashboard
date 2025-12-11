@@ -11,6 +11,9 @@
 
     <!-- 推送通知訂閱提示 -->
     <PushNotificationPrompt />
+
+    <!-- 主題切換按鈕 -->
+    <ThemeToggle />
   </UApp>
 </template>
 
@@ -20,10 +23,12 @@ import { useRoute } from 'vue-router'
 import LoadingOverlay from './components/LoadingOverlay.vue'
 import PwaInstallPrompt from './components/PwaInstallPrompt.vue'
 import PushNotificationPrompt from './components/PushNotificationPrompt.vue'
+import ThemeToggle from './components/ThemeToggle.vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { useNotificationStore } from '@/stores/notification'
 import { isLoading } from '@/utils/loading'
 import { setToastInstance } from '@/utils/globalToast'
+import { useTheme } from '@/composables/useTheme'
 import { useToast } from '@/composables/useToast'
 
 // Layout Components (Lazy loaded)
@@ -56,8 +61,12 @@ const layoutComponent = computed(() => {
 // 初始化通知功能
 const { connect, disconnect, requestDesktopPermission } = useNotifications()
 const notificationStore = useNotificationStore()
+const { initTheme } = useTheme()
 
 onMounted(async () => {
+  // 初始化主題
+  initTheme()
+
   // 檢查是否有 access token
   const token = localStorage.getItem('access_token')
 

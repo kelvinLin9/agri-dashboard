@@ -68,6 +68,12 @@ const router = createRouter({
       component: () => import('../pages/notifications/index.vue'),
       meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
     },
+    {
+      path: '/video-recorder',
+      name: 'video-recorder',
+      component: () => import('../pages/video-recorder.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+    },
 
     // =====================
     // Auth Routes (認證相關 - 空白佈局)

@@ -156,6 +156,7 @@ const navItems = [
   { name: 'products', label: '產品管理', icon: 'i-heroicons-cube' },
   { name: 'categories', label: '分類管理', icon: 'i-heroicons-folder' },
   { name: 'uploads', label: '媒體管理', icon: 'i-heroicons-photo' },
+  { name: 'video-recorder', label: '影片錄製', icon: 'i-heroicons-video-camera' },
   { name: 'notifications', label: '推播通知', icon: 'i-heroicons-bell' },
   { name: 'logs', label: '操作日誌', icon: 'i-heroicons-clipboard-document-list' },
 ]

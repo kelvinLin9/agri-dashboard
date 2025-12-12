@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { authApi } from '@/api'
+import { isAdmin } from '@/utils/roles'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -236,9 +237,9 @@ router.beforeEach(async (to, from, next) => {
     if (token && (to.name === 'login' || to.name === 'register')) {
       if (userStr) {
         const userData = JSON.parse(userStr)
-        const isAdmin = ['super_admin', 'admin', 'operator', 'customer_service'].includes(userData.role)
+        const userIsAdmin = isAdmin(userData.role)
         // 管理員導向 dashboard，一般用戶導向商店
-        return next({ name: isAdmin ? 'dashboard' : 'shop-products' })
+        return next({ name: userIsAdmin ? 'dashboard' : 'shop-products' })
       }
       return next({ name: 'shop-products' })
     }
@@ -269,9 +270,9 @@ router.beforeEach(async (to, from, next) => {
 
     // 檢查是否需要管理員權限
     if (requiresAdmin) {
-      const isAdmin = ['super_admin', 'admin', 'operator', 'customer_service'].includes(userData.role)
+      const userIsAdmin = isAdmin(userData.role)
 
-      if (!isAdmin) {
+      if (!userIsAdmin) {
         // 非管理員嘗試訪問管理頁面，重定向到商店
         return next({ name: 'shop-products' })
       }

@@ -126,4 +126,51 @@ export const uploadApi = {
     const response = await apiClient.get<{ data: UploadConfig }>('/uploads/config')
     return response.data.data
   },
+
+  // ==================== Cloudflare R2 方法 ====================
+
+  /**
+   * 獲取 R2 預簽名上傳 URL
+   * 用於直接上傳大容量影片到 Cloudflare R2
+   */
+  getR2PresignedUrl: async (
+    filename: string,
+    contentType: string,
+  ): Promise<{
+    uploadUrl: string
+    publicUrl: string
+    key: string
+  }> => {
+    const response = await apiClient.post<{
+      uploadUrl: string
+      publicUrl: string
+      key: string
+    }>('/uploads/r2/presigned-url', {
+      filename,
+      contentType,
+    })
+    return response.data
+  },
+
+  /**
+   * 通知後端 R2 上傳完成
+   * 記錄上傳資訊到資料庫
+   */
+  completeR2Upload: async (
+    key: string,
+    publicUrl: string,
+    fileSize: number,
+    title?: string,
+    description?: string,
+  ): Promise<Upload> => {
+    const response = await apiClient.post<Upload>('/uploads/r2/complete', {
+      key,
+      publicUrl,
+      fileSize,
+      title,
+      description,
+    })
+
+    return response.data
+  },
 }

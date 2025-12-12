@@ -25,7 +25,8 @@ export function useVideoUpload() {
   // ==================== Methods ====================
 
   /**
-   * 上傳影片到後端
+   * 上傳影片到 Cloudflare R2
+   * 使用預簽名 URL 直接上傳，不經過後端
    */
   async function uploadVideo(
     blob: Blob,
@@ -46,27 +47,23 @@ export function useVideoUpload() {
         ? `${metadata.title.replace(/[^a-zA-Z0-9]/g, '_')}-${timestamp}.webm`
         : `video-${timestamp}.webm`
 
-      // 創建 File 對象
-      const file = new File([blob], filename, { type: blob.type || 'video/webm' })
-
-      // 調用上傳 API（帶進度回調）
-      const result = await uploadApi.upload(
-        file,
-        'video',  // usage
-        undefined, // entityType
-        undefined  // entityId
+      // Step 1: 獲取 R2 預簽名上傳 URL
+      const { uploadUrl, publicUrl, key } = await uploadApi.getR2PresignedUrl(
+        filename,
+        blob.type || 'video/webm'
       )
 
-      // 如果有元數據，更新上傳記錄
-      if (result.id && (metadata.title || metadata.description)) {
-        const updateData: any = {}
-        if (metadata.title) updateData.filename = metadata.title
-        if (metadata.description) updateData.description = metadata.description
+      // Step 2: 直接上傳到 R2 (使用 XMLHttpRequest 追蹤進度)
+      await uploadToR2WithProgress(uploadUrl, blob)
 
-        if (Object.keys(updateData).length > 0) {
-          await uploadApi.update(String(result.id), updateData)
-        }
-      }
+      // Step 3: 通知後端記錄上傳
+      const result = await uploadApi.completeR2Upload(
+        key,
+        publicUrl,
+        blob.size,
+        metadata.title,
+        metadata.description
+      )
 
       uploadedFile.value = result
       uploadProgress.value = 100
@@ -81,6 +78,47 @@ export function useVideoUpload() {
     } finally {
       isUploading.value = false
     }
+  }
+
+  /**
+   * 使用 XMLHttpRequest 上傳到 R2 並追蹤進度
+   */
+  function uploadToR2WithProgress(url: string, blob: Blob): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+
+      // 上傳進度事件
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          uploadProgress.value = Math.round((e.loaded / e.total) * 100)
+        }
+      })
+
+      // 上傳完成
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve()
+        } else {
+          reject(new Error(`上傳失敗: HTTP ${xhr.status}`))
+        }
+      })
+
+      // 上傳錯誤
+      xhr.addEventListener('error', () => {
+        reject(new Error('網絡錯誤'))
+      })
+
+      // 上傳超時
+      xhr.addEventListener('timeout', () => {
+        reject(new Error('上傳超時'))
+      })
+
+      // 開始上傳
+      xhr.open('PUT', url)
+      xhr.setRequestHeader('Content-Type', blob.type || 'video/webm')
+      xhr.timeout = 5 * 60 * 1000 // 5分鐘超時
+      xhr.send(blob)
+    })
   }
 
   /**

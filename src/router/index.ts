@@ -119,6 +119,12 @@ const router = createRouter({
       meta: { requiresAuth: false, layout: 'customer' },
     },
     {
+      path: '/welcome-jp',
+      name: 'landing-jp',
+      component: () => import('../pages/landing-jp.vue'),
+      meta: { requiresAuth: false, layout: 'customer' },
+    },
+    {
       path: '/shop',
       name: 'shop',
       redirect: '/shop/products',

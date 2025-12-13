@@ -142,14 +142,16 @@ export const uploadApi = {
     key: string
   }> => {
     const response = await apiClient.post<{
-      uploadUrl: string
-      publicUrl: string
-      key: string
+      data: {
+        uploadUrl: string
+        publicUrl: string
+        key: string
+      }
     }>('/uploads/r2/presigned-url', {
       filename,
       contentType,
     })
-    return response.data
+    return response.data.data
   },
 
   /**
@@ -163,7 +165,7 @@ export const uploadApi = {
     title?: string,
     description?: string,
   ): Promise<Upload> => {
-    const response = await apiClient.post<Upload>('/uploads/r2/complete', {
+    const response = await apiClient.post<{ data: Upload }>('/uploads/r2/complete', {
       key,
       publicUrl,
       fileSize,
@@ -171,6 +173,6 @@ export const uploadApi = {
       description,
     })
 
-    return response.data
+    return response.data.data
   },
 }

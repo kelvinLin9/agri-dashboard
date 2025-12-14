@@ -11,9 +11,6 @@
 
     <!-- 推送通知訂閱提示 -->
     <PushNotificationPrompt />
-
-    <!-- 主題切換按鈕 -->
-    <ThemeToggle />
   </UApp>
 </template>
 
@@ -23,7 +20,6 @@ import { useRoute } from 'vue-router'
 import LoadingOverlay from './components/LoadingOverlay.vue'
 import PwaInstallPrompt from './components/PwaInstallPrompt.vue'
 import PushNotificationPrompt from './components/PushNotificationPrompt.vue'
-import ThemeToggle from './components/ThemeToggle.vue'
 import { useNotifications } from '@/composables/useNotifications'
 import { useNotificationStore } from '@/stores/notification'
 import { isLoading } from '@/utils/loading'

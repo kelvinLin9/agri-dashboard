@@ -13,20 +13,20 @@ RUN npm ci
 COPY . .
 
 # Build arguments for environment variables
-# 注意：ARG 如果沒有透過 --build-arg 傳入，會是 undefined
-# 如果透過 --set-build-env-vars 傳入空值，會是空字串
-ARG VITE_API_URL
-ARG VITE_GOOGLE_CLIENT_ID
+# 只有當明確傳入 --build-arg 時才會覆蓋 .env.production
+ARG VITE_API_URL=""
+ARG VITE_GOOGLE_CLIENT_ID=""
 
 # Set environment variables for build
-# 使用 ENV 指令設定環境變數（Vite 會在 build 時讀取）
-# 注意：如果 ARG 是空字串，ENV 也會是空字串，這會覆蓋 .env.production
-# 因此部署腳本必須確保不會傳入空值
-ENV VITE_API_URL=${VITE_API_URL}
-ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
-
-# Build the application
-RUN npm run build
+# 只有在 ARG 有值時才設定 ENV（避免覆蓋 .env.production）
+RUN if [ -n "$VITE_API_URL" ]; then \
+      echo "VITE_API_URL=$VITE_API_URL" >> .env.production; \
+    fi && \
+    if [ -n "$VITE_GOOGLE_CLIENT_ID" ]; then \
+      echo "VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID" >> .env.production; \
+    fi && \
+    cat .env.production && \
+    npm run build
 
 # Production stage
 FROM nginx:alpine

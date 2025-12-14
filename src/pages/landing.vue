@@ -329,47 +329,6 @@
       </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="py-24 relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600"></div>
-      <div class="absolute inset-0">
-        <div class="absolute top-0 left-0 w-full h-full opacity-10">
-          <div class="absolute top-10 left-[10%] text-6xl">🌾</div>
-          <div class="absolute bottom-20 right-[15%] text-5xl">🍃</div>
-          <div class="absolute top-1/2 left-1/2 text-7xl">🌻</div>
-        </div>
-      </div>
-
-      <div class="container mx-auto px-6 relative z-10 text-center">
-        <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
-          開始您的新鮮之旅
-        </h2>
-        <p class="text-xl text-amber-100 mb-10 max-w-2xl mx-auto">
-          立即加入會員，享受專屬優惠與第一手農產資訊。讓新鮮美味，成為您日常的一部分。
-        </p>
-
-        <div class="flex flex-wrap justify-center gap-4">
-          <UButton
-            size="xl"
-            class="bg-white text-orange-600 hover:bg-amber-50 shadow-xl px-8 py-4 text-lg font-semibold"
-            @click="goToRegister"
-          >
-            <UIcon name="i-heroicons-user-plus" class="mr-2 w-5 h-5" />
-            免費加入會員
-          </UButton>
-          <UButton
-            size="xl"
-            variant="outline"
-            class="border-2 border-white text-white hover:bg-white/10 px-8 py-4 text-lg font-semibold"
-            @click="goToShop"
-          >
-            <UIcon name="i-heroicons-shopping-bag" class="mr-2 w-5 h-5" />
-            立即選購
-          </UButton>
-        </div>
-      </div>
-    </section>
-
     <!-- Footer -->
     <footer class="bg-amber-950 text-amber-100 py-16">
       <div class="container mx-auto px-6">

@@ -187,6 +187,7 @@ import { useColorMode } from '@vueuse/core'
 import { useCartStore } from '@/stores/cart'
 import { authApi } from '@/api'
 import SearchBar from './SearchBar.vue'
+import { isAdmin } from '@/utils/roles'
 import type { DropdownMenuItem } from '@nuxt/ui'
 
 const route = useRoute()
@@ -246,14 +247,30 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => {
     ]
   }
 
-  return [
+  // Check if user is admin
+  const userIsAdmin = isAdmin(user.value?.role)
+
+  const baseItems: DropdownMenuItem[][] = [
     [{ label: userName.value, icon: 'i-heroicons-user-circle', disabled: true }],
     [
       { label: '我的訂單', icon: 'i-heroicons-clipboard-document-list', onSelect: () => router.push('/my-orders') },
       { label: '購物車', icon: 'i-heroicons-shopping-cart', onSelect: () => router.push('/cart') },
     ],
-    [{ label: '登出', icon: 'i-heroicons-arrow-right-on-rectangle', color: 'error' as const, onSelect: handleLogout }],
   ]
+
+  // Add admin dashboard link for admin users
+  if (userIsAdmin) {
+    baseItems.push([
+      { label: '管理後台', icon: 'i-heroicons-cog-6-tooth', onSelect: () => router.push('/dashboard') },
+    ])
+  }
+
+  // Add logout
+  baseItems.push([
+    { label: '登出', icon: 'i-heroicons-arrow-right-on-rectangle', color: 'error' as const, onSelect: handleLogout }
+  ])
+
+  return baseItems
 })
 
 // Logout

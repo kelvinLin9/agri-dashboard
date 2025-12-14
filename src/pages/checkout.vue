@@ -117,7 +117,11 @@
                 </div>
                 <div class="flex justify-between text-sm">
                   <span class="text-gray-600">運費</span>
-                  <span>$60</span>
+                  <span v-if="shippingFee === 0" class="text-green-600">免運費</span>
+                  <span v-else>${{ shippingFee.toLocaleString() }}</span>
+                </div>
+                <div v-if="shippingFee === 0 && cartStore.subtotal > 0" class="text-xs text-green-600">
+                  已達免運門檻 (滿 ${{ shippingConfig?.freeThreshold?.toLocaleString() }})
                 </div>
                 <div v-if="discountAmount > 0" class="flex justify-between text-sm text-green-600 dark:text-green-400">
                   <span>優惠折扣</span>
@@ -153,6 +157,8 @@ import * as v from 'valibot'
 import { CheckoutFormSchema, type CheckoutFormInput } from '@/schemas/checkout'
 import { trackPurchase } from '@/utils/analytics'
 import { couponsApi } from '@/api/coupons'
+import { settingsApi } from '@/api/settings'
+import type { ShippingConfig } from '@/api/types/settings'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -165,9 +171,19 @@ const couponCode = ref('')
 const couponError = ref('')
 const appliedCoupon = ref<{ code: string; name: string } | null>(null)
 const discountAmount = ref(0)
+const shippingConfig = ref<ShippingConfig | null>(null)
+
+// 計算運費
+const shippingFee = computed(() => {
+  if (!shippingConfig.value) return 100 // 預設運費
+  const { freeThreshold, baseFee } = shippingConfig.value
+  // 滿額免運
+  if (cartStore.subtotal >= freeThreshold) return 0
+  return baseFee
+})
 
 const totalAmount = computed(() => {
-  return cartStore.subtotal + 60 - discountAmount.value
+  return cartStore.subtotal + shippingFee.value - discountAmount.value
 })
 
 const form = ref<CheckoutFormInput>({
@@ -278,4 +294,16 @@ const submitOrder = async () => {
   isSubmitting.value = false
   router.push(`/payment?orderId=${order.id}`)
 }
+
+// 載入運費設定
+const loadShippingConfig = async () => {
+  try {
+    shippingConfig.value = await settingsApi.getShippingConfig()
+  } catch (err) {
+    console.error('載入運費設定失敗', err)
+  }
+}
+
+// 頁面載入時取得運費設定
+loadShippingConfig()
 </script>

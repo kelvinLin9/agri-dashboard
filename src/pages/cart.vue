@@ -40,9 +40,9 @@
               <!-- Product Image -->
               <div class="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
                 <img
-                  v-if="item.product?.mainImage"
-                  :src="item.product.mainImage"
-                  :alt="item.product?.name"
+                  v-if="item.productImage"
+                  :src="item.productImage"
+                  :alt="item.productName"
                   class="w-full h-full object-cover"
                 />
                 <div v-else class="w-full h-full flex items-center justify-center">

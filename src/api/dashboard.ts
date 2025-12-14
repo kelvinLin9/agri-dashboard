@@ -86,11 +86,18 @@ class DashboardApi {
       const [ordersData, , productsData] = await Promise.all([
         ordersApi.getAll({ page: 1, limit: 100 }),
         membersApi.getStatistics(),
-        productsApi.getAll({ page: 1, limit: 1000 }),
+        productsApi.getAll({ page: 1, limit: 100 }), // 後端限制最大 100
       ])
 
-      const orders = Array.isArray(ordersData) ? ordersData : ordersData.data || []
-      const products = Array.isArray(productsData) ? productsData : productsData.data || []
+      // 安全提取數據，處理分頁回應格式
+      const extractData = (response: any): any[] => {
+        if (Array.isArray(response)) return response
+        if (response?.data && Array.isArray(response.data)) return response.data
+        return []
+      }
+
+      const orders = extractData(ordersData)
+      const products = extractData(productsData)
 
       // 計算今日統計
       const today = new Date()
@@ -160,7 +167,14 @@ class DashboardApi {
   async getSalesTrend(days: number = 30): Promise<SalesTrendItem[]> {
     try {
       const ordersData = await ordersApi.getAll({ page: 1, limit: 100 })
-      const orders = Array.isArray(ordersData) ? ordersData : ordersData.data || []
+
+      // 安全提取數據
+      const extractData = (response: any): any[] => {
+        if (Array.isArray(response)) return response
+        if (response?.data && Array.isArray(response.data)) return response.data
+        return []
+      }
+      const orders = extractData(ordersData)
 
       // 計算日期範圍
       const endDate = new Date()
@@ -208,7 +222,14 @@ class DashboardApi {
   async getOrderStatusDistribution(): Promise<OrderStatusItem[]> {
     try {
       const ordersData = await ordersApi.getAll({ page: 1, limit: 100 })
-      const orders = Array.isArray(ordersData) ? ordersData : ordersData.data || []
+
+      // 安全提取數據
+      const extractData = (response: any): any[] => {
+        if (Array.isArray(response)) return response
+        if (response?.data && Array.isArray(response.data)) return response.data
+        return []
+      }
+      const orders = extractData(ordersData)
 
       // 按狀態分組
       const statusMap: Record<string, { count: number; amount: number }> = {}

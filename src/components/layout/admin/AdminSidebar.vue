@@ -8,19 +8,14 @@
     ]"
   >
     <!-- Logo Section -->
-    <div class="h-16 flex items-center justify-center border-b border-gray-200 dark:border-gray-800">
+    <div class="h-16 flex items-center border-b border-gray-200 dark:border-gray-800">
       <router-link to="/dashboard" class="flex items-center gap-3">
-        <img
-          src="@/assets/logo.png"
-          alt="日沐"
-          class="w-8 h-8 object-contain"
-        />
         <Transition name="fade">
           <span
             v-if="!collapsed"
             class="text-lg font-bold text-gray-900 dark:text-white whitespace-nowrap"
           >
-            日沐 後台
+            後台管理系統
           </span>
         </Transition>
       </router-link>
@@ -132,6 +127,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 interface Props {
@@ -148,18 +144,35 @@ const emit = defineEmits<{
 
 const route = useRoute()
 
+// User role check
+const user = computed(() => {
+  const userStr = localStorage.getItem('user')
+  return userStr ? JSON.parse(userStr) : null
+})
+
+const isSuperAdmin = computed(() => user.value?.role === 'super_admin')
+
 // Navigation Items
-const navItems = [
-  { name: 'dashboard', label: '儀表板', icon: 'i-heroicons-chart-bar' },
-  { name: 'members', label: '會員管理', icon: 'i-heroicons-users' },
-  { name: 'orders', label: '訂單管理', icon: 'i-heroicons-shopping-cart' },
-  { name: 'products', label: '產品管理', icon: 'i-heroicons-cube' },
-  { name: 'categories', label: '分類管理', icon: 'i-heroicons-folder' },
-  { name: 'uploads', label: '媒體管理', icon: 'i-heroicons-photo' },
-  { name: 'video-recorder', label: '影片錄製', icon: 'i-heroicons-video-camera' },
-  { name: 'notifications', label: '推播通知', icon: 'i-heroicons-bell' },
-  { name: 'logs', label: '操作日誌', icon: 'i-heroicons-clipboard-document-list' },
-]
+const navItems = computed(() => {
+  const items = [
+    { name: 'dashboard', label: '儀表板', icon: 'i-heroicons-chart-bar' },
+    { name: 'members', label: '會員管理', icon: 'i-heroicons-users' },
+    { name: 'orders', label: '訂單管理', icon: 'i-heroicons-shopping-cart' },
+    { name: 'products', label: '產品管理', icon: 'i-heroicons-cube' },
+    { name: 'categories', label: '分類管理', icon: 'i-heroicons-folder' },
+    { name: 'uploads', label: '媒體管理', icon: 'i-heroicons-photo' },
+    { name: 'video-recorder', label: '影片錄製', icon: 'i-heroicons-video-camera' },
+    { name: 'notifications', label: '推播通知', icon: 'i-heroicons-bell' },
+    { name: 'logs', label: '操作日誌', icon: 'i-heroicons-clipboard-document-list' },
+  ]
+
+  // 只有 super_admin 才能看到設定
+  if (isSuperAdmin.value) {
+    items.push({ name: 'settings', label: '系統設定', icon: 'i-heroicons-cog-6-tooth' })
+  }
+
+  return items
+})
 
 const isActiveRoute = (name: string) => route.name === name
 </script>

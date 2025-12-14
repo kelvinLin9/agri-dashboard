@@ -25,7 +25,7 @@ export default defineConfig({
           neutral: 'stone',      // 石頭色 - 中性底色
         },
         container: {
-          base: 'w-full max-w-(--ui-container-2xl) mx-auto',
+          base: 'w-full max-w-(--ui-container-xl) mx-auto',
         },
         main: {
           base: 'min-h-[calc(100vh-var(--ui-header-height))]',

@@ -13,12 +13,22 @@ cleanupOutdatedCaches()
 self.skipWaiting()
 clientsClaim()
 
-// SPA 導航處理
-const handler = createHandlerBoundToURL('/index.html')
-const navigationRoute = new NavigationRoute(handler, {
-  denylist: [/^\/api\//], // API 請求不走 SPA 路由
-})
-registerRoute(navigationRoute)
+// SPA 導航處理 - 只在有預快取資源時啟用
+try {
+  // 檢查是否有預快取的 index.html（開發模式下會是空的）
+  const manifest = self.__WB_MANIFEST
+  if (manifest && manifest.length > 0) {
+    const handler = createHandlerBoundToURL('/index.html')
+    const navigationRoute = new NavigationRoute(handler, {
+      denylist: [/^\/api\//], // API 請求不走 SPA 路由
+    })
+    registerRoute(navigationRoute)
+  } else {
+    console.log('[SW] Development mode - skipping navigation route')
+  }
+} catch (error) {
+  console.warn('[SW] Navigation route setup failed (normal in development):', error)
+}
 
 /**
  * Push 事件處理器

@@ -1,14 +1,14 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+  <div>
     <!-- Customer Header -->
     <CustomerHeader />
 
     <!-- Main Content -->
-    <main class="flex-1">
-      <UContainer class="py-6">
+    <UMain>
+      <UContainer>
         <slot />
       </UContainer>
-    </main>
+    </UMain>
 
     <!-- Customer Footer -->
     <CustomerFooter />

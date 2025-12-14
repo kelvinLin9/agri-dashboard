@@ -30,4 +30,5 @@ export { pagesApi } from './pages'
 export { cartApi } from './cart'
 export { couponsApi } from './coupons'
 export { wishlistApi } from './wishlist'
+export { settingsApi } from './settings'
 

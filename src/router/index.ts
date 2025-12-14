@@ -74,6 +74,12 @@ const router = createRouter({
       component: () => import('../pages/video-recorder.vue'),
       meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
     },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: () => import('../pages/settings/index.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, requiresSuperAdmin: true, layout: 'admin' },
+    },
 
     // =====================
     // Auth Routes (認證相關 - 空白佈局)
@@ -288,6 +294,13 @@ router.beforeEach(async (to, from, next) => {
         // 非管理員嘗試訪問管理頁面，重定向到商店
         return next({ name: 'shop-products' })
       }
+    }
+
+    // 檢查是否需要超級管理員權限
+    const requiresSuperAdmin = to.matched.some(record => record.meta.requiresSuperAdmin)
+    if (requiresSuperAdmin && userData.role !== 'super_admin') {
+      // 非超級管理員嘗試訪問超級管理員頁面，重定向到儀表板
+      return next({ name: 'dashboard' })
     }
 
     // 驗證通過，放行

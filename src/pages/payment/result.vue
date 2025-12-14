@@ -152,15 +152,17 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useCartStore } from '@/stores/cart'
 
 const route = useRoute()
 const router = useRouter()
+const cartStore = useCartStore()
 
 const isLoading = ref(true)
 const paymentStatus = ref<'success' | 'failed' | 'unknown'>('unknown')
 const merchantTradeNo = ref<string>('')
 const orderDetails = ref<any>(null)
-const errorMessage = ref<string>('')
+const errorMessage = ref('')
 
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('zh-TW', {
@@ -237,6 +239,8 @@ const checkPaymentStatus = async () => {
     if (orderDetails.value.orderStatus === 'paid' || orderDetails.value.isPaid) {
       paymentStatus.value = 'success'
       console.log(`支付成功：訂單 ${orderDetails.value.orderNumber} 已完成支付`)
+      // 確保購物車已清空（雙重保險）
+      await cartStore.fetchCart()
     } else if (orderDetails.value.orderStatus === 'cancelled' || orderDetails.value.orderStatus === 'failed') {
       paymentStatus.value = 'failed'
       errorMessage.value = '訂單已取消或支付失敗'

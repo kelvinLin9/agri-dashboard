@@ -1,0 +1,48 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'VITE_API_URL=${_VITE_API_URL}'
+      - '--build-arg'
+      - 'VITE_GOOGLE_CLIENT_ID=${_VITE_GOOGLE_CLIENT_ID}'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/dashboard:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/dashboard:latest'
+      - '.'
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/dashboard:$COMMIT_SHA']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/dashboard:latest']
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'dashboard'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/dashboard:$COMMIT_SHA'
+      - '--region'
+      - 'asia-east1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+images:
+  - 'gcr.io/$PROJECT_ID/dashboard:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/dashboard:latest'
+
+# Substitutions - 這些會從 Cloud Build trigger 設定中讀取
+substitutions:
+  _VITE_API_URL: 'https://hirimu.cc/api'
+  _VITE_GOOGLE_CLIENT_ID: ''
+
+options:
+  logging: CLOUD_LOGGING_ONLY

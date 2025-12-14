@@ -215,8 +215,8 @@ const checkPaymentStatus = async () => {
       return
     }
 
-    // TODO: 改回使用環境變數 import.meta.env.VITE_API_URL
-    const apiUrl = 'https://sunbathe-api.hirimu.cc/api'
+    // TODO: SSL 生效後改回 https://sunbathe-api.hirimu.cc/api
+    const apiUrl = 'https://agri-backend-660672910950.asia-east1.run.app/api'
     const response = await fetch(`${apiUrl}/orders/${orderId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,

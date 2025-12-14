@@ -15,7 +15,8 @@ declare module 'axios' {
 
 // 創建 axios 實例
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://sunbathe-api.hirimu.cc/api',
+  // TODO: SSL 生效後改回 https://sunbathe-api.hirimu.cc/api
+  baseURL: import.meta.env.VITE_API_URL || 'https://agri-backend-660672910950.asia-east1.run.app/api',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

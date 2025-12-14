@@ -188,8 +188,8 @@ const proceedToPayment = async () => {
       : order.value.totalAmount
 
     // Call backend to create payment and get ECPay form
-    // TODO: 改回使用環境變數 import.meta.env.VITE_API_URL
-    const apiUrl = 'https://sunbathe-api.hirimu.cc/api'
+    // TODO: SSL 生效後改回 https://sunbathe-api.hirimu.cc/api
+    const apiUrl = 'https://agri-backend-660672910950.asia-east1.run.app/api'
     const response = await fetch(`${apiUrl}/payment/create`, {
       method: 'POST',
       headers: {

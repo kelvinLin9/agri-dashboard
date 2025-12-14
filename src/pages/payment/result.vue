@@ -215,7 +215,8 @@ const checkPaymentStatus = async () => {
       return
     }
 
-    const response = await fetch(`http://localhost:3000/api/orders/${orderId}`, {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+    const response = await fetch(`${apiUrl}/orders/${orderId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

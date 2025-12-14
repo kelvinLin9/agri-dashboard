@@ -188,7 +188,8 @@ const proceedToPayment = async () => {
       : order.value.totalAmount
 
     // Call backend to create payment and get ECPay form
-    const response = await fetch('http://localhost:3000/api/payment/create', {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+    const response = await fetch(`${apiUrl}/payment/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

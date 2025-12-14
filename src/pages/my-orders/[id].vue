@@ -1,201 +1,195 @@
 <template>
-  <div class="page-warm-light py-8">
-    <div class="container mx-auto px-6 max-w-4xl">
+  <div class="page-warm-light py-6">
+    <div class="container mx-auto px-4 max-w-6xl">
       <!-- Back Button -->
       <UButton
         icon="i-heroicons-arrow-left"
         variant="ghost"
         color="neutral"
-        class="mb-6"
+        class="mb-4"
         @click="router.back()"
       >
         返回訂單列表
       </UButton>
 
       <!-- Loading -->
-      <div v-if="orderStore.isLoading" class="space-y-4">
+      <div v-if="orderStore.isLoading" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2">
+          <USkeleton class="h-64" />
+        </div>
         <USkeleton class="h-64" />
-        <USkeleton class="h-96" />
       </div>
 
       <!-- Order Detail -->
-      <div v-else-if="order" class="space-y-6">
-        <!-- Order Header Card -->
-        <UCard class="card-glass shadow-warm">
-          <div class="flex justify-between items-start">
-            <div>
-              <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                訂單詳情
-              </h1>
-              <p class="text-sm text-gray-500">訂單編號: <span class="font-mono font-semibold">{{ order.orderNumber }}</span></p>
-              <p class="text-sm text-gray-500">下單時間: {{ formatDateTime(order.createdAt) }}</p>
-            </div>
-            <StatusBadge :status="order.status" type="order" size="lg" />
-          </div>
-        </UCard>
+      <div v-else-if="order">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Left Column: Order Info & Items -->
+          <div class="lg:col-span-2 space-y-4">
+            <!-- Order Header with Progress -->
+            <UCard class="card-glass shadow-warm">
+              <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                <div>
+                  <h1 class="text-xl font-bold text-gray-900 dark:text-white">
+                    訂單 {{ order.orderNumber }}
+                  </h1>
+                  <p class="text-sm text-gray-500">{{ formatDateTime(order.createdAt) }}</p>
+                </div>
+                <StatusBadge :status="order.status" type="order" size="lg" />
+              </div>
 
-        <!-- Order Progress (Timeline) -->
-        <UCard v-if="order.status !== 'cancelled'" class="card-glass shadow-warm">
-          <template #header>
-            <h2 class="text-lg font-semibold">訂單進度</h2>
-          </template>
-          <div class="relative">
-            <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
-            <div class="space-y-6">
-              <div v-for="step in orderSteps" :key="step.status" class="relative flex gap-4">
+              <!-- Horizontal Progress (if not cancelled) -->
+              <div v-if="order.status !== 'cancelled'" class="mt-4 pt-4 border-t dark:border-gray-700">
+                <div class="grid grid-cols-4 relative">
+                  <!-- Progress Line (Background) -->
+                  <div class="absolute top-4 left-[12.5%] right-[12.5%] h-0.5 bg-gray-200 dark:bg-gray-700 z-0"></div>
+                  <!-- Progress Line (Active) -->
+                  <div 
+                    class="absolute top-4 left-[12.5%] h-0.5 bg-harvest-500 z-0 transition-all duration-500"
+                    :style="{ width: progressWidth }"
+                  ></div>
+                  
+                  <!-- Steps -->
+                  <div 
+                    v-for="step in compactSteps" 
+                    :key="step.status" 
+                    class="flex flex-col items-center z-10"
+                  >
+                    <div 
+                      class="w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors"
+                      :class="step.completed 
+                        ? 'bg-harvest-500 border-harvest-500 text-white' 
+                        : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-400'"
+                    >
+                      <UIcon :name="step.icon" class="w-4 h-4" />
+                    </div>
+                    <span class="text-xs mt-1 text-center hidden sm:block whitespace-nowrap" :class="step.completed ? 'text-harvest-600 font-medium' : 'text-gray-400'">
+                      {{ step.label }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </UCard>
+
+            <!-- Recipient & Shipping Info (Combined) -->
+            <UCard class="card-glass shadow-warm">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h3 class="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                    <UIcon name="i-heroicons-user" class="w-4 h-4" />
+                    收件人資訊
+                  </h3>
+                  <div class="space-y-2 text-sm">
+                    <p><span class="text-gray-500">姓名：</span>{{ order.recipientName }}</p>
+                    <p><span class="text-gray-500">電話：</span>{{ order.recipientPhone }}</p>
+                    <p><span class="text-gray-500">地址：</span>{{ fullAddress }}</p>
+                  </div>
+                </div>
+                <div>
+                  <h3 class="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                    <UIcon name="i-heroicons-truck" class="w-4 h-4" />
+                    付款 / 配送
+                  </h3>
+                  <div class="space-y-2 text-sm">
+                    <p><span class="text-gray-500">付款：</span>{{ getPaymentMethodLabel(order.paymentMethod) }}</p>
+                    <p><span class="text-gray-500">配送：</span>{{ getShippingMethodLabel(order.shippingMethod) }}</p>
+                    <p v-if="order.customerNote"><span class="text-gray-500">備註：</span>{{ order.customerNote }}</p>
+                  </div>
+                </div>
+              </div>
+            </UCard>
+
+            <!-- Order Items (Compact) -->
+            <UCard class="card-glass shadow-warm">
+              <template #header>
+                <div class="flex justify-between items-center">
+                  <h2 class="font-semibold">訂購商品 ({{ order.orderItems?.length || 0 }} 項)</h2>
+                </div>
+              </template>
+              <div class="divide-y dark:divide-gray-700">
                 <div
-                  class="w-8 h8 rounded-full flex items-center justify-center z-10"
-                  :class="step.completed ? 'bg-harvest-500' : 'bg-gray-300'"
+                  v-for="item in order.orderItems"
+                  :key="item.id"
+                  class="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
                 >
-                  <UIcon :name="step.icon" class="w-5 h-5 text-white" />
-                </div>
-                <div class="flex-1 pb-6">
-                  <p :class="step.completed ? 'font-semibold text-gray-900 dark:text-white' : 'text-gray-500'">
-                    {{ step.label }}
-                  </p>
-                  <p v-if="step.time" class="text-sm text-gray-500">{{ step.time }}</p>
+                  <div class="w-14 h-14 bg-gray-100 dark:bg-gray-800 rounded flex-shrink-0 overflow-hidden">
+                    <img v-if="item.productImage" :src="item.productImage" class="w-full h-full object-cover" />
+                    <UIcon v-else name="i-heroicons-photo" class="w-full h-full text-gray-300 p-3" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-medium text-gray-900 dark:text-white truncate">{{ item.productName }}</p>
+                    <p class="text-sm text-gray-500">${{ (Number(item.unitPrice) || 0).toLocaleString() }} × {{ item.quantity }}</p>
+                  </div>
+                  <div class="text-right font-semibold text-gray-900 dark:text-white">
+                    ${{ (Number(item.subtotal) || 0).toLocaleString() }}
+                  </div>
                 </div>
               </div>
-            </div>
+            </UCard>
           </div>
-        </UCard>
 
-        <!-- Recipient Info -->
-        <UCard class="card-glass shadow-warm">
-          <template #header>
-            <h2 class="text-lg font-semibold">收件人資訊</h2>
-          </template>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <p class="text-sm text-gray-500">收件人</p>
-              <p class="font-medium">{{ order.recipientName }}</p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-500">聯絡電話</p>
-              <p class="font-medium">{{ order.recipientPhone }}</p>
-            </div>
-            <div class="col-span-2">
-              <p class="text-sm text-gray-500">收件地址</p>
-              <p class="font-medium">
-                {{ [order.recipientPostalCode, order.recipientCity, order.recipientDistrict, order.recipientAddress].filter(Boolean).join(' ') }}
-              </p>
-            </div>
-          </div>
-        </UCard>
-
-        <!-- Order Items -->
-        <UCard class="card-glass shadow-warm">
-          <template #header>
-            <h2 class="text-lg font-semibold">訂單商品</h2>
-          </template>
+          <!-- Right Column: Payment Summary & Actions -->
           <div class="space-y-4">
-            <div
-              v-for="item in order.orderItems"
-              :key="item.id"
-              class="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
-            >
-              <div class="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded flex-shrink-0">
-                <UIcon v-if="!item.productImage" name="i-heroicons-photo" class="w-full h-full text-gray-400" />
-                <img v-else :src="item.productImage" class="w-full h-full object-cover rounded" />
+            <!-- Payment Summary -->
+            <UCard class="card-glass shadow-warm sticky top-4">
+              <template #header>
+                <h2 class="font-semibold">金額明細</h2>
+              </template>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between text-gray-600 dark:text-gray-400">
+                  <span>商品小計</span>
+                  <span>${{ order.subtotal.toLocaleString() }}</span>
+                </div>
+                <div class="flex justify-between text-gray-600 dark:text-gray-400">
+                  <span>運費</span>
+                  <span>${{ order.shippingFee.toLocaleString() }}</span>
+                </div>
+                <div v-if="order.discountAmount > 0" class="flex justify-between text-red-600">
+                  <span>折扣</span>
+                  <span>-${{ order.discountAmount.toLocaleString() }}</span>
+                </div>
+                <div v-if="order.pointsUsed > 0" class="flex justify-between text-purple-600">
+                  <span>點數折抵</span>
+                  <span>-${{ order.pointsUsed.toLocaleString() }}</span>
+                </div>
+                <div class="border-t dark:border-gray-700 pt-3 mt-3">
+                  <div class="flex justify-between text-lg font-bold">
+                    <span>訂單總額</span>
+                    <span class="text-harvest-600">${{ order.totalAmount.toLocaleString() }}</span>
+                  </div>
+                </div>
               </div>
-              <div class="flex-1">
-                <p class="font-semibold text-gray-900 dark:text-white">{{ item.productName }}</p>
-                <p class="text-sm text-gray-500">單價: ${{ (Number(item.unitPrice) || 0).toLocaleString() }}</p>
-                <p class="text-sm text-gray-500">數量: x{{ item.quantity }}</p>
+
+              <!-- Action Buttons -->
+              <div class="mt-4 pt-4 border-t dark:border-gray-700 space-y-2">
+                <UButton
+                  v-if="order.status === 'pending'"
+                  block
+                  size="lg"
+                  color="primary"
+                  @click="goToPayment"
+                >
+                  <UIcon name="i-heroicons-credit-card" class="mr-2" />
+                  前往付款
+                </UButton>
+                <UButton
+                  v-if="canCancel"
+                  block
+                  color="error"
+                  variant="soft"
+                  @click="confirmCancel"
+                >
+                  取消訂單
+                </UButton>
+                <UButton
+                  block
+                  variant="ghost"
+                  @click="router.push('/my-orders')"
+                >
+                  返回列表
+                </UButton>
               </div>
-              <div class="text-right">
-                <p class="font-bold text-lg text-gray-900 dark:text-white">
-                  ${{ (Number(item.subtotal) || 0).toLocaleString() }}
-                </p>
-              </div>
-            </div>
+            </UCard>
           </div>
-        </UCard>
-
-        <!-- Payment Summary -->
-        <UCard class="card-glass shadow-warm">
-          <template #header>
-            <h2 class="text-lg font-semibold">金額明細</h2>
-          </template>
-          <div class="space-y-3">
-            <div class="flex justify-between text-gray-600 dark:text-gray-400">
-              <span>商品小計</span>
-              <span>${{ order.subtotal.toLocaleString() }}</span>
-            </div>
-            <div class="flex justify-between text-gray-600 dark:text-gray-400">
-              <span>運費</span>
-              <span>${{ order.shippingFee.toLocaleString() }}</span>
-            </div>
-            <div v-if="order.discountAmount > 0" class="flex justify-between text-red-600">
-              <span>折扣</span>
-              <span>-${{ order.discountAmount.toLocaleString() }}</span>
-            </div>
-            <div v-if="order.pointsUsed > 0" class="flex justify-between text-purple-600">
-              <span>點數折抵 ({{ order.pointsUsed }} 點)</span>
-              <span>-${{ order.pointsUsed.toLocaleString() }}</span>
-            </div>
-            <div class="border-t border-gray-200 dark:border-gray-700 pt-3">
-              <div class="flex justify-between text-xl font-bold">
-                <span>訂單總額</span>
-                <span class="text-harvest-600">${{ order.totalAmount.toLocaleString() }}</span>
-              </div>
-            </div>
-          </div>
-        </UCard>
-
-        <!-- Payment & Shipping Info -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <UCard class="card-glass shadow-warm">
-            <template #header>
-              <h3 class="font-semibold">付款方式</h3>
-            </template>
-            <p>{{ getPaymentMethodLabel(order.paymentMethod) }}</p>
-          </UCard>
-
-          <UCard class="card-glass shadow-warm">
-            <template #header>
-              <h3 class="font-semibold">配送方式</h3>
-            </template>
-            <p>{{ getShippingMethodLabel(order.shippingMethod) }}</p>
-          </UCard>
-        </div>
-
-        <!-- Customer Note -->
-        <UCard v-if="order.customerNote" class="card-glass shadow-warm">
-          <template #header>
-            <h3 class="font-semibold">訂單備註</h3>
-          </template>
-          <p class="text-gray-700 dark:text-gray-300">{{ order.customerNote }}</p>
-        </UCard>
-
-        <!-- Actions -->
-        <div class="flex gap-3 justify-end sticky bottom-6">
-          <UButton
-            v-if="order.status === 'pending'"
-            size="lg"
-            color="primary"
-            @click="goToPayment"
-          >
-            <UIcon name="i-heroicons-credit-card" class="mr-2" />
-            前往付款
-          </UButton>
-          <UButton
-            v-if="canCancel"
-            size="lg"
-            color="error"
-            variant="outline"
-            @click="confirmCancel"
-          >
-            <UIcon name="i-heroicons-x-circle" class="mr-2" />
-            取消訂單
-          </UButton>
-          <UButton
-            size="lg"
-            variant="outline"
-            @click="router.push('/my-orders')"
-          >
-            返回列表
-          </UButton>
         </div>
       </div>
 
@@ -244,43 +238,48 @@ const isCancelling = ref(false)
 const orderId = route.params.id as string
 const order = computed(() => orderStore.currentOrder)
 
-// Order progress steps
-const orderSteps = computed(() => [
+// Full address computed
+const fullAddress = computed(() => {
+  if (!order.value) return ''
+  return [order.value.recipientPostalCode, order.value.recipientCity, order.value.recipientDistrict, order.value.recipientAddress].filter(Boolean).join(' ')
+})
+
+// Compact progress steps (4 steps instead of 5)
+const compactSteps = computed(() => [
   {
     status: 'pending',
-    label: '訂單已建立',
+    label: '已下單',
     icon: 'i-heroicons-document-text',
-    completed: true,
-    time: formatDateTime(order.value?.createdAt || '')
+    completed: true
   },
   {
     status: 'paid',
-    label: '付款完成',
-    icon: 'i-heroicons-check-circle',
-    completed: order.value && ['paid', 'processing', 'shipping', 'delivered', 'completed'].includes(order.value.status),
-    time: order.value?.paidAt ? formatDateTime(order.value.paidAt) : undefined
-  },
-  {
-    status: 'processing',
-    label: '商品準備中',
-    icon: 'i-heroicons-cog',
-    completed: order.value && ['processing', 'shipping', 'delivered', 'completed'].includes(order.value.status)
+    label: '已付款',
+    icon: 'i-heroicons-credit-card',
+    completed: order.value && ['paid', 'processing', 'shipping', 'delivered', 'completed'].includes(order.value.status)
   },
   {
     status: 'shipping',
-    label: '商品配送中',
+    label: '配送中',
     icon: 'i-heroicons-truck',
-    completed: order.value && ['shipping', 'delivered', 'completed'].includes(order.value.status),
-    time: order.value?.shippedAt ? formatDateTime(order.value.shippedAt) : undefined
+    completed: order.value && ['shipping', 'delivered', 'completed'].includes(order.value.status)
   },
   {
     status: 'completed',
-    label: '訂單完成',
+    label: '已完成',
     icon: 'i-heroicons-check-badge',
-    completed: order.value && ['completed'].includes(order.value.status),
-    time: order.value?.completedAt ? formatDateTime(order.value.completedAt) : undefined
+    completed: order.value && ['completed'].includes(order.value.status)
   }
 ])
+
+// Progress bar width (for grid layout - spans from 12.5% to 87.5%, so 75% total)
+const progressWidth = computed(() => {
+  const completed = compactSteps.value.filter(s => s.completed).length
+  // 4 steps, 3 segments, each segment is 25% of container (75% / 3 = 25%)
+  const segmentWidth = 25 // percentage
+  const completedSegments = Math.max(0, completed - 1)
+  return `${completedSegments * segmentWidth}%`
+})
 
 const canCancel = computed(() => {
   return order.value && (order.value.status === OrderStatus.PENDING || order.value.status === OrderStatus.PAID)

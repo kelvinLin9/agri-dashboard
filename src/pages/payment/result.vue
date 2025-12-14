@@ -199,7 +199,7 @@ const checkPaymentStatus = async () => {
     await new Promise(resolve => setTimeout(resolve, 2000))
 
     // Fetch order details to check payment status
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('access_token')
     const amountFromUrl = route.query.amt ? parseInt(route.query.amt as string) : null
     
     if (!token) {

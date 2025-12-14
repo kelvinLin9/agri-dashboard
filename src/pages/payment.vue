@@ -188,7 +188,8 @@ const proceedToPayment = async () => {
       : order.value.totalAmount
 
     // Call backend to create payment and get ECPay form
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+    // TODO: 改回使用環境變數 import.meta.env.VITE_API_URL
+    const apiUrl = 'https://hirimu.cc/api'
     const response = await fetch(`${apiUrl}/payment/create`, {
       method: 'POST',
       headers: {

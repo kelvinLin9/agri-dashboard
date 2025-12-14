@@ -72,7 +72,7 @@ onMounted(async () => {
 <style scoped>
 .floating-cart {
   position: fixed;
-  bottom: 24px;
+  bottom: 96px; /* 提高以避免和 BackToTop 按鈕重疊 */
   right: 24px;
   z-index: 999;
 }
@@ -92,7 +92,7 @@ onMounted(async () => {
 /* 響應式：手機上稍微小一點 */
 @media (max-width: 768px) {
   .floating-cart {
-    bottom: 16px;
+    bottom: 80px;
     right: 16px;
   }
 

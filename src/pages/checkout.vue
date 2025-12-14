@@ -290,6 +290,10 @@ const submitOrder = async () => {
       quantity: item.quantity
     }))
   })
+  
+  // 重新載入購物車（後端已清空，這會同步前端 state）
+  await cartStore.fetchCart()
+  
   toast.success('訂單已建立', `訂單編號: ${order.orderNumber}`)
   isSubmitting.value = false
   router.push(`/payment?orderId=${order.id}`)

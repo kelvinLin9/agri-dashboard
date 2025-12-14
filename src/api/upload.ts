@@ -127,29 +127,64 @@ export const uploadApi = {
     return response.data.data
   },
 
+  // ==================== 上傳策略 ====================
+
+  /**
+   * 取得上傳策略
+   * 根據檔案大小和類型決定使用傳統 API 或 R2 預簽名上傳
+   */
+  getUploadStrategy: async (
+    fileSize: number,
+    mimeType: string,
+    filename: string,
+    usage?: string,
+  ): Promise<{
+    strategy: 'direct' | 'presigned'
+    maxSize: number
+    reason: string
+  }> => {
+    const response = await apiClient.post<{
+      data: {
+        strategy: 'direct' | 'presigned'
+        maxSize: number
+        reason: string
+      }
+    }>('/uploads/strategy', {
+      fileSize,
+      mimeType,
+      filename,
+      usage,
+    })
+    return response.data.data
+  },
+
   // ==================== Cloudflare R2 方法 ====================
 
   /**
    * 獲取 R2 預簽名上傳 URL
-   * 用於直接上傳大容量影片到 Cloudflare R2
+   * 用於直接上傳大容量檔案到 Cloudflare R2
    */
   getR2PresignedUrl: async (
     filename: string,
     contentType: string,
+    fileSize?: number,
   ): Promise<{
     uploadUrl: string
     publicUrl: string
     key: string
+    expectedFileSize?: number
   }> => {
     const response = await apiClient.post<{
       data: {
         uploadUrl: string
         publicUrl: string
         key: string
+        expectedFileSize?: number
       }
     }>('/uploads/r2/presigned-url', {
       filename,
       contentType,
+      fileSize,
     })
     return response.data.data
   },
@@ -162,17 +197,24 @@ export const uploadApi = {
     key: string,
     publicUrl: string,
     fileSize: number,
-    title?: string,
-    description?: string,
+    options?: {
+      expectedFileSize?: number
+      mimeType?: string
+      title?: string
+      description?: string
+    },
   ): Promise<Upload> => {
     const response = await apiClient.post<{ data: Upload }>('/uploads/r2/complete', {
       key,
       publicUrl,
       fileSize,
-      title,
-      description,
+      expectedFileSize: options?.expectedFileSize,
+      mimeType: options?.mimeType,
+      title: options?.title,
+      description: options?.description,
     })
 
     return response.data.data
   },
 }
+

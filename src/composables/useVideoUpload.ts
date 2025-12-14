@@ -47,22 +47,27 @@ export function useVideoUpload() {
         ? `${metadata.title.replace(/[^a-zA-Z0-9]/g, '_')}-${timestamp}.webm`
         : `video-${timestamp}.webm`
 
-      // Step 1: 獲取 R2 預簽名上傳 URL
-      const { uploadUrl, publicUrl, key } = await uploadApi.getR2PresignedUrl(
+      // Step 1: 獲取 R2 預簽名上傳 URL（含檔案大小驗證）
+      const { uploadUrl, publicUrl, key, expectedFileSize } = await uploadApi.getR2PresignedUrl(
         filename,
-        blob.type || 'video/webm'
+        blob.type || 'video/webm',
+        blob.size,
       )
 
       // Step 2: 直接上傳到 R2 (使用 XMLHttpRequest 追蹤進度)
       await uploadToR2WithProgress(uploadUrl, blob)
 
-      // Step 3: 通知後端記錄上傳
+      // Step 3: 通知後端記錄上傳（含安全驗證資訊）
       const result = await uploadApi.completeR2Upload(
         key,
         publicUrl,
         blob.size,
-        metadata.title,
-        metadata.description
+        {
+          expectedFileSize,
+          mimeType: blob.type || 'video/webm',
+          title: metadata.title,
+          description: metadata.description,
+        },
       )
 
       uploadedFile.value = result

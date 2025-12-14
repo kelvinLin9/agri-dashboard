@@ -142,7 +142,56 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
     return { valid: true }
   }
 
-  // 上傳檔案
+  /**
+   * 上傳單一檔案（智能選擇上傳策略）
+   */
+  const uploadSingleFile = async (file: File): Promise<string> => {
+    // 查詢上傳策略
+    const strategy = await uploadApi.getUploadStrategy(file.size, file.type, file.name, usage)
+
+    if (strategy.strategy === 'presigned') {
+      // 大檔案：R2 預簽名上傳
+      const { uploadUrl, publicUrl, key, expectedFileSize } = await uploadApi.getR2PresignedUrl(
+        file.name,
+        file.type,
+        file.size,
+      )
+
+      // 直接上傳到 R2
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            // 單檔進度（整體進度在外層處理）
+          }
+        })
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve()
+          } else {
+            reject(new Error(`上傳失敗: HTTP ${xhr.status}`))
+          }
+        })
+        xhr.addEventListener('error', () => reject(new Error('網絡錯誤')))
+        xhr.open('PUT', uploadUrl)
+        xhr.setRequestHeader('Content-Type', file.type)
+        xhr.send(file)
+      })
+
+      // 通知後端記錄
+      const result = await uploadApi.completeR2Upload(key, publicUrl, file.size, {
+        expectedFileSize,
+        mimeType: file.type,
+      })
+      return result.url
+    } else {
+      // 小檔案：傳統 API 上傳
+      const result = await uploadApi.upload(file, usage)
+      return result.url
+    }
+  }
+
+  // 上傳檔案（智能策略）
   const uploadFiles = async (files: File[]): Promise<string[]> => {
     if (files.length === 0) return []
 
@@ -172,8 +221,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
     try {
       let processedCount = 0
       for (const file of filesToUpload) {
-        const result = await uploadApi.upload(file, usage)
-        const imageUrl = result.url
+        const imageUrl = await uploadSingleFile(file)
 
         // 添加到圖片列表
         if (!images.value.includes(imageUrl) && mainImage.value !== imageUrl) {

@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
 
+/* Container 最大寬度設定 - 使用 xl (1280px = 80rem) */
+:root {
+  --ui-container: 80rem; /* xl = 1280px */
+}
+
 /* 全域字體設定 - 溫暖親切風 */
 html {
   font-family:

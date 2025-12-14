@@ -6,17 +6,16 @@ import { NavigationRoute, registerRoute } from 'workbox-routing'
 declare let self: ServiceWorkerGlobalScope
 
 // Workbox 預快取和路由
-precacheAndRoute(self.__WB_MANIFEST)
+const manifest = self.__WB_MANIFEST
+precacheAndRoute(manifest)
 cleanupOutdatedCaches()
 
 // 允許立即控制頁面
 self.skipWaiting()
 clientsClaim()
 
-// SPA 導航處理 - 只在有預快取資源時啟用
+// SPA 導航處理 - 只在有預快取資源時啟用（生產環境）
 try {
-  // 檢查是否有預快取的 index.html（開發模式下會是空的）
-  const manifest = self.__WB_MANIFEST
   if (manifest && manifest.length > 0) {
     const handler = createHandlerBoundToURL('/index.html')
     const navigationRoute = new NavigationRoute(handler, {

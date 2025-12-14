@@ -1,7 +1,7 @@
-import { getCurrentInstance } from 'vue'
+import { ref, inject } from 'vue'
 
 /**
- * Toast 通知類型
+ * Toast 通知選項
  */
 export interface ToastOptions {
   title: string
@@ -9,10 +9,6 @@ export interface ToastOptions {
   icon?: string
   color?: 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
   duration?: number
-  actions?: {
-    label: string
-    click?: () => void
-  }[]
 }
 
 /**
@@ -25,67 +21,55 @@ const defaultIcons: Record<string, string> = {
   info: 'i-heroicons-information-circle',
 }
 
+// Toast 狀態 key (Nuxt UI 使用的 injection key)
+const toastInjectionKey = Symbol('nuxt-ui.toaster')
+
 /**
- * 全域 Toast Composable
+ * Toast Composable
  * 
- * 提供統一的 Toast 通知介面
- * 
- * @example
- * ```ts
- * const toast = useToast()
- * 
- * // 成功通知
- * toast.success('操作成功', '商品已加入購物車')
- * 
- * // 錯誤通知
- * toast.error('操作失敗', '請稍後再試')
- * 
- * // 自訂通知
- * toast.add({
- *   title: '新訂單',
- *   description: '您有一筆新訂單',
- *   color: 'primary',
- *   icon: 'i-heroicons-shopping-bag'
- * })
- * ```
+ * 使用 Nuxt UI 的 Toaster context 來顯示通知
  */
 export function useToast() {
-  const instance = getCurrentInstance()
+  // 嘗試從 Nuxt UI 的 Toaster context 取得 toast 實例
+  const toaster = inject<any>(toastInjectionKey, null)
 
-  // 取得 Nuxt UI 的 toast 實例
-  const getToastInstance = () => {
-    // Nuxt UI v4 會自動注入 $toast
-    if (instance?.appContext.config.globalProperties.$toast) {
-      return instance.appContext.config.globalProperties.$toast
-    }
-
-    // 嘗試從 provide/inject 取得
-    const app = instance?.appContext.app
-    if (app && (app as any)._context?.provides?.toast) {
-      return (app as any)._context.provides.toast
-    }
-
-    // 如果都取不到，使用 console 作為 fallback
-    console.warn('[useToast] Toast instance not found, using console fallback')
-    return null
-  }
+  // 本地 toasts 陣列（fallback）
+  const localToasts = ref<ToastOptions[]>([])
 
   /**
    * 新增 Toast 通知
    */
   const add = (options: ToastOptions) => {
-    const toastInstance = getToastInstance()
-
-    if (toastInstance?.add) {
-      toastInstance.add(options)
+    if (toaster?.add) {
+      toaster.add(options)
     } else {
-      // Fallback: 使用 console
+      // Fallback: 使用 console 輸出
       const emoji = options.color === 'success' ? '✅' :
         options.color === 'error' ? '❌' :
           options.color === 'warning' ? '⚠️' :
             options.color === 'info' ? 'ℹ️' : '🔔'
       console.log(`${emoji} [Toast] ${options.title}${options.description ? ': ' + options.description : ''}`)
+      localToasts.value.push(options)
     }
+  }
+
+  /**
+   * 移除 Toast
+   */
+  const remove = (id: string) => {
+    if (toaster?.remove) {
+      toaster.remove(id)
+    }
+  }
+
+  /**
+   * 清除所有 Toast
+   */
+  const clear = () => {
+    if (toaster?.clear) {
+      toaster.clear()
+    }
+    localToasts.value = []
   }
 
   /**
@@ -136,22 +120,14 @@ export function useToast() {
     })
   }
 
-  /**
-   * 清除所有通知
-   */
-  const clear = () => {
-    const toastInstance = getToastInstance()
-    if (toastInstance?.clear) {
-      toastInstance.clear()
-    }
-  }
-
   return {
     add,
+    remove,
+    clear,
+    toasts: localToasts,
     success,
     error,
     warning,
     info,
-    clear,
   }
 }

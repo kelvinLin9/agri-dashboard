@@ -216,7 +216,7 @@ const checkPaymentStatus = async () => {
     }
 
     // TODO: 改回使用環境變數 import.meta.env.VITE_API_URL
-    const apiUrl = 'https://hirimu.cc/api'
+    const apiUrl = 'https://sunbathe-api.hirimu.cc/api'
     const response = await fetch(`${apiUrl}/orders/${orderId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,

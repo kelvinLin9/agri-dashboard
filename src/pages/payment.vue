@@ -189,7 +189,7 @@ const proceedToPayment = async () => {
 
     // Call backend to create payment and get ECPay form
     // TODO: 改回使用環境變數 import.meta.env.VITE_API_URL
-    const apiUrl = 'https://hirimu.cc/api'
+    const apiUrl = 'https://sunbathe-api.hirimu.cc/api'
     const response = await fetch(`${apiUrl}/payment/create`, {
       method: 'POST',
       headers: {

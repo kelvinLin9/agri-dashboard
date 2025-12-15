@@ -8,321 +8,462 @@
           系統操作記錄與審計追蹤
         </p>
       </div>
-      <UButton
-        icon="i-heroicons-arrow-path"
-        :loading="loading"
-        @click="fetchLogs"
-      >
-        刷新
-      </UButton>
+      <div class="flex gap-2">
+        <UButton
+          icon="i-heroicons-trash"
+          color="error"
+          variant="soft"
+          :loading="cleaning"
+          @click="handleCleanup"
+        >
+          清理過期日誌
+        </UButton>
+        <UButton
+          icon="i-heroicons-arrow-path"
+          :loading="loading"
+          @click="fetchData"
+        >
+          刷新
+        </UButton>
+      </div>
     </div>
 
     <!-- 統計卡片 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
       <UCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">總操作數</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-              {{ statistics?.totalLogs || 0 }}
-            </p>
-          </div>
-          <UIcon name="i-heroicons-document-text" class="w-8 h-8 text-blue-500" />
+        <div class="text-center">
+          <UIcon name="i-heroicons-document-text" class="w-6 h-6 text-blue-500 mx-auto mb-2" />
+          <p class="text-2xl font-bold">{{ statistics?.totalLogs || 0 }}</p>
+          <p class="text-sm text-gray-500">總日誌數</p>
         </div>
       </UCard>
 
       <UCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">平均響應時間</p>
-            <p class="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
-              {{ Math.round(statistics?.averageResponseTime || 0) }}ms
-            </p>
-          </div>
-          <UIcon name="i-heroicons-clock" class="w-8 h-8 text-green-500" />
+        <div class="text-center">
+          <UIcon name="i-heroicons-calendar" class="w-6 h-6 text-purple-500 mx-auto mb-2" />
+          <p class="text-2xl font-bold">{{ statistics?.todayCount || 0 }}</p>
+          <p class="text-sm text-gray-500">今日操作</p>
         </div>
       </UCard>
 
       <UCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">錯誤率</p>
-            <p class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">
-              {{ ((statistics?.errorRate || 0) * 100).toFixed(1) }}%
-            </p>
-          </div>
-          <UIcon name="i-heroicons-exclamation-triangle" class="w-8 h-8 text-red-500" />
+        <div class="text-center">
+          <UIcon name="i-heroicons-exclamation-triangle" class="w-6 h-6 text-red-500 mx-auto mb-2" />
+          <p class="text-2xl font-bold">{{ statistics?.errorCount || 0 }}</p>
+          <p class="text-sm text-gray-500">錯誤數</p>
         </div>
       </UCard>
 
       <UCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">今日操作</p>
-            <p class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">
-              {{ todayLogs }}
-            </p>
-          </div>
-          <UIcon name="i-heroicons-calendar" class="w-8 h-8 text-purple-500" />
+        <div class="text-center">
+          <UIcon name="i-heroicons-shield-check" class="w-6 h-6 text-green-500 mx-auto mb-2" />
+          <p class="text-2xl font-bold">{{ statistics?.adminOperations || 0 }}</p>
+          <p class="text-sm text-gray-500">管理員操作</p>
+        </div>
+      </UCard>
+
+      <UCard>
+        <div class="text-center">
+          <UIcon name="i-heroicons-users" class="w-6 h-6 text-cyan-500 mx-auto mb-2" />
+          <p class="text-2xl font-bold">{{ statistics?.customerOperations || 0 }}</p>
+          <p class="text-sm text-gray-500">顧客操作</p>
         </div>
       </UCard>
     </div>
 
-    <!-- 篩選和搜尋 -->
+    <!-- 篩選區 -->
     <UCard>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <!-- 操作類型篩選 -->
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <!-- 操作類型 -->
         <USelectMenu
-          v-model="selectedOperationType"
+          v-model="filters.operationType"
           :items="operationTypeOptions"
           placeholder="操作類型"
+          value-attribute="value"
         />
 
-        <!-- 狀態碼篩選 -->
+        <!-- 用戶類型 -->
         <USelectMenu
-          v-model="selectedStatusCode"
+          v-model="filters.userType"
+          :items="userTypeOptions"
+          placeholder="用戶類型"
+          value-attribute="value"
+        />
+
+        <!-- 狀態碼 -->
+        <USelectMenu
+          v-model="filters.statusCode"
           :items="statusCodeOptions"
           placeholder="狀態碼"
+          value-attribute="value"
         />
 
-        <!-- 用戶 ID 搜尋 -->
+        <!-- 開始日期 -->
         <UInput
-          v-model="searchUserId"
-          placeholder="搜尋用戶 ID..."
-          icon="i-heroicons-magnifying-glass"
+          v-model="filters.startDate"
+          type="date"
+          placeholder="開始日期"
         />
 
-        <!-- 清除篩選 -->
+        <!-- 結束日期 -->
+        <UInput
+          v-model="filters.endDate"
+          type="date"
+          placeholder="結束日期"
+        />
+
+        <!-- 清除 -->
         <UButton
-          label="清除篩選"
           color="neutral"
           variant="soft"
+          icon="i-heroicons-x-mark"
           @click="clearFilters"
-        />
+        >
+          清除篩選
+        </UButton>
       </div>
     </UCard>
 
-    <!-- 日誌列表 -->
+    <!-- 日誌表格 -->
     <UCard>
       <template #header>
-        <h3 class="text-lg font-semibold">操作記錄</h3>
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-semibold">操作記錄</h3>
+          <span class="text-sm text-gray-500">共 {{ total }} 筆</span>
+        </div>
       </template>
 
+      <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center h-64">
         <UIcon name="i-heroicons-arrow-path" class="animate-spin w-8 h-8" />
         <span class="ml-2">載入中...</span>
       </div>
 
+      <!-- Error -->
       <div v-else-if="error" class="flex flex-col items-center justify-center h-64 text-red-500">
         <UIcon name="i-heroicons-exclamation-triangle" class="w-12 h-12 mb-2" />
         <p>{{ error }}</p>
-        <UButton size="sm" class="mt-4" @click="fetchLogs">重試</UButton>
+        <UButton size="sm" class="mt-4" @click="fetchData">重試</UButton>
       </div>
 
+      <!-- Empty -->
       <div v-else-if="!logs.length" class="flex flex-col items-center justify-center h-64 text-gray-500">
         <UIcon name="i-heroicons-inbox" class="w-12 h-12 mb-2" />
         <p>暫無日誌記錄</p>
       </div>
 
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead class="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">時間</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">用戶</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">操作類型</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">端點</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">方法</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">狀態</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">響應時間</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">IP</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="log in logs" :key="log.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
-              <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                {{ formatDateTime(log.createdAt) }}
-              </td>
-              <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                {{ log.username || log.userId }}
-              </td>
-              <td class="px-4 py-3 text-sm">
-                <UBadge :color="getOperationColor(log.operationType)">
-                  {{ log.operationType }}
-                </UBadge>
-              </td>
-              <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 font-mono">
-                {{ log.endpoint }}
-              </td>
-              <td class="px-4 py-3 text-sm">
-                <UBadge :color="getMethodColor(log.method)" variant="subtle">
-                  {{ log.method }}
-                </UBadge>
-              </td>
-              <td class="px-4 py-3 text-sm">
-                <UBadge :color="getStatusColor(log.statusCode)">
-                  {{ log.statusCode }}
-                </UBadge>
-              </td>
-              <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                {{ log.responseTime }}ms
-              </td>
-              <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 font-mono">
-                {{ log.ipAddress }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <!-- Table -->
+      <UTable
+        v-else
+        :data="logs"
+        :columns="columns"
+        :loading="loading"
+      >
+        <template #createdAt-cell="{ row }">
+          {{ formatDateTime(row.original.createdAt) }}
+        </template>
+
+        <template #operationType-cell="{ row }">
+          <UBadge :color="getOperationColor(row.original.operationType)">
+            {{ getOperationLabel(row.original.operationType) }}
+          </UBadge>
+        </template>
+
+        <template #userType-cell="{ row }">
+          <UBadge :color="row.original.userType === 'admin' ? 'warning' : 'neutral'" variant="subtle">
+            {{ row.original.userType === 'admin' ? '管理員' : '顧客' }}
+          </UBadge>
+        </template>
+
+        <template #method-cell="{ row }">
+          <UBadge :color="getMethodColor(row.original.method)" variant="outline">
+            {{ row.original.method }}
+          </UBadge>
+        </template>
+
+        <template #statusCode-cell="{ row }">
+          <UBadge :color="getStatusColor(row.original.statusCode)">
+            {{ row.original.statusCode }}
+          </UBadge>
+        </template>
+
+        <template #executionTime-cell="{ row }">
+          <span :class="row.original.executionTime > 1000 ? 'text-red-500' : ''">
+            {{ row.original.executionTime || '-' }}ms
+          </span>
+        </template>
+
+        <template #actions-cell="{ row }">
+          <UButton
+            icon="i-heroicons-eye"
+            variant="ghost"
+            size="xs"
+            @click="viewDetail(row.original)"
+          />
+        </template>
+      </UTable>
+
+      <!-- Pagination -->
+      <template #footer>
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-gray-500">
+            顯示 {{ offset + 1 }} - {{ Math.min(offset + limit, total) }} 筆，共 {{ total }} 筆
+          </span>
+          <UPagination
+            v-model:page="currentPage"
+            :total="total"
+            :page-count="limit"
+          />
+        </div>
+      </template>
     </UCard>
 
-    <!-- 分頁 -->
-    <div class="flex justify-center">
-      <UButton
-        :disabled="offset === 0"
-        @click="previousPage"
-      >
-        上一頁
-      </UButton>
-      <span class="mx-4 flex items-center">
-        第 {{ currentPage }} 頁
-      </span>
-      <UButton
-        :disabled="logs.length < limit"
-        @click="nextPage"
-      >
-        下一頁
-      </UButton>
-    </div>
+    <!-- 詳情 Modal -->
+    <UModal v-model:open="detailOpen">
+      <template #header>
+        <h3 class="text-lg font-semibold">日誌詳情</h3>
+      </template>
+
+      <div v-if="selectedLog" class="space-y-4 p-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-sm text-gray-500">時間</p>
+            <p class="font-medium">{{ formatDateTime(selectedLog.createdAt) }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">操作類型</p>
+            <UBadge :color="getOperationColor(selectedLog.operationType)">
+              {{ getOperationLabel(selectedLog.operationType) }}
+            </UBadge>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">用戶</p>
+            <p class="font-medium">{{ selectedLog.username || selectedLog.userId || '-' }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">IP 地址</p>
+            <p class="font-mono">{{ selectedLog.ipAddress || '-' }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">路徑</p>
+            <p class="font-mono text-sm">{{ selectedLog.path }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">狀態碼</p>
+            <UBadge :color="getStatusColor(selectedLog.statusCode)">
+              {{ selectedLog.statusCode }}
+            </UBadge>
+          </div>
+        </div>
+
+        <div v-if="selectedLog.description">
+          <p class="text-sm text-gray-500">描述</p>
+          <p class="font-medium">{{ selectedLog.description }}</p>
+        </div>
+
+        <div v-if="selectedLog.errorMessage">
+          <p class="text-sm text-gray-500">錯誤訊息</p>
+          <p class="text-red-500">{{ selectedLog.errorMessage }}</p>
+        </div>
+
+        <div v-if="selectedLog.metadata">
+          <p class="text-sm text-gray-500">附加資料</p>
+          <pre class="bg-gray-100 dark:bg-gray-800 p-2 rounded text-sm overflow-x-auto">{{ JSON.stringify(selectedLog.metadata, null, 2) }}</pre>
+        </div>
+
+        <div v-if="selectedLog.userAgent">
+          <p class="text-sm text-gray-500">User Agent</p>
+          <p class="text-xs text-gray-600 break-all">{{ selectedLog.userAgent }}</p>
+        </div>
+      </div>
+
+      <template #footer>
+        <UButton color="neutral" @click="detailOpen = false">關閉</UButton>
+      </template>
+    </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { logsApi, OperationType, type AuditLog, type LogStatistics } from '@/api/logs'
+import {
+  logsApi,
+  OperationType,
+  UserType,
+  operationTypeLabels,
+  operationTypeColors,
+  type AuditLog,
+  type LogStatistics,
+} from '@/api/logs'
 
-const logs = ref<AuditLog[]>([])
+const toast = useToast()
+
+// State
+// State
+const logs = ref<any[]>([])
 const statistics = ref<LogStatistics | null>(null)
 const loading = ref(false)
+const cleaning = ref(false)
 const error = ref<string | null>(null)
-const totalLogs = ref(0)
+const total = ref(0)
 
-// 篩選參數
-const selectedOperationType = ref<{ label: string; value: OperationType | null }>({ label: '全部類型', value: null })
-const selectedStatusCode = ref<{ label: string; value: number | null }>({ label: '全部狀態', value: null })
-const searchUserId = ref('')
+// Detail modal
+const detailOpen = ref(false)
+const selectedLog = ref<AuditLog | null>(null)
 
-// 分頁參數
-const limit = ref(50)
-const offset = ref(0)
-
-const currentPage = computed(() => Math.floor(offset.value / limit.value) + 1)
-
-// 今日日誌數量
-const todayLogs = computed(() => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  
-  return logs.value.filter(log => {
-    const logDate = new Date(log.createdAt)
-    return logDate >= today
-  }).length
+// Filters
+const filters = ref({
+  operationType: null as any,
+  userType: null as any,
+  statusCode: null as any,
+  startDate: '',
+  endDate: '',
 })
 
-// 操作類型選項
+// Pagination
+const limit = 20
+const offset = ref(0)
+const currentPage = computed({
+  get: () => Math.floor(offset.value / limit) + 1,
+  set: (val) => {
+    offset.value = (val - 1) * limit
+    fetchLogs()
+  },
+})
+
+// Table columns
+const columns: any[] = [
+  { key: 'createdAt', label: '時間' },
+  { key: 'operationType', label: '操作類型' },
+  { key: 'userType', label: '用戶類型' },
+  { key: 'username', label: '用戶' },
+  { key: 'method', label: '方法' },
+  { key: 'path', label: '路徑' },
+  { key: 'statusCode', label: '狀態' },
+  { key: 'executionTime', label: '耗時' },
+  { key: 'actions', label: '' },
+]
+
+// Options
 const operationTypeOptions = [
   { label: '全部類型', value: null },
-  { label: 'CREATE', value: OperationType.CREATE },
-  { label: 'READ', value: OperationType.READ },
-  { label: 'UPDATE', value: OperationType.UPDATE },
-  { label: 'DELETE', value: OperationType.DELETE },
-  { label: 'LOGIN', value: OperationType.LOGIN },
-  { label: 'LOGOUT', value: OperationType.LOGOUT },
-  { label: 'UPLOAD', value: OperationType.UPLOAD },
-  { label: 'DOWNLOAD', value: OperationType.DOWNLOAD },
-  { label: 'PAYMENT', value: OperationType.PAYMENT },
-  { label: 'REFUND', value: OperationType.REFUND },
-  { label: 'OTHER', value: OperationType.OTHER },
+  ...Object.entries(operationTypeLabels).map(([value, label]) => ({
+    label,
+    value: value as OperationType,
+  })),
 ]
 
-// 狀態碼選項
+const userTypeOptions = [
+  { label: '全部', value: null },
+  { label: '管理員', value: UserType.ADMIN },
+  { label: '顧客', value: UserType.CUSTOMER },
+  { label: '系統', value: UserType.SYSTEM },
+]
+
 const statusCodeOptions = [
   { label: '全部狀態', value: null },
-  { label: '200 (成功)', value: 200 },
-  { label: '201 (已創建)', value: 201 },
-  { label: '400 (錯誤請求)', value: 400 },
-  { label: '401 (未授權)', value: 401 },
-  { label: '403 (禁止訪問)', value: 403 },
-  { label: '404 (未找到)', value: 404 },
-  { label: '500 (伺服器錯誤)', value: 500 },
+  { label: '成功 (2xx)', value: 200 },
+  { label: '客戶端錯誤 (4xx)', value: 400 },
+  { label: '伺服器錯誤 (5xx)', value: 500 },
 ]
 
-// 獲取日誌
+// Fetch logs
 async function fetchLogs() {
   loading.value = true
   error.value = null
 
   try {
-    const params: any = {
-      limit: limit.value,
+    const params: Record<string, unknown> = {
+      limit,
       offset: offset.value,
     }
 
-    if (selectedOperationType.value.value) {
-      params.operationType = selectedOperationType.value.value
+    if (filters.value.operationType) {
+      params.operationType = filters.value.operationType
     }
-
-    if (selectedStatusCode.value.value) {
-      params.statusCode = selectedStatusCode.value.value
+    if (filters.value.userType) {
+      params.userType = filters.value.userType
     }
-
-    if (searchUserId.value) {
-      params.userId = searchUserId.value
+    if (filters.value.statusCode) {
+      params.statusCode = filters.value.statusCode
+    }
+    if (filters.value.startDate) {
+      params.startDate = filters.value.startDate
+    }
+    if (filters.value.endDate) {
+      params.endDate = filters.value.endDate
     }
 
     const response = await logsApi.getAll(params)
     logs.value = response.logs
-    totalLogs.value = response.total
-  } catch (err: any) {
-    error.value = err.message || '獲取日誌失敗'
-    console.error('Failed to fetch logs:', err)
+    total.value = response.total
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : '獲取日誌失敗'
   } finally {
     loading.value = false
   }
 }
 
-// 獲取統計資料
+// Fetch statistics
 async function fetchStatistics() {
   try {
     statistics.value = await logsApi.getStatistics()
-  } catch (err: any) {
+  } catch (err) {
     console.error('Failed to fetch statistics:', err)
   }
 }
 
-// 清除篩選
+// Fetch all data
+async function fetchData() {
+  await Promise.all([fetchLogs(), fetchStatistics()])
+}
+
+// Clear filters
 function clearFilters() {
-  selectedOperationType.value = { label: '全部類型', value: null }
-  selectedStatusCode.value = { label: '全部狀態', value: null }
-  searchUserId.value = ''
+  filters.value = {
+    operationType: null,
+    userType: null,
+    statusCode: null,
+    startDate: '',
+    endDate: '',
+  }
   offset.value = 0
   fetchLogs()
 }
 
-// 分頁
-function previousPage() {
-  if (offset.value >= limit.value) {
-    offset.value -= limit.value
-    fetchLogs()
+// Manual cleanup
+async function handleCleanup() {
+  if (!confirm('確定要清理過期日誌嗎？\n- 管理員日誌超過 90 天將被刪除\n- 審計日誌超過 2 年將被刪除')) {
+    return
+  }
+
+  cleaning.value = true
+  try {
+    const result = await logsApi.cleanup()
+    toast.add({
+      title: '清理完成',
+      description: `已刪除 ${result.adminLogsDeleted} 條管理員日誌，${result.auditLogsDeleted} 條審計日誌`,
+      color: 'success',
+    })
+    fetchData()
+  } catch (err) {
+    toast.add({
+      title: '清理失敗',
+      description: err instanceof Error ? err.message : '未知錯誤',
+      color: 'error',
+    })
+  } finally {
+    cleaning.value = false
   }
 }
 
-function nextPage() {
-  offset.value += limit.value
-  fetchLogs()
+// View detail
+function viewDetail(log: AuditLog) {
+  selectedLog.value = log
+  detailOpen.value = true
 }
 
-// 格式化日期時間
+// Helpers
 function formatDateTime(dateString: string): string {
   return new Date(dateString).toLocaleString('zh-TW', {
     year: 'numeric',
@@ -334,53 +475,48 @@ function formatDateTime(dateString: string): string {
   })
 }
 
-// 操作類型顏色
-function getOperationColor(type: OperationType): string {
-  const colors: Record<OperationType, string> = {
-    [OperationType.CREATE]: 'green',
-    [OperationType.READ]: 'blue',
-    [OperationType.UPDATE]: 'yellow',
-    [OperationType.DELETE]: 'red',
-    [OperationType.LOGIN]: 'purple',
-    [OperationType.LOGOUT]: 'gray',
-    [OperationType.UPLOAD]: 'indigo',
-    [OperationType.DOWNLOAD]: 'cyan',
-    [OperationType.PAYMENT]: 'emerald',
-    [OperationType.REFUND]: 'orange',
-    [OperationType.OTHER]: 'gray',
-  }
-  return colors[type] || 'gray'
+function getOperationLabel(type: OperationType): string {
+  return operationTypeLabels[type] || type
 }
 
-// HTTP 方法顏色
+function getOperationColor(type: OperationType): string {
+  return operationTypeColors[type] || 'neutral'
+}
+
 function getMethodColor(method: string): string {
   const colors: Record<string, string> = {
-    GET: 'blue',
-    POST: 'green',
-    PUT: 'yellow',
-    PATCH: 'orange',
-    DELETE: 'red',
+    GET: 'info',
+    POST: 'success',
+    PUT: 'warning',
+    PATCH: 'warning',
+    DELETE: 'error',
   }
-  return colors[method] || 'gray'
+  return colors[method] || 'neutral'
 }
 
-// 狀態碼顏色
 function getStatusColor(code: number): string {
-  if (code >= 200 && code < 300) return 'green'
-  if (code >= 300 && code < 400) return 'blue'
-  if (code >= 400 && code < 500) return 'yellow'
-  if (code >= 500) return 'red'
-  return 'gray'
+  if (code >= 200 && code < 300) return 'success'
+  if (code >= 300 && code < 400) return 'info'
+  if (code >= 400 && code < 500) return 'warning'
+  if (code >= 500) return 'error'
+  return 'neutral'
 }
 
-// 監聽篩選變化
-watch([selectedOperationType, selectedStatusCode, searchUserId], () => {
-  offset.value = 0
-  fetchLogs()
-})
+// Watch filters
+watch(
+  () => [
+    filters.value.operationType,
+    filters.value.userType,
+    filters.value.statusCode,
+    filters.value.startDate,
+    filters.value.endDate,
+  ],
+  () => {
+    offset.value = 0
+    fetchLogs()
+  },
+)
 
-// 頁面載入時獲取數據
-onMounted(async () => {
-  await Promise.all([fetchLogs(), fetchStatistics()])
-})
+// Init
+onMounted(fetchData)
 </script>

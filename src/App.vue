@@ -75,8 +75,6 @@ onMounted(async () => {
 
     // 請求桌面通知權限
     await requestDesktopPermission()
-  } else {
-    console.log('🔔 No access token, skipping notification initialization')
   }
 })
 

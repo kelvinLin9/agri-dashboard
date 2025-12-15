@@ -4,6 +4,21 @@ import { cartApi } from '@/api'
 import type { Cart, AddCartItemDto } from '@/api/types'
 
 /**
+ * 檢查是否為 401 未授權錯誤
+ */
+function isUnauthorizedError(err: unknown): boolean {
+  const error = err as { response?: { status?: number } }
+  return error?.response?.status === 401
+}
+
+/**
+ * 檢查是否有有效的 token
+ */
+function hasToken(): boolean {
+  return !!localStorage.getItem('access_token')
+}
+
+/**
  * 購物車 Store
  * 管理購物車狀態和操作
  */
@@ -24,13 +39,18 @@ export const useCartStore = defineStore('cart', () => {
    * 載入購物車
    */
   const fetchCart = async () => {
+    // 未登入時跳過
+    if (!hasToken()) return
+
     isLoading.value = true
     error.value = null
     try {
       cart.value = await cartApi.getMy()
     }
-    catch (err: any) {
-      error.value = err.message || '載入購物車失敗'
+    catch (err: unknown) {
+      // 靜默處理 401 錯誤
+      if (isUnauthorizedError(err)) return
+      error.value = (err as Error).message || '載入購物車失敗'
       throw err
     }
     finally {

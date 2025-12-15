@@ -3,6 +3,21 @@ import { ref, computed } from 'vue'
 import { notificationsApi } from '@/api/notifications'
 import type { Notification, NotificationStatus, NotificationType, NotificationQueryParams } from '@/api/types'
 
+/**
+ * 檢查是否為 401 未授權錯誤
+ */
+function isUnauthorizedError(err: unknown): boolean {
+  const error = err as { response?: { status?: number } }
+  return error?.response?.status === 401
+}
+
+/**
+ * 檢查是否有有效的 token
+ */
+function hasToken(): boolean {
+  return !!localStorage.getItem('access_token')
+}
+
 export const useNotificationStore = defineStore('notification', () => {
   // State
   const notifications = ref<Notification[]>([])
@@ -26,6 +41,9 @@ export const useNotificationStore = defineStore('notification', () => {
 
   // Actions
   const fetchNotifications = async () => {
+    // 未登入時跳過
+    if (!hasToken()) return
+
     isLoading.value = true
     try {
       const params: NotificationQueryParams = {
@@ -46,7 +64,10 @@ export const useNotificationStore = defineStore('notification', () => {
       notifications.value = Array.isArray(paginatedData.data) ? paginatedData.data : []
       pagination.value.total = paginatedData.total || 0
     } catch (error) {
-      console.error('獲取通知失敗:', error)
+      // 靜默處理 401 錯誤
+      if (!isUnauthorizedError(error)) {
+        console.error('獲取通知失敗:', error)
+      }
       notifications.value = []
       pagination.value.total = 0
     } finally {
@@ -55,6 +76,9 @@ export const useNotificationStore = defineStore('notification', () => {
   }
 
   const fetchUnreadCount = async () => {
+    // 未登入時跳過
+    if (!hasToken()) return
+
     try {
       const response = await notificationsApi.getUnreadCount()
 
@@ -62,7 +86,10 @@ export const useNotificationStore = defineStore('notification', () => {
       const data = (response as any).data || response
       unreadCount.value = data.count || 0
     } catch (error) {
-      console.error('獲取未讀數量失敗:', error)
+      // 靜默處理 401 錯誤
+      if (!isUnauthorizedError(error)) {
+        console.error('獲取未讀數量失敗:', error)
+      }
     }
   }
 

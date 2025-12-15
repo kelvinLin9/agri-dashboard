@@ -213,8 +213,96 @@ export const uploadApi = {
       title: options?.title,
       description: options?.description,
     })
-
     return response.data.data
+  },
+
+  // ==================== Multipart Upload ====================
+
+  /**
+   * 初始化分片上傳
+   */
+  initiateMultipartUpload: async (
+    filename: string,
+    contentType: string,
+    fileSize: number,
+  ): Promise<{
+    uploadId: string
+    key: string
+    partCount: number
+    partSize: number
+    fileSize: number
+  }> => {
+    const response = await apiClient.post<{
+      data: {
+        uploadId: string
+        key: string
+        partCount: number
+        partSize: number
+        fileSize: number
+      }
+    }>('/uploads/multipart/initiate', {
+      filename,
+      contentType,
+      fileSize,
+    })
+    return response.data.data
+  },
+
+  /**
+   * 獲取各 part 的預簽名上傳 URL
+   */
+  getMultipartPresignedUrls: async (
+    key: string,
+    uploadId: string,
+    partCount: number,
+  ): Promise<{ parts: { partNumber: number; uploadUrl: string }[] }> => {
+    const response = await apiClient.post<{
+      data: { parts: { partNumber: number; uploadUrl: string }[] }
+    }>('/uploads/multipart/presign', {
+      key,
+      uploadId,
+      partCount,
+    })
+    return response.data.data
+  },
+
+  /**
+   * 完成分片上傳
+   */
+  completeMultipartUpload: async (
+    key: string,
+    uploadId: string,
+    parts: { partNumber: number; etag: string }[],
+    fileSize: number,
+    options?: {
+      mimeType?: string
+      title?: string
+      description?: string
+    },
+  ): Promise<Upload> => {
+    const response = await apiClient.post<{ data: Upload }>(
+      '/uploads/multipart/complete',
+      {
+        key,
+        uploadId,
+        parts,
+        fileSize,
+        mimeType: options?.mimeType,
+        title: options?.title,
+        description: options?.description,
+      },
+    )
+    return response.data.data
+  },
+
+  /**
+   * 取消分片上傳
+   */
+  abortMultipartUpload: async (key: string, uploadId: string): Promise<void> => {
+    await apiClient.post('/uploads/multipart/abort', {
+      key,
+      uploadId,
+    })
   },
 }
 

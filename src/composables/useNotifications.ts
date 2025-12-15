@@ -2,7 +2,10 @@ import { ref, onUnmounted } from 'vue'
 import { io, Socket } from 'socket.io-client'
 import { useNotificationStore } from '@/stores/notification'
 import { useToast } from '@/composables/useToast'
+import { createLogger } from '@/utils/logger'
 import type { Notification } from '@/api/types'
+
+const log = createLogger('Notifications')
 
 export const useNotifications = () => {
   const socket = ref<Socket | null>(null)
@@ -14,7 +17,7 @@ export const useNotifications = () => {
   const connect = () => {
     const token = localStorage.getItem('access_token')
     if (!token) {
-      console.warn('No access token found, cannot connect to notifications')
+      log.warn('No access token found, cannot connect to notifications')
       return
     }
 
@@ -32,12 +35,7 @@ export const useNotifications = () => {
       wsUrl = 'wss://agri-backend-660672910950.asia-east1.run.app/notifications'
     }
 
-    console.log('🔧 [useNotifications] WebSocket URL:', wsUrl)
-    console.log('🔧 [useNotifications] Access Token:', token?.substring(0, 20) + '...')
-    console.log('🔧 [useNotifications] Environment Variables:', {
-      VITE_API_URL: import.meta.env.VITE_API_URL,
-      mode: import.meta.env.MODE,
-    })
+    log.debug('Connecting to WebSocket', { wsUrl, mode: import.meta.env.MODE })
 
 
     // 建立 WebSocket 連線
@@ -51,7 +49,7 @@ export const useNotifications = () => {
 
     // 連線成功
     socket.value.on('connect', () => {
-      console.log('✅ Connected to notification server')
+      log.info('Connected to notification server')
       isConnected.value = true
       notificationStore.setConnected(true)
       socket.value?.emit('subscribe')
@@ -59,21 +57,21 @@ export const useNotifications = () => {
 
     // 連線斷開
     socket.value.on('disconnect', (reason) => {
-      console.log('❌ Disconnected from notification server:', reason)
+      log.info('Disconnected from notification server', { reason })
       isConnected.value = false
       notificationStore.setConnected(false)
     })
 
     // 連線錯誤
     socket.value.on('connect_error', (error) => {
-      console.error('Connection error:', error.message)
+      log.error('Connection error', { message: error.message })
       isConnected.value = false
       notificationStore.setConnected(false)
     })
 
     // 接收新通知
     socket.value.on('notification', (notification: Notification) => {
-      console.log('📬 New notification received:', notification)
+      log.debug('New notification received', notification)
 
       // 更新 Store
       notificationStore.addNotification(notification)
@@ -87,7 +85,7 @@ export const useNotifications = () => {
 
     // 訂閱確認
     socket.value.on('subscribed', (data) => {
-      console.log('✅ Subscribed to notifications:', data)
+      log.debug('Subscribed to notifications', data)
     })
   }
 
@@ -99,7 +97,7 @@ export const useNotifications = () => {
       socket.value = null
       isConnected.value = false
       notificationStore.setConnected(false)
-      console.log('🔌 Disconnected from notification server')
+      log.info('Disconnected from notification server')
     }
   }
 
@@ -174,3 +172,4 @@ export const useNotifications = () => {
     requestDesktopPermission,
   }
 }
+

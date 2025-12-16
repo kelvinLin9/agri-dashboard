@@ -160,36 +160,36 @@
         :loading="loading"
       >
         <template #createdAt-cell="{ row }">
-          {{ formatDateTime(row.original.createdAt) }}
+          {{ formatDateTime(row.createdAt) }}
         </template>
 
         <template #operationType-cell="{ row }">
-          <UBadge :color="getOperationColor(row.original.operationType)">
-            {{ getOperationLabel(row.original.operationType) }}
+          <UBadge :color="getOperationColor(row.operationType)">
+            {{ getOperationLabel(row.operationType) }}
           </UBadge>
         </template>
 
         <template #userType-cell="{ row }">
-          <UBadge :color="row.original.userType === 'admin' ? 'warning' : 'neutral'" variant="subtle">
-            {{ row.original.userType === 'admin' ? '管理員' : '顧客' }}
+          <UBadge :color="row.userType === 'admin' ? 'warning' : 'neutral'" variant="subtle">
+            {{ row.userType === 'admin' ? '管理員' : '顧客' }}
           </UBadge>
         </template>
 
         <template #method-cell="{ row }">
-          <UBadge :color="getMethodColor(row.original.method)" variant="outline">
-            {{ row.original.method }}
+          <UBadge :color="getMethodColor(row.method)" variant="outline">
+            {{ row.method }}
           </UBadge>
         </template>
 
         <template #statusCode-cell="{ row }">
-          <UBadge :color="getStatusColor(row.original.statusCode)">
-            {{ row.original.statusCode }}
+          <UBadge :color="getStatusColor(row.statusCode)">
+            {{ row.statusCode }}
           </UBadge>
         </template>
 
         <template #executionTime-cell="{ row }">
-          <span :class="row.original.executionTime > 1000 ? 'text-red-500' : ''">
-            {{ row.original.executionTime || '-' }}ms
+          <span :class="row.executionTime > 1000 ? 'text-red-500' : ''">
+            {{ row.executionTime || '-' }}ms
           </span>
         </template>
 
@@ -198,7 +198,7 @@
             icon="i-heroicons-eye"
             variant="ghost"
             size="xs"
-            @click="viewDetail(row.original)"
+            @click="viewDetail(row)"
           />
         </template>
       </UTable>

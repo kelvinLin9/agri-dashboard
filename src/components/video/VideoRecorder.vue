@@ -23,12 +23,20 @@
         }"
       />
 
-      <!-- Grid Overlay -->
-      <div v-if="showGridOverlay && state !== 'wrong_orientation'" class="video-recorder__grid">
+      <!-- Grid Overlay (Always visible) -->
+      <div v-if="state !== 'wrong_orientation'" class="video-recorder__grid">
         <div class="video-recorder__grid-line video-recorder__grid-line--v1" />
         <div class="video-recorder__grid-line video-recorder__grid-line--v2" />
         <div class="video-recorder__grid-line video-recorder__grid-line--h1" />
         <div class="video-recorder__grid-line video-recorder__grid-line--h2" />
+      </div>
+
+      <!-- Guide Overlay Slot (for face guide, arrows, etc.) -->
+      <div
+        v-if="(state === 'ready' || state === 'recording' || state === 'paused') && $slots['guide-overlay']"
+        class="video-recorder__guide-overlay"
+      >
+        <slot name="guide-overlay" />
       </div>
 
       <!-- Wrong Orientation Overlay -->
@@ -140,9 +148,12 @@
       <Transition name="fade">
         <div v-if="state === 'ready'" class="video-recorder__instruction-bar">
           <div class="video-recorder__instruction-content">
-            <span v-if="props.instruction" class="video-recorder__instruction-text">
-              {{ props.instruction }}
-            </span>
+            <!-- Instruction Slot (with fallback to prop) -->
+            <slot name="instruction">
+              <span v-if="props.instruction" class="video-recorder__instruction-text">
+                {{ props.instruction }}
+              </span>
+            </slot>
             <button
               type="button"
               class="video-recorder__btn video-recorder__btn--start"
@@ -175,27 +186,6 @@
 
           <!-- Control Buttons -->
           <div class="video-recorder__control-buttons">
-            <!-- Grid Toggle -->
-            <button
-              type="button"
-              class="video-recorder__btn video-recorder__btn--control"
-              :class="{ 'video-recorder__btn--active': showGridOverlay }"
-              @click="showGridOverlay = !showGridOverlay"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                class="video-recorder__icon"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M1.5 5.625c0-1.036.84-1.875 1.875-1.875h17.25c1.035 0 1.875.84 1.875 1.875v12.75c0 1.035-.84 1.875-1.875 1.875H3.375A1.875 1.875 0 011.5 18.375V5.625zM21 9.375A.375.375 0 0020.625 9h-7.5a.375.375 0 00-.375.375v1.5c0 .207.168.375.375.375h7.5a.375.375 0 00.375-.375v-1.5zm0 3.75a.375.375 0 00-.375-.375h-7.5a.375.375 0 00-.375.375v1.5c0 .207.168.375.375.375h7.5a.375.375 0 00.375-.375v-1.5zm0 3.75a.375.375 0 00-.375-.375h-7.5a.375.375 0 00-.375.375v1.5c0 .207.168.375.375.375h7.5a.375.375 0 00.375-.375v-1.5zM10.875 18.75a.375.375 0 00.375-.375v-1.5a.375.375 0 00-.375-.375h-7.5a.375.375 0 00-.375.375v1.5c0 .207.168.375.375.375h7.5zM3.375 15h7.5a.375.375 0 00.375-.375v-1.5a.375.375 0 00-.375-.375h-7.5a.375.375 0 00-.375.375v1.5c0 .207.168.375.375.375zm0-3.75h7.5a.375.375 0 00.375-.375v-1.5A.375.375 0 0010.875 9h-7.5a.375.375 0 00-.375.375v1.5c0 .207.168.375.375.375z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </button>
-
             <!-- Pause/Resume -->
             <button
               type="button"
@@ -464,7 +454,7 @@ async function switchCamera() {
         mediaRecorder.value?.pause()
       }
     }
-  } catch (err) {
+  } catch {
     emit('error', { message: '切換攝像頭失敗' })
   }
 }
@@ -788,6 +778,14 @@ onUnmounted(() => {
   height: 1px;
   border-top: 1px dashed rgba(255, 255, 255, 0.5);
   background: transparent;
+}
+
+/* ==================== Guide Overlay (Slot) ====================  */
+.video-recorder__guide-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
 }
 
 /* ==================== Orientation Overlay ====================  */

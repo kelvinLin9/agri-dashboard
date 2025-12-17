@@ -244,7 +244,7 @@ const formattedFileSize = computed(() => {
 })
 
 // ==================== Settings ====================
-const selectedOrientation = ref<'portrait' | 'landscape'>('landscape')
+const selectedOrientation = ref<'portrait' | 'landscape'>('portrait')
 const orientationOptions = [
   { label: '橫向', value: 'landscape' },
   { label: '直向', value: 'portrait' },

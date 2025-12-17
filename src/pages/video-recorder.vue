@@ -1,294 +1,111 @@
 <template>
-  <div class="flex flex-col bg-gray-100 dark:bg-gray-900">
+  <div class="video-recorder-page">
     <!-- Top Bar -->
-    <div class="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-4 py-3">
-      <div class="mx-auto flex max-w-6xl items-center justify-between">
-        <div class="flex items-center gap-3">
-          <UIcon name="i-heroicons-video-camera" class="h-6 w-6 text-harvest-500" />
-          <h1 class="text-lg font-semibold text-gray-900 dark:text-white">影片錄製</h1>
+    <div class="video-recorder-page__header">
+      <div class="video-recorder-page__header-content">
+        <div class="video-recorder-page__title">
+          <UIcon name="i-heroicons-video-camera" class="video-recorder-page__title-icon" />
+          <h1 class="video-recorder-page__title-text">影片錄製</h1>
         </div>
-        <div class="flex items-center gap-2">
-          <UBadge :color="isRecording ? 'red' : 'gray'" variant="subtle">
-            {{ isRecording ? '錄製中' : (recordedBlob ? '已完成' : '準備就緒') }}
-          </UBadge>
-        </div>
+        <UBadge :color="recordedBlob ? 'success' : 'neutral'" variant="subtle">
+          {{ recordedBlob ? '已完成' : '準備就緒' }}
+        </UBadge>
       </div>
     </div>
 
     <!-- Main Content -->
-    <div class="flex flex-col items-center p-2 sm:p-4 pb-8">
-      <!-- Video Preview Area -->
-      <div
-        ref="videoContainerRef"
-        class="relative w-full max-w-sm lg:max-w-4xl overflow-hidden rounded-lg bg-black shadow-2xl aspect-[9/16] lg:aspect-video"
-        :class="{ 'max-w-none !aspect-auto h-screen': isFullscreen }"
-      >
-        <!-- Video Element -->
-        <video
-          ref="videoElement"
-          autoplay
-          playsinline
-          muted
-          class="h-full w-full object-cover"
-          :class="{ 'scale-x-[-1]': settings.facingMode === 'user' }"
-        ></video>
+    <div class="video-recorder-page__content">
+      <!-- Start Recording Card -->
+      <div v-if="!recordedBlob && !uploadedFile" class="video-recorder-page__start-section">
+        <UCard class="video-recorder-page__start-card">
+          <div class="video-recorder-page__start-content">
+            <div class="video-recorder-page__start-icon">
+              <UIcon name="i-heroicons-video-camera" class="video-recorder-page__start-icon-svg" />
+            </div>
+            <h2 class="video-recorder-page__start-title">開始錄影</h2>
+            <p class="video-recorder-page__start-desc">點擊下方按鈕開始全螢幕錄影</p>
 
-        <!-- Grid Overlay -->
-        <div v-if="!recordedBlob" class="pointer-events-none absolute inset-0 opacity-30">
-          <div class="absolute top-0 left-1/3 h-full w-px border-l border-dashed border-white"></div>
-          <div class="absolute top-0 left-2/3 h-full w-px border-l border-dashed border-white"></div>
-          <div class="absolute top-1/3 left-0 h-px w-full border-t border-dashed border-white"></div>
-          <div class="absolute top-2/3 left-0 h-px w-full border-t border-dashed border-white"></div>
-        </div>
-
-        <!-- Recording Indicator (top right) -->
-        <div v-if="isRecording" class="absolute top-2 sm:top-4 right-2 sm:right-4 flex items-center gap-2 rounded-full bg-red-600 px-3 sm:px-4 py-1.5 sm:py-2 shadow-lg">
-          <div class="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-pulse rounded-full bg-white"></div>
-          <span class="text-xs sm:text-sm font-semibold text-white">{{ isPaused ? '已暫停' : 'REC' }}</span>
-        </div>
-
-        <!-- Timer & File Size (top left) -->
-        <div v-if="isRecording || recordedBlob" class="absolute top-2 sm:top-4 left-2 sm:left-4 flex flex-col gap-1.5 sm:gap-2">
-          <div class="flex items-center gap-1.5 sm:gap-2 rounded-lg bg-black/60 px-2 sm:px-3 py-1.5 sm:py-2 backdrop-blur">
-            <UIcon name="i-heroicons-clock" class="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
-            <span class="text-xs sm:text-sm font-mono text-white">{{ formattedTime }}</span>
-            <span v-if="remainingTime !== null && isRecording" class="text-[10px] sm:text-xs text-gray-400">
-              / {{ formatRemainingTime(remainingTime) }}
-            </span>
-          </div>
-          <div class="hidden sm:flex items-center gap-2 rounded-lg bg-black/60 px-3 py-2 backdrop-blur">
-            <UIcon name="i-heroicons-server-stack" class="h-4 w-4 text-white" />
-            <span class="text-sm font-mono text-white">{{ formattedFileSize }}</span>
-          </div>
-        </div>
-
-        <!-- Audio Level Meter (bottom, wider on desktop) -->
-        <div v-if="(isRecording || isInitialized) && !recordedBlob" class="absolute bottom-16 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 lg:bottom-4">
-          <div class="rounded-lg bg-black/60 px-2 sm:px-3 py-1.5 sm:py-2 backdrop-blur">
-            <div class="mb-1 flex items-center justify-between">
-              <div class="flex items-center gap-1.5 sm:gap-2">
-                <UIcon
-                  :name="isMuted ? 'i-heroicons-speaker-x-mark' : 'i-heroicons-speaker-wave'"
-                  class="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white"
+            <!-- Settings -->
+            <div class="video-recorder-page__settings">
+              <UFormField label="錄製方向">
+                <USelectMenu
+                  v-model="selectedOrientation"
+                  :items="orientationOptions"
+                  value-key="value"
+                  class="video-recorder-page__select"
                 />
-                <span class="text-[10px] sm:text-xs font-medium text-white">音量</span>
-              </div>
-              <span class="text-[10px] sm:text-xs font-mono text-gray-400">{{ audioLevel }}%</span>
+              </UFormField>
+              <UFormField label="影片品質">
+                <USelectMenu
+                  v-model="selectedQuality"
+                  :items="qualityOptions"
+                  value-key="value"
+                  class="video-recorder-page__select"
+                />
+              </UFormField>
+              <UFormField label="最大時間">
+                <USelectMenu
+                  v-model="selectedMaxDuration"
+                  :items="durationOptions"
+                  value-key="value"
+                  class="video-recorder-page__select"
+                />
+              </UFormField>
             </div>
-            <div class="h-1.5 sm:h-2 w-full overflow-hidden rounded-full bg-gray-700">
-              <div
-                class="h-full transition-all duration-100"
-                :class="[
-                  audioLevel > 80 ? 'bg-red-500' :
-                  audioLevel > 50 ? 'bg-yellow-500' :
-                  'bg-green-500'
-                ]"
-                :style="{ width: `${audioLevel}%` }"
-              ></div>
-            </div>
-          </div>
-        </div>
 
-        <!-- ====== MOBILE/TABLET: Overlay Controls (inside video) ====== -->
-        <div v-if="!recordedBlob" class="lg:hidden absolute bottom-2 left-0 right-0 flex justify-center">
-          <div class="flex items-center gap-3 rounded-full bg-black/70 px-4 py-2 backdrop-blur-md">
-            <!-- Settings Dropdown (left) -->
-            <UPopover v-if="!isRecording" mode="click">
-              <UButton
-                icon="i-heroicons-cog-6-tooth"
-                color="neutral"
-                variant="ghost"
-                size="lg"
-                class="!text-white"
-              />
-              <template #content>
-                <div class="p-4 space-y-4 min-w-[200px]">
-                  <UFormField label="影片品質" size="sm">
-                    <USelectMenu
-                      v-model="selectedQuality"
-                      :items="qualityOptions"
-                      size="sm"
-                      value-key="value"
-                      class="w-full"
-                      @update:model-value="handleQualityChange"
-                    />
-                  </UFormField>
-                  <UFormField label="最大時間" size="sm">
-                    <USelectMenu
-                      v-model="maxDuration"
-                      :items="durationOptions"
-                      size="sm"
-                      value-key="value"
-                      class="w-full"
-                      @update:model-value="handleMaxDurationChange"
-                    />
-                  </UFormField>
-                </div>
-              </template>
-            </UPopover>
-
-            <!-- Pause/Resume (left side during recording) -->
             <UButton
-              v-if="isRecording"
-              :icon="isPaused ? 'i-heroicons-play' : 'i-heroicons-pause'"
-              color="neutral"
-              variant="ghost"
-              size="lg"
-              class="!text-white"
-              @click="togglePause"
-            />
-
-            <!-- Record / Stop Button (CENTER) -->
-            <button
-              class="h-12 w-12 rounded-full flex items-center justify-center transition-all active:scale-95"
-              :class="isRecording ? 'bg-red-600 ring-4 ring-red-400/50' : 'bg-white ring-4 ring-white/30'"
-              @click="toggleRecording"
+              icon="i-heroicons-video-camera"
+              color="primary"
+              size="xl"
+              class="video-recorder-page__start-btn"
+              @click="startRecording"
             >
-              <div v-if="isRecording" class="h-4 w-4 rounded-sm bg-white"></div>
-              <UIcon v-else name="i-heroicons-video-camera" class="h-6 w-6 text-gray-900" />
-            </button>
-
-            <!-- Camera Switch (right) -->
-            <UButton
-              icon="i-heroicons-arrows-right-left"
-              color="neutral"
-              variant="ghost"
-              size="lg"
-              class="!text-white"
-              :disabled="isRecording"
-              @click="handleSwitchCamera"
-            />
-
-            <!-- Fullscreen Toggle -->
-            <UButton
-              :icon="isFullscreen ? 'i-heroicons-arrows-pointing-in' : 'i-heroicons-arrows-pointing-out'"
-              color="neutral"
-              variant="ghost"
-              size="lg"
-              class="!text-white"
-              @click="toggleFullscreen"
-            />
+              開始錄製
+            </UButton>
           </div>
-        </div>
-
-        <!-- Error Message (TOP) -->
-        <div v-if="error" class="absolute inset-x-2 sm:inset-x-4 top-2 sm:top-4 z-10">
-          <UAlert
-            icon="i-heroicons-exclamation-triangle"
-            color="error"
-            variant="solid"
-            :title="error"
-            :close-button="{ icon: 'i-heroicons-x-mark', color: 'white', variant: 'link' }"
-            @close="error = null"
-          />
-        </div>
-
-        <!-- Playback controls for recorded video -->
-        <div v-if="recordedBlob && !isUploading && recordedBlobUrl" class="absolute inset-0 flex items-center justify-center">
-          <video
-            :src="recordedBlobUrl"
-            controls
-            class="h-full w-full object-contain"
-          ></video>
-        </div>
+        </UCard>
       </div>
 
-      <!-- ====== DESKTOP: External Control Panel ====== -->
-      <div class="hidden lg:block mt-6 w-full max-w-4xl">
-        <div v-if="!recordedBlob">
-          <UCard>
-            <div class="flex items-center gap-6">
-              <!-- Left: Settings (only shown when not recording) -->
-              <div v-if="!isRecording" class="flex-1">
-                <div class="grid grid-cols-2 gap-4">
-                  <UFormField label="影片品質" size="sm">
-                    <USelectMenu
-                      v-model="selectedQuality"
-                      :items="qualityOptions"
-                      size="sm"
-                      value-key="value"
-                      class="w-full"
-                      @update:model-value="handleQualityChange"
-                    />
-                  </UFormField>
-                  <UFormField label="最大時間" size="sm">
-                    <USelectMenu
-                      v-model="maxDuration"
-                      :items="durationOptions"
-                      size="sm"
-                      value-key="value"
-                      class="w-full"
-                      @update:model-value="handleMaxDurationChange"
-                    />
-                  </UFormField>
-                </div>
-              </div>
-
-              <!-- Recording status (shown when recording) -->
-              <div v-else class="flex-1 flex items-center gap-4">
-                <div class="flex items-center gap-2">
-                  <div class="h-3 w-3 rounded-full animate-pulse" :class="isPaused ? 'bg-yellow-500' : 'bg-red-500'"></div>
-                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {{ isPaused ? '已暫停' : '錄製中' }}
-                  </span>
-                </div>
-                <div class="text-lg font-mono font-semibold text-gray-900 dark:text-white">
-                  {{ formattedTime }}
-                </div>
-                <div v-if="remainingTime !== null" class="text-sm text-gray-500 dark:text-gray-400">
-                  剩餘 {{ formatRemainingTime(remainingTime) }}
-                </div>
-              </div>
-
-              <!-- Right: Action Buttons -->
-              <div class="flex items-center gap-3">
-                <!-- Camera Switch -->
-                <UButton
-                  icon="i-heroicons-arrows-right-left"
-                  color="neutral"
-                  variant="soft"
-                  size="lg"
-                  :disabled="isRecording"
-                  @click="handleSwitchCamera"
-                />
-
-                <!-- Pause/Resume (only during recording) -->
-                <UButton
-                  v-if="isRecording"
-                  :icon="isPaused ? 'i-heroicons-play' : 'i-heroicons-pause'"
-                  color="warning"
-                  variant="soft"
-                  size="lg"
-                  @click="togglePause"
-                />
-
-                <!-- Record / Stop Button -->
-                <UButton
-                  :icon="isRecording ? 'i-heroicons-stop' : 'i-heroicons-video-camera'"
-                  :color="isRecording ? 'error' : 'primary'"
-                  size="xl"
-                  class="!rounded-full !p-4"
-                  @click="toggleRecording"
-                />
-              </div>
-            </div>
-          </UCard>
-        </div>
-      </div>
-
-      <!-- Upload Controls (shown after recording, on all devices) -->
-      <div class="mt-4 w-full max-w-4xl" v-if="recordedBlob && !uploadedFile">
-        <!-- Metadata Form -->
+      <!-- Preview Section (after recording) -->
+      <div v-if="recordedBlob && !uploadedFile" class="video-recorder-page__preview-section">
         <UCard>
           <template #header>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">影片資訊</h3>
+            <h3 class="video-recorder-page__section-title">影片預覽</h3>
           </template>
 
-          <div class="space-y-4">
+          <!-- Video Preview -->
+          <div class="video-recorder-page__video-container">
+            <video
+              v-if="recordedBlobUrl"
+              :src="recordedBlobUrl"
+              controls
+              class="video-recorder-page__video"
+            />
+          </div>
+
+          <!-- Recording Info -->
+          <div class="video-recorder-page__info">
+            <div class="video-recorder-page__info-item">
+              <UIcon name="i-heroicons-clock" class="video-recorder-page__info-icon" />
+              <span>時長: {{ formattedDuration }}</span>
+            </div>
+            <div class="video-recorder-page__info-item">
+              <UIcon name="i-heroicons-server-stack" class="video-recorder-page__info-icon" />
+              <span>大小: {{ formattedFileSize }}</span>
+            </div>
+          </div>
+        </UCard>
+
+        <!-- Metadata Form -->
+        <UCard class="video-recorder-page__metadata-card">
+          <template #header>
+            <h3 class="video-recorder-page__section-title">影片資訊</h3>
+          </template>
+
+          <div class="video-recorder-page__form">
             <UFormField label="標題">
               <UInput v-model="metadata.title" placeholder="輸入影片標題..." />
             </UFormField>
-
             <UFormField label="描述">
               <UTextarea v-model="metadata.description" placeholder="輸入影片描述..." :rows="3" />
             </UFormField>
@@ -296,16 +113,16 @@
         </UCard>
 
         <!-- Upload Progress -->
-        <div v-if="isUploading" class="mt-4 space-y-2">
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-gray-600 dark:text-gray-400">上傳中...</span>
-            <span class="font-semibold text-gray-900 dark:text-white">{{ uploadProgress }}%</span>
+        <div v-if="isUploading" class="video-recorder-page__progress">
+          <div class="video-recorder-page__progress-header">
+            <span>上傳中...</span>
+            <span class="video-recorder-page__progress-percent">{{ uploadProgress }}%</span>
           </div>
           <UProgress :value="uploadProgress" color="primary" />
         </div>
 
         <!-- Action Buttons -->
-        <div class="mt-4 flex flex-wrap items-center justify-center gap-3">
+        <div class="video-recorder-page__actions">
           <UButton
             icon="i-heroicons-cloud-arrow-up"
             color="primary"
@@ -316,7 +133,6 @@
           >
             上傳影片
           </UButton>
-
           <UButton
             icon="i-heroicons-arrow-path"
             color="neutral"
@@ -327,7 +143,6 @@
           >
             重新錄製
           </UButton>
-
           <UButton
             icon="i-heroicons-arrow-down-tray"
             color="neutral"
@@ -341,8 +156,8 @@
         </div>
       </div>
 
-      <!-- Upload Success (shown after successful upload, on all devices) -->
-      <div class="mt-4 w-full max-w-4xl space-y-4" v-if="uploadedFile">
+      <!-- Upload Success Section -->
+      <div v-if="uploadedFile" class="video-recorder-page__success-section">
         <UAlert
           icon="i-heroicons-check-circle"
           color="success"
@@ -351,170 +166,155 @@
           description="影片已成功上傳到伺服器"
         />
 
-        <UCard>
-          <div class="space-y-3">
-            <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-video-camera" class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-              <span class="text-sm text-gray-700 dark:text-gray-300">{{ metadata.title || '未命名影片' }}</span>
+        <UCard class="video-recorder-page__success-card">
+          <div class="video-recorder-page__success-info">
+            <div class="video-recorder-page__info-item">
+              <UIcon name="i-heroicons-video-camera" class="video-recorder-page__info-icon" />
+              <span>{{ metadata.title || '未命名影片' }}</span>
             </div>
-            <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-clock" class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-              <span class="text-sm text-gray-700 dark:text-gray-300">時長: {{ formattedTime }}</span>
+            <div class="video-recorder-page__info-item">
+              <UIcon name="i-heroicons-clock" class="video-recorder-page__info-icon" />
+              <span>時長: {{ formattedDuration }}</span>
             </div>
-            <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-server-stack" class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-              <span class="text-sm text-gray-700 dark:text-gray-300">大小: {{ formattedFileSize }}</span>
+            <div class="video-recorder-page__info-item">
+              <UIcon name="i-heroicons-server-stack" class="video-recorder-page__info-icon" />
+              <span>大小: {{ formattedFileSize }}</span>
             </div>
           </div>
         </UCard>
 
-        <div class="flex items-center justify-center gap-3">
-          <UButton
-            icon="i-heroicons-link"
-            color="neutral"
-            variant="soft"
-            @click="copyLink"
-          >
+        <div class="video-recorder-page__success-actions">
+          <UButton icon="i-heroicons-link" color="neutral" variant="soft" @click="copyLink">
             複製連結
           </UButton>
-
-          <UButton
-            icon="i-heroicons-plus-circle"
-            color="primary"
-            @click="handleRetake"
-          >
+          <UButton icon="i-heroicons-plus-circle" color="primary" @click="handleRetake">
             繼續錄製
           </UButton>
         </div>
       </div>
     </div>
+
+    <!-- Video Recorder Component -->
+    <VideoRecorder
+      ref="recorderRef"
+      :orientation="selectedOrientation"
+      :quality="selectedQuality"
+      :max-duration="selectedMaxDuration"
+      :show-grid="true"
+      :show-countdown="true"
+      instruction="請對準拍攝對象開始錄製"
+      @recorded="handleRecorded"
+      @cancelled="handleCancelled"
+      @error="handleError"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useVideoRecorder } from '@/composables/useVideoRecorder'
+import { ref, computed, watch } from 'vue'
+import VideoRecorder from '@/components/video/VideoRecorder.vue'
 import { useVideoUpload } from '@/composables/useVideoUpload'
-import { useAudioLevel } from '@/composables/useAudioLevel'
-import { VideoQuality } from '@/types/video'
 import { useToast } from '@/composables/useToast'
 
 const toast = useToast()
 
-// ==================== Fullscreen ====================
-const videoContainerRef = ref<HTMLDivElement | null>(null)
-const isFullscreen = ref(false)
+// ==================== Recorder Ref ====================
+const recorderRef = ref<InstanceType<typeof VideoRecorder>>()
 
-function toggleFullscreen() {
-  if (!videoContainerRef.value) return
+// ==================== Recording State ====================
+const recordedBlob = ref<Blob | null>(null)
+const recordedDuration = ref(0)
 
-  if (!document.fullscreenElement) {
-    videoContainerRef.value.requestFullscreen().catch((err) => {
-      toast.add({
-        title: '無法進入全螢幕',
-        description: err.message,
-        color: 'error',
-      })
-    })
-  } else {
-    document.exitFullscreen()
-  }
-}
-
-function handleFullscreenChange() {
-  isFullscreen.value = !!document.fullscreenElement
-}
-
-// ==================== Video Recorder ====================
-const videoElement = ref<HTMLVideoElement | null>(null)
-const {
-  isRecording,
-  isPaused,
-  isInitialized,
-  recordedBlob,
-  error,
-  settings,
-  stream,
-  formattedTime,
-  formattedFileSize,
-  remainingTime,
-  initCamera,
-  toggleRecording,
-  pauseRecording,
-  resumeRecording,
-  clearRecording,
-  switchCamera: switchCameraFn,
-  setQuality,
-  setMaxDuration,
-} = useVideoRecorder({
-  quality: VideoQuality.MEDIUM,
-  facingMode: 'environment',
-  audioEnabled: true,
-  maxDuration: 300, // 5分鐘預設
+const recordedBlobUrl = computed(() => {
+  if (!recordedBlob.value) return null
+  return URL.createObjectURL(recordedBlob.value)
 })
 
-// ==================== Audio Level ====================
-const {
-  audioLevel,
-  isMuted,
-  initAudioAnalyser,
-  stopAnalysis,
-} = useAudioLevel(stream)
-
-// Watch for stream initialization
-watch(stream, (newStream) => {
-  if (newStream) {
-    initAudioAnalyser()
-  } else {
-    stopAnalysis()
-  }
+const formattedDuration = computed(() => {
+  const mins = Math.floor(recordedDuration.value / 60)
+  const secs = recordedDuration.value % 60
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 })
 
-// ==================== Video Upload ====================
-const {
-  isUploading,
-  uploadProgress,
-  uploadedFile,
-  uploadError,
-  uploadVideo,
-  clearUpload,
-} = useVideoUpload()
-
-// ==================== State ====================
-const metadata = ref({
-  title: '',
-  description: '',
-  tags: [] as string[],
+const formattedFileSize = computed(() => {
+  const size = recordedBlob.value?.size || 0
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`
 })
 
-const selectedQuality = ref(VideoQuality.MEDIUM)
-const qualityOptions = [
-  { label: '高畫質 (1080p)', value: VideoQuality.HIGH },
-  { label: '標準畫質 (720p)', value: VideoQuality.MEDIUM },
-  { label: '低畫質 (480p)', value: VideoQuality.LOW },
+// ==================== Settings ====================
+const selectedOrientation = ref<'portrait' | 'landscape'>('landscape')
+const orientationOptions = [
+  { label: '橫向', value: 'landscape' },
+  { label: '直向', value: 'portrait' },
 ]
 
-const maxDuration = ref(300) // 5 minutes
+const selectedQuality = ref<'480p' | '720p' | '1080p'>('720p')
+const qualityOptions = [
+  { label: '高畫質 (1080p)', value: '1080p' },
+  { label: '標準畫質 (720p)', value: '720p' },
+  { label: '低畫質 (480p)', value: '480p' },
+]
+
+const selectedMaxDuration = ref(60)
 const durationOptions = [
   { label: '無限制', value: 0 },
   { label: '1 分鐘', value: 60 },
   { label: '3 分鐘', value: 180 },
   { label: '5 分鐘', value: 300 },
   { label: '10 分鐘', value: 600 },
-  { label: '15 分鐘', value: 900 },
 ]
 
-// ==================== Computed ====================
-const recordedBlobUrl = computed(() => {
-  if (!recordedBlob.value) return null
-  return URL.createObjectURL(recordedBlob.value)
+// ==================== Upload ====================
+const { isUploading, uploadProgress, uploadedFile, uploadError, uploadVideo, clearUpload } =
+  useVideoUpload()
+
+// ==================== Metadata ====================
+const metadata = ref({
+  title: '',
+  description: '',
 })
 
 // ==================== Methods ====================
-function formatRemainingTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+function startRecording() {
+  recorderRef.value?.start()
+}
+
+function handleRecorded({ blob, duration }: { blob: Blob; duration: number }) {
+  recordedBlob.value = blob
+  recordedDuration.value = duration
+
+  // Auto-generate title
+  const timestamp = new Date().toLocaleString('zh-TW', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  metadata.value.title = `影片錄製 ${timestamp}`
+
+  toast.add({
+    title: '錄製完成',
+    description: `已錄製 ${formattedDuration.value} 的影片`,
+    color: 'success',
+  })
+}
+
+function handleCancelled() {
+  toast.add({
+    title: '已取消',
+    description: '錄製已取消',
+    color: 'neutral',
+  })
+}
+
+function handleError({ message }: { message: string }) {
+  toast.add({
+    title: '錄製錯誤',
+    description: message,
+    color: 'error',
+  })
 }
 
 async function handleUpload() {
@@ -545,28 +345,22 @@ async function handleUpload() {
 }
 
 function handleRetake() {
-  clearRecording()
-  clearUpload()
-  metadata.value = {
-    title: '',
-    description: '',
-    tags: [],
-  }
-
   // Revoke old blob URL
   if (recordedBlobUrl.value) {
     URL.revokeObjectURL(recordedBlobUrl.value)
   }
+
+  recordedBlob.value = null
+  recordedDuration.value = 0
+  metadata.value = { title: '', description: '' }
+  clearUpload()
 }
 
 function handleDownload() {
-  if (!recordedBlob.value) return
-
-  const url = recordedBlobUrl.value
-  if (!url) return
+  if (!recordedBlob.value || !recordedBlobUrl.value) return
 
   const a = document.createElement('a')
-  a.href = url
+  a.href = recordedBlobUrl.value
   a.download = `${metadata.value.title || 'video'}-${new Date().toISOString().slice(0, 10)}.webm`
   document.body.appendChild(a)
   a.click()
@@ -577,45 +371,6 @@ function handleDownload() {
     description: '影片下載已開始',
     color: 'success',
   })
-}
-
-function togglePause() {
-  if (isPaused.value) {
-    resumeRecording()
-  } else {
-    pauseRecording()
-  }
-}
-
-function handleQualityChange(value: any) {
-  if (!value || typeof value !== 'string') return
-  if (!Object.values(VideoQuality).includes(value as VideoQuality)) return
-
-  if (setQuality(value as VideoQuality)) {
-    toast.add({
-      title: '品質已變更',
-      description: `影片品質設為 ${value}`,
-      color: 'success',
-    })
-  }
-}
-
-function handleMaxDurationChange(value: any) {
-  if (value === undefined || value === null) return
-  const numValue = typeof value === 'number' ? value : Number(value)
-  if (isNaN(numValue)) return
-
-  setMaxDuration(numValue)
-  const label = durationOptions.find(opt => opt.value === numValue)?.label || '自訂'
-  toast.add({
-    title: '時間限制已變更',
-    description: `最大錄製時間設為 ${label}`,
-    color: 'success',
-  })
-}
-
-async function handleSwitchCamera() {
-  await switchCameraFn()
 }
 
 async function copyLink() {
@@ -637,43 +392,225 @@ async function copyLink() {
   }
 }
 
-// ==================== Lifecycle ====================
-onMounted(async () => {
-  // Add fullscreen event listener
-  document.addEventListener('fullscreenchange', handleFullscreenChange)
-
-  if (videoElement.value) {
-    await initCamera(videoElement.value)
-  }
-})
-
-onUnmounted(() => {
-  document.removeEventListener('fullscreenchange', handleFullscreenChange)
-})
-
-// Auto-generate title based on timestamp
-watch(recordedBlob, (blob) => {
-  if (blob && !metadata.value.title) {
-    const timestamp = new Date().toLocaleString('zh-TW', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-    metadata.value.title = `影片錄製 ${timestamp}`
+// ==================== Cleanup ====================
+watch(recordedBlobUrl, (_, oldUrl) => {
+  if (oldUrl) {
+    URL.revokeObjectURL(oldUrl)
   }
 })
 </script>
 
 <style scoped>
-/* Smooth animations */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
+.video-recorder-page {
+  min-height: 100vh;
+  background: var(--ui-bg);
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.video-recorder-page__header {
+  border-bottom: 1px solid var(--ui-border);
+  background: var(--ui-bg-elevated);
+  padding: 12px 16px;
+}
+
+.video-recorder-page__header-content {
+  max-width: 1024px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.video-recorder-page__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.video-recorder-page__title-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--ui-primary);
+}
+
+.video-recorder-page__title-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ui-text);
+  margin: 0;
+}
+
+.video-recorder-page__content {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+/* Start Section */
+.video-recorder-page__start-section {
+  display: flex;
+  justify-content: center;
+  padding-top: 48px;
+}
+
+.video-recorder-page__start-card {
+  max-width: 400px;
+  width: 100%;
+}
+
+.video-recorder-page__start-content {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.video-recorder-page__start-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  background: var(--ui-primary-muted);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-recorder-page__start-icon-svg {
+  width: 40px;
+  height: 40px;
+  color: var(--ui-primary);
+}
+
+.video-recorder-page__start-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--ui-text);
+  margin: 0 0 8px;
+}
+
+.video-recorder-page__start-desc {
+  font-size: 14px;
+  color: var(--ui-text-muted);
+  margin: 0 0 24px;
+}
+
+.video-recorder-page__settings {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.video-recorder-page__select {
+  width: 100%;
+}
+
+.video-recorder-page__start-btn {
+  width: 100%;
+}
+
+/* Preview Section */
+.video-recorder-page__preview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.video-recorder-page__section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ui-text);
+  margin: 0;
+}
+
+.video-recorder-page__video-container {
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.video-recorder-page__video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.video-recorder-page__info {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+}
+
+.video-recorder-page__info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ui-text-muted);
+}
+
+.video-recorder-page__info-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.video-recorder-page__metadata-card {
+  margin-top: 8px;
+}
+
+.video-recorder-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.video-recorder-page__progress {
+  padding: 16px;
+  background: var(--ui-bg-elevated);
+  border-radius: 8px;
+}
+
+.video-recorder-page__progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--ui-text-muted);
+}
+
+.video-recorder-page__progress-percent {
+  font-weight: 600;
+  color: var(--ui-text);
+}
+
+.video-recorder-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* Success Section */
+.video-recorder-page__success-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.video-recorder-page__success-card {
+  margin-top: 8px;
+}
+
+.video-recorder-page__success-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.video-recorder-page__success-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
 }
 </style>

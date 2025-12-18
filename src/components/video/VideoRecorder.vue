@@ -1,6 +1,6 @@
 <template>
-  <!-- 全螢幕覆蓋層 -->
-  <Teleport to="body">
+  <!-- 全螢幕模式：使用 Teleport -->
+  <Teleport v-if="!props.embedded" to="body" :disabled="false">
     <div
       v-if="isActive"
       ref="containerRef"
@@ -18,7 +18,7 @@
         muted
         class="video-recorder__video"
         :class="{
-          'video-recorder__video--mirror': currentFacingMode === 'user',
+          'video-recorder__video--mirror': recorder.currentFacingMode.value === 'user',
           'video-recorder__video--blurred': state === 'wrong_orientation',
         }"
       />
@@ -33,7 +33,10 @@
 
       <!-- 引導遮罩插槽（用於臉部引導、箭頭等） -->
       <div
-        v-if="(state === 'ready' || state === 'recording' || state === 'paused') && $slots['guide-overlay']"
+        v-if="
+          (state === 'ready' || state === 'recording' || state === 'paused') &&
+          $slots['guide-overlay']
+        "
         class="video-recorder__guide-overlay"
       >
         <slot name="guide-overlay" />
@@ -181,7 +184,7 @@
               class="video-recorder__timer-dot"
               :class="{ 'video-recorder__timer-dot--paused': state === 'paused' }"
             />
-            <span class="video-recorder__timer-text">{{ formattedTime }}</span>
+            <span class="video-recorder__timer-text">{{ recorder.formattedTime.value }}</span>
           </div>
 
           <!-- 控制按鈕列 -->
@@ -190,7 +193,7 @@
             <button
               type="button"
               class="video-recorder__btn video-recorder__btn--control"
-              @click="togglePause"
+              @click="handleTogglePause"
             >
               <svg
                 v-if="state === 'paused'"
@@ -231,7 +234,7 @@
 
             <!-- 切換鏡頭（只有多個鏡頭時顯示） -->
             <button
-              v-if="hasMultipleCameras"
+              v-if="recorder.hasMultipleCameras.value"
               type="button"
               class="video-recorder__btn video-recorder__btn--control"
               @click="handleSwitchCamera"
@@ -255,6 +258,172 @@
       </Transition>
     </div>
   </Teleport>
+
+  <!-- 嵌入模式：不使用 Teleport -->
+  <div
+    v-if="props.embedded && isActive"
+    ref="containerRef"
+    class="video-recorder video-recorder--embedded"
+    :class="[`video-recorder--${props.orientation}`]"
+  >
+    <!-- 影片預覽層 -->
+    <video
+      ref="videoRef"
+      autoplay
+      playsinline
+      muted
+      class="video-recorder__video"
+      :class="{
+        'video-recorder__video--mirror': recorder.currentFacingMode.value === 'user',
+        'video-recorder__video--blurred': state === 'wrong_orientation',
+      }"
+    />
+
+    <!-- 九宮格輔助線 -->
+    <div v-if="state !== 'wrong_orientation'" class="video-recorder__grid">
+      <div class="video-recorder__grid-line video-recorder__grid-line--v1" />
+      <div class="video-recorder__grid-line video-recorder__grid-line--v2" />
+      <div class="video-recorder__grid-line video-recorder__grid-line--h1" />
+      <div class="video-recorder__grid-line video-recorder__grid-line--h2" />
+    </div>
+
+    <!-- 引導遮罩插槽 -->
+    <div
+      v-if="
+        (state === 'ready' || state === 'recording' || state === 'paused') &&
+        $slots['guide-overlay']
+      "
+      class="video-recorder__guide-overlay"
+    >
+      <slot name="guide-overlay" />
+    </div>
+
+    <!-- 頂部列：取消按鈕 -->
+    <div class="video-recorder__top-bar">
+      <button
+        type="button"
+        class="video-recorder__btn video-recorder__btn--cancel"
+        @click="handleCancel"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          class="video-recorder__icon"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <!-- 準備狀態 -->
+    <Transition name="fade">
+      <div v-if="state === 'ready'" class="video-recorder__instruction-bar">
+        <div class="video-recorder__instruction-content">
+          <slot name="instruction">
+            <span v-if="props.instruction" class="video-recorder__instruction-text">
+              {{ props.instruction }}
+            </span>
+          </slot>
+          <button
+            type="button"
+            class="video-recorder__btn video-recorder__btn--start"
+            @click="handleStartRecording"
+          >
+            開始錄製 →
+          </button>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- 倒數動畫遮罩 -->
+    <Transition name="scale">
+      <div v-if="state === 'countdown'" class="video-recorder__countdown">
+        <span class="video-recorder__countdown-number">{{ countdownValue }}</span>
+      </div>
+    </Transition>
+
+    <!-- 錄製中：控制按鈕 -->
+    <Transition name="slide-up">
+      <div v-if="state === 'recording' || state === 'paused'" class="video-recorder__controls">
+        <div class="video-recorder__timer">
+          <div
+            class="video-recorder__timer-dot"
+            :class="{ 'video-recorder__timer-dot--paused': state === 'paused' }"
+          />
+          <span class="video-recorder__timer-text">{{ recorder.formattedTime.value }}</span>
+        </div>
+
+        <div class="video-recorder__control-buttons">
+          <button
+            type="button"
+            class="video-recorder__btn video-recorder__btn--control"
+            @click="handleTogglePause"
+          >
+            <svg
+              v-if="state === 'paused'"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              class="video-recorder__icon"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <svg
+              v-else
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              class="video-recorder__icon"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0A.75.75 0 0115 4.5h1.5a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H15a.75.75 0 01-.75-.75V5.25z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            class="video-recorder__btn video-recorder__btn--stop"
+            @click="handleStopRecording"
+          >
+            <div class="video-recorder__stop-icon" />
+          </button>
+
+          <button
+            v-if="recorder.hasMultipleCameras.value"
+            type="button"
+            class="video-recorder__btn video-recorder__btn--control"
+            @click="handleSwitchCamera"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              class="video-recorder__icon"
+            >
+              <path d="M12 9a3.75 3.75 0 100 7.5A3.75 3.75 0 0012 9z" />
+              <path
+                fill-rule="evenodd"
+                d="M9.344 3.071a49.52 49.52 0 015.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 01-3 3H4.5a3 3 0 01-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.152-.177a1.56 1.56 0 001.11-.71l.821-1.317a2.603 2.603 0 012.332-1.39zM12 17.25a5.25 5.25 0 100-10.5 5.25 5.25 0 000 10.5z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </Transition>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -263,12 +432,17 @@
  *
  * 專為行動裝置設計的錄影元件，支援：
  * - 全螢幕錄製
+ * - 嵌入模式（embedded）
  * - 裝置方向偵測與鎖定
  * - 倒數計時動畫
  * - 暫停/繼續錄製
  * - 前後鏡頭切換
+ *
+ * 使用 useVideoRecorder composable 處理核心錄製邏輯
  */
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { useVideoRecorder, type Orientation, type FacingMode } from '@/composables/useVideoRecorder'
+import { VideoQuality } from '@/types/video'
 
 // =====================================================================
 // 型別定義
@@ -284,16 +458,6 @@ type RecorderState =
   | 'recording' // 錄製中
   | 'paused' // 暫停
   | 'completed' // 完成
-
-/**
- * 裝置方向（攝影術語）
- * - portrait: 直向
- * - landscape: 橫向
- */
-type Orientation = 'portrait' | 'landscape'
-
-/** 攝影機方向 */
-type FacingMode = 'user' | 'environment'
 
 /** 錄製結果 */
 interface RecordedResult {
@@ -320,6 +484,10 @@ interface Props {
   showCountdown?: boolean
   /** 預設攝影機方向 */
   facingMode?: FacingMode
+  /** 是否全螢幕模式 */
+  fullscreen?: boolean
+  /** 是否嵌入模式（不使用 Teleport） */
+  embedded?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -330,6 +498,8 @@ const props = withDefaults(defineProps<Props>(), {
   showGrid: true,
   showCountdown: true,
   facingMode: 'environment',
+  fullscreen: true,
+  embedded: false,
 })
 
 const emit = defineEmits<{
@@ -342,15 +512,26 @@ const emit = defineEmits<{
 }>()
 
 // =====================================================================
-// 常數設定
+// 品質映射
 // =====================================================================
 
-/** 影片品質設定表 */
-const QUALITY_CONFIGS = {
-  '480p': { width: 854, height: 480, bitrate: 1_000_000, frameRate: 30 },
-  '720p': { width: 1280, height: 720, bitrate: 2_500_000, frameRate: 30 },
-  '1080p': { width: 1920, height: 1080, bitrate: 5_000_000, frameRate: 30 },
-} as const
+const QUALITY_MAP: Record<string, VideoQuality> = {
+  '480p': VideoQuality.LOW,
+  '720p': VideoQuality.MEDIUM,
+  '1080p': VideoQuality.HIGH,
+}
+
+// =====================================================================
+// Composable
+// =====================================================================
+
+const recorder = useVideoRecorder({
+  quality: QUALITY_MAP[props.quality],
+  facingMode: props.facingMode,
+  audioEnabled: true,
+  maxDuration: props.maxDuration,
+  requiredOrientation: props.orientation,
+})
 
 // =====================================================================
 // DOM 參照
@@ -375,62 +556,19 @@ const state = ref<RecorderState>('idle')
 /** 是否顯示九宮格 */
 const showGridOverlay = ref(props.showGrid)
 
-/** 目前攝影機方向 */
-const currentFacingMode = ref<FacingMode>(props.facingMode)
-
 /** 倒數值 */
 const countdownValue = ref(3)
 
-/** 已錄製時間（秒）*/
-const elapsedTime = ref(0)
-
-// =====================================================================
-// 媒體相關
-// =====================================================================
-
-const stream = ref<MediaStream | null>(null)
-const mediaRecorder = ref<MediaRecorder | null>(null)
-const recordedChunks = ref<Blob[]>([])
-
-/** 可用的攝影機列表 */
-const availableCameras = ref<MediaDeviceInfo[]>([])
-
-// =====================================================================
-// 計時器
-// =====================================================================
-
-let recordingTimer: number | null = null
+/** 方向變更前是否正在錄製 */
 let wasRecordingBeforeOrientationChange = false
-
-// =====================================================================
-// 計算屬性
-// =====================================================================
-
-/** 格式化的錄製時間 (MM:SS) */
-const formattedTime = computed(() => {
-  const mins = Math.floor(elapsedTime.value / 60)
-  const secs = elapsedTime.value % 60
-  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-})
-
-/** 是否有多個攝影機（決定是否顯示切換按鈕） */
-const hasMultipleCameras = computed(() => availableCameras.value.length > 1)
 
 // =====================================================================
 // 方向偵測
 // =====================================================================
 
-/** 取得目前裝置方向 */
-function getCurrentOrientation(): Orientation {
-  if (screen.orientation) {
-    return screen.orientation.type.includes('portrait') ? 'portrait' : 'landscape'
-  }
-  return window.matchMedia('(orientation: portrait)').matches ? 'portrait' : 'landscape'
-}
-
 /** 檢查方向是否正確 */
 function isOrientationCorrect(): boolean {
-  return getCurrentOrientation() === props.orientation
+  return recorder.getCurrentOrientation() === props.orientation
 }
 
 /** 處理方向變化 */
@@ -441,7 +579,8 @@ function handleOrientationChange() {
     // 方向變錯了
     if (state.value === 'recording') {
       wasRecordingBeforeOrientationChange = true
-      pauseRecording()
+      recorder.pauseRecording()
+      state.value = 'paused'
     }
     if (state.value !== 'countdown') {
       state.value = 'wrong_orientation'
@@ -449,211 +588,14 @@ function handleOrientationChange() {
   } else {
     // 方向恢復正確
     if (state.value === 'wrong_orientation') {
-      state.value = 'ready'
       if (wasRecordingBeforeOrientationChange) {
         wasRecordingBeforeOrientationChange = false
-        resumeRecording()
+        recorder.resumeRecording()
+        state.value = 'recording'
+      } else {
+        state.value = 'ready'
       }
     }
-  }
-}
-
-// =====================================================================
-// 攝影機控制
-// =====================================================================
-
-/** 列舉可用的攝影機 */
-async function enumerateCameras() {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices()
-    availableCameras.value = devices.filter((d) => d.kind === 'videoinput')
-  } catch {
-    // 無法列舉設備，假設只有一個鏡頭
-    availableCameras.value = []
-  }
-}
-
-/** 初始化攝影機 */
-async function initCamera() {
-  try {
-    state.value = 'requesting_camera'
-
-    // 列舉可用的攝影機
-    await enumerateCameras()
-
-    const config = QUALITY_CONFIGS[props.quality]
-
-    const constraints: MediaStreamConstraints = {
-      video: {
-        facingMode: currentFacingMode.value,
-        width: { ideal: config.width },
-        height: { ideal: config.height },
-        frameRate: { ideal: config.frameRate },
-      },
-      audio: true,
-    }
-
-    const mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
-    stream.value = mediaStream
-
-    if (videoRef.value) {
-      videoRef.value.srcObject = mediaStream
-    }
-
-    // 初始化後檢查方向
-    state.value = isOrientationCorrect() ? 'ready' : 'wrong_orientation'
-  } catch (err) {
-    console.error('攝影機初始化失敗:', err)
-    emit('error', { message: err instanceof Error ? err.message : '無法存取攝像頭' })
-    cleanup()
-  }
-}
-
-/** 切換前後鏡頭 */
-async function switchCamera() {
-  if (!stream.value) return
-
-  // 停止目前的串流
-  stream.value.getTracks().forEach((track) => track.stop())
-
-  // 切換方向
-  currentFacingMode.value = currentFacingMode.value === 'user' ? 'environment' : 'user'
-
-  const config = QUALITY_CONFIGS[props.quality]
-
-  try {
-    const newStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: currentFacingMode.value,
-        width: { ideal: config.width },
-        height: { ideal: config.height },
-        frameRate: { ideal: config.frameRate },
-      },
-      audio: true,
-    })
-
-    stream.value = newStream
-    if (videoRef.value) {
-      videoRef.value.srcObject = newStream
-    }
-
-    // 如果錄製中，需要重新啟動錄製器
-    if (mediaRecorder.value && (state.value === 'recording' || state.value === 'paused')) {
-      const wasRecording = state.value === 'recording'
-      mediaRecorder.value.stop()
-
-      await nextTick()
-      startMediaRecorder()
-      if (!wasRecording) {
-        mediaRecorder.value?.pause()
-      }
-    }
-  } catch {
-    emit('error', { message: '切換攝像頭失敗' })
-  }
-}
-
-// =====================================================================
-// 錄製控制
-// =====================================================================
-
-/** 啟動 MediaRecorder */
-function startMediaRecorder() {
-  if (!stream.value) return
-
-  const config = QUALITY_CONFIGS[props.quality]
-  const options: MediaRecorderOptions = {
-    mimeType: 'video/webm;codecs=vp8,opus',
-    videoBitsPerSecond: config.bitrate,
-  }
-
-  // 檢查支援的格式
-  if (!MediaRecorder.isTypeSupported(options.mimeType!)) {
-    if (MediaRecorder.isTypeSupported('video/webm')) {
-      options.mimeType = 'video/webm'
-    } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-      options.mimeType = 'video/mp4'
-    } else {
-      delete options.mimeType
-    }
-  }
-
-  const recorder = new MediaRecorder(stream.value, options)
-  mediaRecorder.value = recorder
-
-  // 收到資料時存入陣列
-  recorder.ondataavailable = (event: BlobEvent) => {
-    if (event.data?.size > 0) {
-      recordedChunks.value.push(event.data)
-    }
-  }
-
-  // 錄製停止時合併資料
-  recorder.onstop = () => {
-    if (state.value === 'completed') {
-      const blob = new Blob(recordedChunks.value, {
-        type: mediaRecorder.value?.mimeType || 'video/webm',
-      })
-      emit('recorded', { blob, duration: elapsedTime.value })
-      cleanup()
-    }
-  }
-
-  // 錄製錯誤
-  recorder.onerror = () => {
-    emit('error', { message: '錄製過程中發生錯誤' })
-    cleanup()
-  }
-
-  // 每秒收集一次資料
-  recorder.start(1000)
-}
-
-/** 開始錄製計時器 */
-function startRecordingTimer() {
-  stopRecordingTimer()
-  recordingTimer = window.setInterval(() => {
-    elapsedTime.value++
-
-    // 檢查是否達到最大時長
-    if (props.maxDuration > 0 && elapsedTime.value >= props.maxDuration) {
-      handleStopRecording()
-    }
-  }, 1000)
-}
-
-/** 停止錄製計時器 */
-function stopRecordingTimer() {
-  if (recordingTimer) {
-    clearInterval(recordingTimer)
-    recordingTimer = null
-  }
-}
-
-/** 暫停錄製 */
-function pauseRecording() {
-  if (mediaRecorder.value && state.value === 'recording') {
-    mediaRecorder.value.pause()
-    state.value = 'paused'
-    stopRecordingTimer()
-  }
-}
-
-/** 繼續錄製 */
-function resumeRecording() {
-  if (mediaRecorder.value && state.value === 'paused') {
-    mediaRecorder.value.resume()
-    state.value = 'recording'
-    startRecordingTimer()
-  }
-}
-
-/** 切換暫停/繼續 */
-function togglePause() {
-  if (state.value === 'recording') {
-    pauseRecording()
-  } else if (state.value === 'paused') {
-    resumeRecording()
   }
 }
 
@@ -681,24 +623,56 @@ function handleStartRecording() {
 
 /** 開始實際錄製 */
 function beginRecording() {
-  recordedChunks.value = []
-  elapsedTime.value = 0
-  startMediaRecorder()
-  state.value = 'recording'
-  startRecordingTimer()
+  const success = recorder.startRecording()
+  if (success) {
+    state.value = 'recording'
+  } else {
+    emit('error', { message: recorder.error.value || '開始錄製失敗' })
+  }
 }
 
 /** 停止錄製 */
 function handleStopRecording() {
   state.value = 'completed'
-  stopRecordingTimer()
-  mediaRecorder.value?.stop()
-  exitFullscreen()
+  recorder.stopRecording()
+
+  // 非嵌入模式才退出全螢幕
+  if (!props.embedded) {
+    exitFullscreen()
+  }
+
+  // 等待 recordedBlob 更新後發送事件
+  const checkBlob = setInterval(() => {
+    if (recorder.recordedBlob.value) {
+      clearInterval(checkBlob)
+      emit('recorded', {
+        blob: recorder.recordedBlob.value,
+        duration: recorder.elapsedTime.value,
+      })
+      cleanup()
+    }
+  }, 100)
+
+  // 最多等待 3 秒
+  setTimeout(() => {
+    clearInterval(checkBlob)
+  }, 3000)
+}
+
+/** 切換暫停/繼續 */
+function handleTogglePause() {
+  if (state.value === 'recording') {
+    recorder.pauseRecording()
+    state.value = 'paused'
+  } else if (state.value === 'paused') {
+    recorder.resumeRecording()
+    state.value = 'recording'
+  }
 }
 
 /** 切換攝影機 */
 function handleSwitchCamera() {
-  switchCamera()
+  recorder.switchCamera()
 }
 
 /** 取消錄製 */
@@ -740,8 +714,8 @@ async function exitFullscreen() {
 function handleFullscreenChange() {
   isFullscreen.value = !!document.fullscreenElement
 
-  // 使用者手動退出全螢幕，取消錄製
-  if (!isFullscreen.value && isActive.value && state.value !== 'completed') {
+  // 使用者手動退出全螢幕，取消錄製（僅非嵌入模式）
+  if (!isFullscreen.value && isActive.value && state.value !== 'completed' && !props.embedded) {
     handleCancel()
   }
 }
@@ -754,23 +728,13 @@ function handleFullscreenChange() {
 function cleanup() {
   isActive.value = false
   state.value = 'idle'
-  stopRecordingTimer()
-
-  // 停止媒體串流
-  if (stream.value) {
-    stream.value.getTracks().forEach((track) => track.stop())
-    stream.value = null
-  }
-
-  if (mediaRecorder.value) {
-    mediaRecorder.value = null
-  }
-
-  recordedChunks.value = []
-  elapsedTime.value = 0
   wasRecordingBeforeOrientationChange = false
 
-  exitFullscreen()
+  recorder.cleanup()
+
+  if (!props.embedded) {
+    exitFullscreen()
+  }
 }
 
 // =====================================================================
@@ -780,16 +744,39 @@ function cleanup() {
 /** 開始錄影流程 */
 async function start() {
   isActive.value = true
-  currentFacingMode.value = props.facingMode
   showGridOverlay.value = props.showGrid
 
   await nextTick()
-  await enterFullscreen()
-  await initCamera()
 
-  // 開始監聽方向變化
-  screen.orientation?.addEventListener('change', handleOrientationChange)
-  window.addEventListener('orientationchange', handleOrientationChange)
+  // 根據 prop 決定是否進入全螢幕（僅非嵌入模式）
+  if (props.fullscreen && !props.embedded) {
+    await enterFullscreen()
+  }
+
+  // 初始化攝影機
+  state.value = 'requesting_camera'
+  const success = await recorder.initCamera(videoRef.value || undefined)
+
+  if (success) {
+    // 初始化後檢查方向（嵌入模式不檢查方向）
+    if (props.embedded) {
+      state.value = 'ready'
+    } else {
+      state.value = isOrientationCorrect() ? 'ready' : 'wrong_orientation'
+    }
+  } else {
+    emit('error', { message: recorder.error.value || '無法存取攝像頭' })
+    cleanup()
+    return
+  }
+
+  // 開始監聯方向變化（僅非嵌入模式）
+  if (!props.embedded) {
+    screen.orientation?.addEventListener('change', handleOrientationChange)
+    window.addEventListener('orientationchange', handleOrientationChange)
+    // 監聽 resize 以支援桌面瀏覽器拉伸測試
+    window.addEventListener('resize', handleOrientationChange)
+  }
 }
 
 /** 停止錄製 */
@@ -821,6 +808,16 @@ watch(
   },
 )
 
+// 監聽最大時長達到
+watch(
+  () => recorder.elapsedTime.value,
+  (elapsed) => {
+    if (props.maxDuration > 0 && elapsed >= props.maxDuration && state.value === 'recording') {
+      handleStopRecording()
+    }
+  },
+)
+
 // =====================================================================
 // 掛載/卸載
 // =====================================================================
@@ -833,6 +830,7 @@ onUnmounted(() => {
   document.removeEventListener('fullscreenchange', handleFullscreenChange)
   screen.orientation?.removeEventListener('change', handleOrientationChange)
   window.removeEventListener('orientationchange', handleOrientationChange)
+  window.removeEventListener('resize', handleOrientationChange)
   cleanup()
 })
 </script>
@@ -848,6 +846,15 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+/* 嵌入模式 */
+.video-recorder--embedded {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  z-index: auto;
 }
 
 /* ==================== Video ====================  */

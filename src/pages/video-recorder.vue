@@ -1,208 +1,202 @@
 <template>
-  <div class="video-recorder-page">
-    <!-- Top Bar -->
-    <div class="video-recorder-page__header">
-      <div class="video-recorder-page__header-content">
-        <div class="video-recorder-page__title">
-          <UIcon name="i-heroicons-video-camera" class="video-recorder-page__title-icon" />
-          <h1 class="video-recorder-page__title-text">影片錄製</h1>
-        </div>
-        <UBadge :color="recordedBlob ? 'success' : 'neutral'" variant="subtle">
-          {{ recordedBlob ? '已完成' : '準備就緒' }}
-        </UBadge>
-      </div>
+  <div class="max-w-3xl mx-auto p-6">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">測試錄影</h1>
+      <p class="text-gray-500">此頁面用於測試 VideoRecorder 元件的功能</p>
     </div>
 
-    <!-- Main Content -->
-    <div class="video-recorder-page__content">
-      <!-- Start Recording Card -->
-      <div v-if="!recordedBlob && !uploadedFile" class="video-recorder-page__start-section">
-        <UCard class="video-recorder-page__start-card">
-          <div class="video-recorder-page__start-content">
-            <div class="video-recorder-page__start-icon">
-              <UIcon name="i-heroicons-video-camera" class="video-recorder-page__start-icon-svg" />
-            </div>
-            <h2 class="video-recorder-page__start-title">開始錄影</h2>
-            <p class="video-recorder-page__start-desc">點擊下方按鈕開始全螢幕錄影</p>
+    <div class="flex flex-col gap-6">
+      <!-- 設定區 -->
+      <div class="bg-gray-50 rounded-xl p-5">
+        <h2 class="text-base font-semibold text-gray-700 mb-4">錄影設定</h2>
 
-            <!-- Settings -->
-            <div class="video-recorder-page__settings">
-              <UFormField label="錄製方向">
-                <USelectMenu
-                  v-model="selectedOrientation"
-                  :items="orientationOptions"
-                  value-key="value"
-                  class="video-recorder-page__select"
-                />
-              </UFormField>
-              <UFormField label="影片品質">
-                <USelectMenu
-                  v-model="selectedQuality"
-                  :items="qualityOptions"
-                  value-key="value"
-                  class="video-recorder-page__select"
-                />
-              </UFormField>
-              <UFormField label="最大時間">
-                <USelectMenu
-                  v-model="selectedMaxDuration"
-                  :items="durationOptions"
-                  value-key="value"
-                  class="video-recorder-page__select"
-                />
-              </UFormField>
-            </div>
+        <div class="mb-3">
+          <label class="flex items-center gap-2 text-sm text-gray-600">方向要求</label>
+          <select
+            v-model="settings.orientation"
+            class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+          >
+            <option value="landscape">橫式 (Landscape)</option>
+            <option value="portrait">直式 (Portrait)</option>
+          </select>
+        </div>
 
-            <UButton
-              icon="i-heroicons-video-camera"
-              color="primary"
-              size="xl"
-              class="video-recorder-page__start-btn"
-              @click="startRecording"
+        <div class="mb-3">
+          <label class="flex items-center gap-2 text-sm text-gray-600">最大時長</label>
+          <select
+            v-model.number="settings.maxDuration"
+            class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+          >
+            <option :value="15">15 秒</option>
+            <option :value="30">30 秒</option>
+            <option :value="60">60 秒</option>
+            <option :value="120">2 分鐘</option>
+            <option :value="0">無限制</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="flex items-center gap-2 text-sm text-gray-600">
+            <input v-model="settings.fullscreen" type="checkbox" class="w-4 h-4" />
+            全螢幕模式
+          </label>
+        </div>
+
+        <div class="mb-3">
+          <label class="flex items-center gap-2 text-sm text-gray-600">
+            <input v-model="settings.embedded" type="checkbox" class="w-4 h-4" />
+            嵌入模式（不使用 Teleport）
+          </label>
+        </div>
+      </div>
+
+      <!-- 開始按鈕 -->
+      <button
+        class="px-6 py-3 rounded-xl text-base font-semibold text-white bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg shadow-orange-500/30 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-500/40 transition-all"
+        @click="startRecording"
+      >
+        🎬 開始錄影
+      </button>
+
+      <!-- 結果區 -->
+      <div v-if="recordedVideo" class="bg-green-50 border border-green-300 rounded-xl p-5">
+        <h2 class="text-base font-semibold text-green-800 mb-4">錄製結果</h2>
+        <video :src="recordedVideo.url" controls class="w-full max-h-96 rounded-lg bg-black" />
+        <div class="mt-4 space-y-1">
+          <p class="text-sm text-gray-700"><strong>檔案大小：</strong>{{ formatFileSize(recordedVideo.blob.size) }}</p>
+          <p class="text-sm text-gray-700"><strong>錄製時長：</strong>{{ recordedVideo.duration }} 秒</p>
+          <p class="text-sm text-gray-700"><strong>格式：</strong>{{ recordedVideo.blob.type }}</p>
+        </div>
+        <div class="flex gap-3 mt-4">
+          <button
+            class="px-6 py-3 rounded-xl text-base font-semibold text-white bg-blue-500 hover:bg-blue-600 transition-colors"
+            @click="downloadVideo"
+          >
+            ⬇️ 下載影片
+          </button>
+          <button
+            class="px-6 py-3 rounded-xl text-base font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors"
+            @click="clearVideo"
+          >
+            🗑️ 清除
+          </button>
+        </div>
+      </div>
+
+      <!-- 日誌區 -->
+      <div class="bg-gray-800 rounded-xl p-5">
+        <h2 class="text-base font-semibold text-gray-100 mb-4">事件日誌</h2>
+        <div class="max-h-52 overflow-y-auto">
+          <div
+            v-for="(log, index) in logs"
+            :key="index"
+            class="flex gap-3 py-2 border-b border-gray-700 text-sm font-mono"
+          >
+            <span class="text-gray-400 shrink-0">{{ log.time }}</span>
+            <span
+              :class="{
+                'text-gray-200': log.type === 'info',
+                'text-green-400': log.type === 'success',
+                'text-yellow-400': log.type === 'warning',
+                'text-red-400': log.type === 'error',
+              }"
             >
-              開始錄製
-            </UButton>
+              {{ log.message }}
+            </span>
           </div>
-        </UCard>
-      </div>
-
-      <!-- Preview Section (after recording) -->
-      <div v-if="recordedBlob && !uploadedFile" class="video-recorder-page__preview-section">
-        <UCard>
-          <template #header>
-            <h3 class="video-recorder-page__section-title">影片預覽</h3>
-          </template>
-
-          <!-- Video Preview -->
-          <div class="video-recorder-page__video-container">
-            <video
-              v-if="recordedBlobUrl"
-              :src="recordedBlobUrl"
-              controls
-              class="video-recorder-page__video"
-            />
-          </div>
-
-          <!-- Recording Info -->
-          <div class="video-recorder-page__info">
-            <div class="video-recorder-page__info-item">
-              <UIcon name="i-heroicons-clock" class="video-recorder-page__info-icon" />
-              <span>時長: {{ formattedDuration }}</span>
-            </div>
-            <div class="video-recorder-page__info-item">
-              <UIcon name="i-heroicons-server-stack" class="video-recorder-page__info-icon" />
-              <span>大小: {{ formattedFileSize }}</span>
-            </div>
-          </div>
-        </UCard>
-
-        <!-- Metadata Form -->
-        <UCard class="video-recorder-page__metadata-card">
-          <template #header>
-            <h3 class="video-recorder-page__section-title">影片資訊</h3>
-          </template>
-
-          <div class="video-recorder-page__form">
-            <UFormField label="標題">
-              <UInput v-model="metadata.title" placeholder="輸入影片標題..." />
-            </UFormField>
-            <UFormField label="描述">
-              <UTextarea v-model="metadata.description" placeholder="輸入影片描述..." :rows="3" />
-            </UFormField>
-          </div>
-        </UCard>
-
-        <!-- Upload Progress -->
-        <div v-if="isUploading" class="video-recorder-page__progress">
-          <div class="video-recorder-page__progress-header">
-            <span>上傳中...</span>
-            <span class="video-recorder-page__progress-percent">{{ uploadProgress }}%</span>
-          </div>
-          <UProgress :value="uploadProgress" color="primary" />
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="video-recorder-page__actions">
-          <UButton
-            icon="i-heroicons-cloud-arrow-up"
-            color="primary"
-            size="lg"
-            :loading="isUploading"
-            :disabled="isUploading"
-            @click="handleUpload"
-          >
-            上傳影片
-          </UButton>
-          <UButton
-            icon="i-heroicons-arrow-path"
-            color="neutral"
-            variant="soft"
-            size="lg"
-            :disabled="isUploading"
-            @click="handleRetake"
-          >
-            重新錄製
-          </UButton>
-          <UButton
-            icon="i-heroicons-arrow-down-tray"
-            color="neutral"
-            variant="ghost"
-            size="lg"
-            :disabled="isUploading"
-            @click="handleDownload"
-          >
-            下載
-          </UButton>
+          <div v-if="logs.length === 0" class="text-gray-500 italic text-center py-4">尚無事件</div>
         </div>
       </div>
 
-      <!-- Upload Success Section -->
-      <div v-if="uploadedFile" class="video-recorder-page__success-section">
-        <UAlert
-          icon="i-heroicons-check-circle"
-          color="success"
-          variant="subtle"
-          title="上傳成功！"
-          description="影片已成功上傳到伺服器"
-        />
+      <!-- 裝置資訊區 -->
+      <div class="bg-yellow-50 border border-yellow-300 rounded-xl p-5">
+        <h2 class="text-base font-semibold text-yellow-800 mb-4">📱 裝置資訊</h2>
+        <button
+          class="mb-4 px-6 py-3 rounded-xl text-base font-semibold text-white bg-blue-500 hover:bg-blue-600 transition-colors"
+          @click="loadDeviceInfo"
+        >
+          🔄 重新讀取
+        </button>
 
-        <UCard class="video-recorder-page__success-card">
-          <div class="video-recorder-page__success-info">
-            <div class="video-recorder-page__info-item">
-              <UIcon name="i-heroicons-video-camera" class="video-recorder-page__info-icon" />
-              <span>{{ metadata.title || '未命名影片' }}</span>
-            </div>
-            <div class="video-recorder-page__info-item">
-              <UIcon name="i-heroicons-clock" class="video-recorder-page__info-icon" />
-              <span>時長: {{ formattedDuration }}</span>
-            </div>
-            <div class="video-recorder-page__info-item">
-              <UIcon name="i-heroicons-server-stack" class="video-recorder-page__info-icon" />
-              <span>大小: {{ formattedFileSize }}</span>
-            </div>
-          </div>
-        </UCard>
+        <div v-if="deviceInfo.loading" class="text-gray-500 text-center py-4">讀取中...</div>
 
-        <div class="video-recorder-page__success-actions">
-          <UButton icon="i-heroicons-link" color="neutral" variant="soft" @click="copyLink">
-            複製連結
-          </UButton>
-          <UButton icon="i-heroicons-plus-circle" color="primary" @click="handleRetake">
-            繼續錄製
-          </UButton>
+        <div v-else-if="deviceInfo.error" class="text-red-600 text-center py-4">
+          ❗ {{ deviceInfo.error }}
         </div>
+
+        <template v-else>
+          <!-- 攝影機列表 -->
+          <div class="mb-4 pb-4 border-b border-yellow-200">
+            <h3 class="text-sm font-semibold text-yellow-900 mb-2">🎥 可用攝影機 ({{ deviceInfo.cameras.length }})</h3>
+            <ul v-if="deviceInfo.cameras.length > 0" class="pl-5 list-disc">
+              <li v-for="camera in deviceInfo.cameras" :key="camera.deviceId" class="text-sm text-gray-700 mb-1">
+                <strong>{{ camera.label || '未命名鏡頭' }}</strong>
+                <code class="ml-2 px-1.5 py-0.5 bg-black/5 rounded text-xs text-gray-500">{{ camera.deviceId.slice(0, 16) }}...</code>
+              </li>
+            </ul>
+            <p v-else class="text-gray-400 italic">無可用攝影機</p>
+          </div>
+
+          <!-- 螢幕資訊 -->
+          <div class="mb-4 pb-4 border-b border-yellow-200">
+            <h3 class="text-sm font-semibold text-yellow-900 mb-2">📺 螢幕/視窗</h3>
+            <ul class="pl-5 list-disc text-sm text-gray-700 space-y-1">
+              <li><strong>螢幕解析度：</strong>{{ deviceInfo.screen.width }} × {{ deviceInfo.screen.height }}</li>
+              <li><strong>視窗大小：</strong>{{ deviceInfo.window.width }} × {{ deviceInfo.window.height }}</li>
+              <li><strong>裝置像素比：</strong>{{ deviceInfo.pixelRatio }}x</li>
+              <li><strong>目前方向：</strong>{{ deviceInfo.orientation }}</li>
+            </ul>
+          </div>
+
+          <!-- 瀏覽器支援 -->
+          <div class="mb-4 pb-4 border-b border-yellow-200">
+            <h3 class="text-sm font-semibold text-yellow-900 mb-2">🌐 瀏覽器支援</h3>
+            <ul class="pl-5 list-disc text-sm text-gray-700 space-y-1">
+              <li>
+                <strong>MediaRecorder：</strong>
+                <span :class="deviceInfo.support.mediaRecorder ? 'text-green-600' : 'text-red-600'">
+                  {{ deviceInfo.support.mediaRecorder ? '✅ 支援' : '❌ 不支援' }}
+                </span>
+              </li>
+              <li>
+                <strong>getUserMedia：</strong>
+                <span :class="deviceInfo.support.getUserMedia ? 'text-green-600' : 'text-red-600'">
+                  {{ deviceInfo.support.getUserMedia ? '✅ 支援' : '❌ 不支援' }}
+                </span>
+              </li>
+              <li>
+                <strong>Fullscreen API：</strong>
+                <span :class="deviceInfo.support.fullscreen ? 'text-green-600' : 'text-red-600'">
+                  {{ deviceInfo.support.fullscreen ? '✅ 支援' : '❌ 不支援' }}
+                </span>
+              </li>
+              <li><strong>建議編碼：</strong>{{ deviceInfo.support.preferredMimeType || '無' }}</li>
+            </ul>
+          </div>
+
+          <!-- UserAgent -->
+          <div>
+            <h3 class="text-sm font-semibold text-yellow-900 mb-2">🔍 UserAgent</h3>
+            <code class="block bg-black/5 px-3 py-2 rounded-lg text-xs text-gray-500 break-all leading-relaxed">
+              {{ deviceInfo.userAgent }}
+            </code>
+          </div>
+        </template>
       </div>
     </div>
 
-    <!-- Video Recorder Component -->
+    <!-- 錄影元件 -->
     <VideoRecorder
       ref="recorderRef"
-      :orientation="selectedOrientation"
-      :quality="selectedQuality"
-      :max-duration="selectedMaxDuration"
-      :show-grid="true"
-      :show-countdown="true"
-      instruction="請對準拍攝對象開始錄製"
+      :orientation="settings.orientation"
+      quality="1080p"
+      :max-duration="settings.maxDuration"
+      :show-countdown="settings.showCountdown"
+      :show-grid="settings.showGrid"
+      :fullscreen="settings.fullscreen"
+      :embedded="settings.embedded"
+      instruction="請開始錄影"
       @recorded="handleRecorded"
       @cancelled="handleCancelled"
       @error="handleError"
@@ -211,406 +205,182 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import VideoRecorder from '@/components/video/VideoRecorder.vue'
-import { useVideoUpload } from '@/composables/useVideoUpload'
-import { useToast } from '@/composables/useToast'
 
-const toast = useToast()
+// =====================================================================
+// 型別
+// =====================================================================
 
-// ==================== Recorder Ref ====================
-const recorderRef = ref<InstanceType<typeof VideoRecorder>>()
+interface RecordedVideo {
+  blob: Blob
+  url: string
+  duration: number
+}
 
-// ==================== Recording State ====================
-const recordedBlob = ref<Blob | null>(null)
-const recordedDuration = ref(0)
+interface LogEntry {
+  time: string
+  message: string
+  type: 'info' | 'success' | 'warning' | 'error'
+}
 
-const recordedBlobUrl = computed(() => {
-  if (!recordedBlob.value) return null
-  return URL.createObjectURL(recordedBlob.value)
+// =====================================================================
+// 狀態
+// =====================================================================
+
+const recorderRef = ref<InstanceType<typeof VideoRecorder> | null>(null)
+
+const settings = reactive({
+  orientation: 'landscape' as 'landscape' | 'portrait',
+  maxDuration: 60,
+  showCountdown: true,
+  showGrid: true,
+  fullscreen: true,
+  embedded: false,
 })
 
-const formattedDuration = computed(() => {
-  const mins = Math.floor(recordedDuration.value / 60)
-  const secs = recordedDuration.value % 60
-  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+const recordedVideo = ref<RecordedVideo | null>(null)
+const logs = ref<LogEntry[]>([])
+
+// 裝置資訊
+interface CameraInfo {
+  deviceId: string
+  label: string
+}
+
+const deviceInfo = reactive({
+  loading: false,
+  error: '',
+  cameras: [] as CameraInfo[],
+  screen: { width: 0, height: 0 },
+  window: { width: 0, height: 0 },
+  pixelRatio: 1,
+  orientation: '',
+  userAgent: '',
+  support: {
+    mediaRecorder: false,
+    getUserMedia: false,
+    fullscreen: false,
+    preferredMimeType: '',
+  },
 })
 
-const formattedFileSize = computed(() => {
-  const size = recordedBlob.value?.size || 0
-  if (size < 1024) return `${size} B`
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`
-})
+// =====================================================================
+// 方法
+// =====================================================================
 
-// ==================== Settings ====================
-const selectedOrientation = ref<'portrait' | 'landscape'>('portrait')
-const orientationOptions = [
-  { label: '橫向', value: 'landscape' },
-  { label: '直向', value: 'portrait' },
-]
+function addLog(message: string, type: LogEntry['type'] = 'info') {
+  const now = new Date()
+  const time = now.toLocaleTimeString('zh-TW', { hour12: false })
+  logs.value.unshift({ time, message, type })
 
-const selectedQuality = ref<'480p' | '720p' | '1080p'>('720p')
-const qualityOptions = [
-  { label: '高畫質 (1080p)', value: '1080p' },
-  { label: '標準畫質 (720p)', value: '720p' },
-  { label: '低畫質 (480p)', value: '480p' },
-]
+  // 最多保留 50 條
+  if (logs.value.length > 50) {
+    logs.value.pop()
+  }
+}
 
-const selectedMaxDuration = ref(60)
-const durationOptions = [
-  { label: '無限制', value: 0 },
-  { label: '1 分鐘', value: 60 },
-  { label: '3 分鐘', value: 180 },
-  { label: '5 分鐘', value: 300 },
-  { label: '10 分鐘', value: 600 },
-]
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+}
 
-// ==================== Upload ====================
-const { isUploading, uploadProgress, uploadedFile, uploadError, uploadVideo, clearUpload } =
-  useVideoUpload()
-
-// ==================== Metadata ====================
-const metadata = ref({
-  title: '',
-  description: '',
-})
-
-// ==================== Methods ====================
 function startRecording() {
+  addLog('開始錄影流程', 'info')
   recorderRef.value?.start()
 }
 
-function handleRecorded({ blob, duration }: { blob: Blob; duration: number }) {
-  recordedBlob.value = blob
-  recordedDuration.value = duration
+function handleRecorded(result: { blob: Blob; duration: number }) {
+  addLog(
+    `錄製完成！時長: ${result.duration}秒, 大小: ${formatFileSize(result.blob.size)}`,
+    'success',
+  )
 
-  // Auto-generate title
-  const timestamp = new Date().toLocaleString('zh-TW', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-  metadata.value.title = `影片錄製 ${timestamp}`
+  // 清除舊的 URL
+  if (recordedVideo.value?.url) {
+    URL.revokeObjectURL(recordedVideo.value.url)
+  }
 
-  toast.add({
-    title: '錄製完成',
-    description: `已錄製 ${formattedDuration.value} 的影片`,
-    color: 'success',
-  })
+  recordedVideo.value = {
+    blob: result.blob,
+    url: URL.createObjectURL(result.blob),
+    duration: result.duration,
+  }
 }
 
 function handleCancelled() {
-  toast.add({
-    title: '已取消',
-    description: '錄製已取消',
-    color: 'neutral',
-  })
+  addLog('使用者取消錄製', 'warning')
 }
 
-function handleError({ message }: { message: string }) {
-  toast.add({
-    title: '錄製錯誤',
-    description: message,
-    color: 'error',
-  })
+function handleError(error: { message: string }) {
+  addLog(`錯誤: ${error.message}`, 'error')
 }
 
-async function handleUpload() {
-  if (!recordedBlob.value) {
-    toast.add({
-      title: '錯誤',
-      description: '沒有可上傳的影片',
-      color: 'error',
-    })
-    return
+function downloadVideo() {
+  if (!recordedVideo.value) return
+
+  const link = document.createElement('a')
+  link.href = recordedVideo.value.url
+  link.download = `recording-${Date.now()}.webm`
+  link.click()
+
+  addLog('開始下載影片', 'info')
+}
+
+function clearVideo() {
+  if (recordedVideo.value?.url) {
+    URL.revokeObjectURL(recordedVideo.value.url)
   }
-
-  const result = await uploadVideo(recordedBlob.value, metadata.value)
-
-  if (result) {
-    toast.add({
-      title: '上傳成功',
-      description: '影片已成功上傳',
-      color: 'success',
-    })
-  } else if (uploadError.value) {
-    toast.add({
-      title: '上傳失敗',
-      description: uploadError.value,
-      color: 'error',
-    })
-  }
+  recordedVideo.value = null
+  addLog('已清除錄製結果', 'info')
 }
 
-function handleRetake() {
-  // Revoke old blob URL
-  if (recordedBlobUrl.value) {
-    URL.revokeObjectURL(recordedBlobUrl.value)
-  }
-
-  recordedBlob.value = null
-  recordedDuration.value = 0
-  metadata.value = { title: '', description: '' }
-  clearUpload()
-}
-
-function handleDownload() {
-  if (!recordedBlob.value || !recordedBlobUrl.value) return
-
-  const a = document.createElement('a')
-  a.href = recordedBlobUrl.value
-  a.download = `${metadata.value.title || 'video'}-${new Date().toISOString().slice(0, 10)}.webm`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-
-  toast.add({
-    title: '下載開始',
-    description: '影片下載已開始',
-    color: 'success',
-  })
-}
-
-async function copyLink() {
-  if (!uploadedFile.value?.url) return
+// 裝置資訊讀取
+async function loadDeviceInfo() {
+  deviceInfo.loading = true
+  deviceInfo.error = ''
 
   try {
-    await navigator.clipboard.writeText(uploadedFile.value.url)
-    toast.add({
-      title: '已複製',
-      description: '影片連結已複製到剪貼簿',
-      color: 'success',
-    })
-  } catch {
-    toast.add({
-      title: '複製失敗',
-      description: '無法複製到剪貼簿',
-      color: 'error',
-    })
+    // 螢幕/視窗資訊
+    deviceInfo.screen = { width: screen.width, height: screen.height }
+    deviceInfo.window = { width: window.innerWidth, height: window.innerHeight }
+    deviceInfo.pixelRatio = window.devicePixelRatio
+    deviceInfo.orientation =
+      window.innerWidth >= window.innerHeight ? '橫式 (Landscape)' : '直式 (Portrait)'
+    deviceInfo.userAgent = navigator.userAgent
+
+    // 瀏覽器支援
+    deviceInfo.support.mediaRecorder = typeof MediaRecorder !== 'undefined'
+    deviceInfo.support.getUserMedia = !!navigator.mediaDevices?.getUserMedia
+    deviceInfo.support.fullscreen = !!document.documentElement.requestFullscreen
+
+    // 建議 MIME type
+    const mimeTypes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4']
+    deviceInfo.support.preferredMimeType =
+      mimeTypes.find((type) => MediaRecorder.isTypeSupported(type)) || ''
+
+    // 列舉攝影機
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    deviceInfo.cameras = devices
+      .filter((d) => d.kind === 'videoinput')
+      .map((d) => ({ deviceId: d.deviceId, label: d.label }))
+  } catch (err) {
+    deviceInfo.error = err instanceof Error ? err.message : '讀取失敗'
+  } finally {
+    deviceInfo.loading = false
   }
 }
 
-// ==================== Cleanup ====================
-watch(recordedBlobUrl, (_, oldUrl) => {
-  if (oldUrl) {
-    URL.revokeObjectURL(oldUrl)
+// 清理
+onUnmounted(() => {
+  if (recordedVideo.value?.url) {
+    URL.revokeObjectURL(recordedVideo.value.url)
   }
 })
+
+// 初始化
+onMounted(() => {
+  loadDeviceInfo()
+})
 </script>
-
-<style scoped>
-.video-recorder-page {
-  min-height: 100vh;
-  background: var(--ui-bg);
-}
-
-.video-recorder-page__header {
-  border-bottom: 1px solid var(--ui-border);
-  background: var(--ui-bg-elevated);
-  padding: 12px 16px;
-}
-
-.video-recorder-page__header-content {
-  max-width: 1024px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.video-recorder-page__title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.video-recorder-page__title-icon {
-  width: 24px;
-  height: 24px;
-  color: var(--ui-primary);
-}
-
-.video-recorder-page__title-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--ui-text);
-  margin: 0;
-}
-
-.video-recorder-page__content {
-  max-width: 1024px;
-  margin: 0 auto;
-  padding: 24px 16px;
-}
-
-/* Start Section */
-.video-recorder-page__start-section {
-  display: flex;
-  justify-content: center;
-  padding-top: 48px;
-}
-
-.video-recorder-page__start-card {
-  max-width: 400px;
-  width: 100%;
-}
-
-.video-recorder-page__start-content {
-  text-align: center;
-  padding: 24px 0;
-}
-
-.video-recorder-page__start-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 16px;
-  background: var(--ui-primary-muted);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.video-recorder-page__start-icon-svg {
-  width: 40px;
-  height: 40px;
-  color: var(--ui-primary);
-}
-
-.video-recorder-page__start-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--ui-text);
-  margin: 0 0 8px;
-}
-
-.video-recorder-page__start-desc {
-  font-size: 14px;
-  color: var(--ui-text-muted);
-  margin: 0 0 24px;
-}
-
-.video-recorder-page__settings {
-  display: grid;
-  gap: 16px;
-  margin-bottom: 24px;
-  text-align: left;
-}
-
-.video-recorder-page__select {
-  width: 100%;
-}
-
-.video-recorder-page__start-btn {
-  width: 100%;
-}
-
-/* Preview Section */
-.video-recorder-page__preview-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.video-recorder-page__section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--ui-text);
-  margin: 0;
-}
-
-.video-recorder-page__video-container {
-  aspect-ratio: 16 / 9;
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.video-recorder-page__video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.video-recorder-page__info {
-  display: flex;
-  gap: 24px;
-  margin-top: 12px;
-}
-
-.video-recorder-page__info-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: var(--ui-text-muted);
-}
-
-.video-recorder-page__info-icon {
-  width: 18px;
-  height: 18px;
-}
-
-.video-recorder-page__metadata-card {
-  margin-top: 8px;
-}
-
-.video-recorder-page__form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.video-recorder-page__progress {
-  padding: 16px;
-  background: var(--ui-bg-elevated);
-  border-radius: 8px;
-}
-
-.video-recorder-page__progress-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 14px;
-  color: var(--ui-text-muted);
-}
-
-.video-recorder-page__progress-percent {
-  font-weight: 600;
-  color: var(--ui-text);
-}
-
-.video-recorder-page__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-/* Success Section */
-.video-recorder-page__success-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.video-recorder-page__success-card {
-  margin-top: 8px;
-}
-
-.video-recorder-page__success-info {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.video-recorder-page__success-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 8px;
-}
-</style>

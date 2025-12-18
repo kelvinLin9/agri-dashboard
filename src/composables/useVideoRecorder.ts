@@ -1,6 +1,37 @@
 import { ref, computed, onBeforeUnmount } from 'vue'
 import { VideoQuality, VIDEO_QUALITY_CONFIGS, type RecordingSettings } from '@/types/video'
 
+// =====================================================================
+// 型別定義
+// =====================================================================
+
+/** 裝置方向 */
+export type Orientation = 'portrait' | 'landscape'
+
+/** 攝影機方向 */
+export type FacingMode = 'user' | 'environment'
+
+/** 錄製結果 */
+export interface RecordedResult {
+  blob: Blob
+  duration: number
+  mimeType: string
+}
+
+/** Composable 設定選項 */
+export interface VideoRecorderOptions {
+  /** 影片品質 */
+  quality?: VideoQuality
+  /** 攝影機方向 */
+  facingMode?: FacingMode
+  /** 是否啟用音訊 */
+  audioEnabled?: boolean
+  /** 最大錄製時間（秒） */
+  maxDuration?: number
+  /** 要求的裝置方向（可選） */
+  requiredOrientation?: Orientation
+}
+
 /**
  * 影片錄製 Composable
  *
@@ -9,8 +40,10 @@ import { VideoQuality, VIDEO_QUALITY_CONFIGS, type RecordingSettings } from '@/t
  * - 多品質錄製選項
  * - 錄製控制（開始/停止/暫停/繼續）
  * - 時間與大小追蹤
+ * - 方向偵測
+ * - 多鏡頭支援
  */
-export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
+export function useVideoRecorder(options?: VideoRecorderOptions) {
   // ==================== State ====================
   const videoElement = ref<HTMLVideoElement | null>(null)
   const stream = ref<MediaStream | null>(null)
@@ -27,14 +60,20 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
   const elapsedTime = ref(0)
   let timerInterval: number | null = null
 
+  // Camera
+  const availableCameras = ref<MediaDeviceInfo[]>([])
+  const currentFacingMode = ref<FacingMode>(options?.facingMode || 'environment')
+
   // Settings
   const settings = ref<RecordingSettings>({
-    quality: VideoQuality.MEDIUM,
-    facingMode: 'environment',
-    audioEnabled: true,
-    maxDuration: 0, // unlimited
-    ...initialSettings,
+    quality: options?.quality || VideoQuality.MEDIUM,
+    facingMode: options?.facingMode || 'environment',
+    audioEnabled: options?.audioEnabled ?? true,
+    maxDuration: options?.maxDuration || 0,
   })
+
+  // Orientation
+  const requiredOrientation = ref<Orientation | undefined>(options?.requiredOrientation)
 
   // ==================== Computed ====================
   const formattedTime = computed(() => {
@@ -62,7 +101,52 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
     return Math.max(0, settings.value.maxDuration - elapsedTime.value)
   })
 
-  // ==================== Methods ====================
+  /** 是否有多個攝影機 */
+  const hasMultipleCameras = computed(() => availableCameras.value.length > 1)
+
+  /** 目前的 MIME type */
+  const currentMimeType = computed(() => mediaRecorder.value?.mimeType || 'video/webm')
+
+  // ==================== Orientation Methods ====================
+
+  /**
+   * 取得目前裝置/視窗方向
+   * 使用視窗尺寸判斷，適用於桌面和行動裝置
+   */
+  function getCurrentOrientation(): Orientation {
+    // 優先使用視窗尺寸判斷，因為這在桌面瀏覽器拉伸時也能正確反應
+    return window.innerWidth >= window.innerHeight ? 'landscape' : 'portrait'
+  }
+
+  /**
+   * 檢查方向是否正確
+   */
+  function isOrientationCorrect(): boolean {
+    if (!requiredOrientation.value) return true
+    return getCurrentOrientation() === requiredOrientation.value
+  }
+
+  /**
+   * 設定要求的方向
+   */
+  function setRequiredOrientation(orientation: Orientation | undefined) {
+    requiredOrientation.value = orientation
+  }
+
+  // ==================== Camera Methods ====================
+
+  /**
+   * 列舉可用的攝影機
+   */
+  async function enumerateCameras() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      availableCameras.value = devices.filter((d) => d.kind === 'videoinput')
+    } catch {
+      // 無法列舉設備，假設只有一個鏡頭
+      availableCameras.value = []
+    }
+  }
 
   /**
    * 初始化攝像頭
@@ -75,12 +159,15 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
         videoElement.value = videoEl
       }
 
+      // 列舉可用的攝影機
+      await enumerateCameras()
+
       const config = VIDEO_QUALITY_CONFIGS[settings.value.quality]
 
       // 請求媒體權限
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: settings.value.facingMode,
+          facingMode: currentFacingMode.value,
           width: { ideal: config.width },
           height: { ideal: config.height },
           frameRate: { ideal: config.frameRate },
@@ -112,58 +199,135 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
   }
 
   /**
-   * 開始錄製
+   * 切換攝像頭
    */
-  function startRecording() {
+  async function switchCamera() {
+    if (!stream.value) return false
+
+    try {
+      // 停止目前的串流
+      stream.value.getTracks().forEach((track) => track.stop())
+
+      // 切換方向
+      const newMode: FacingMode = currentFacingMode.value === 'user' ? 'environment' : 'user'
+      currentFacingMode.value = newMode
+      settings.value.facingMode = newMode
+
+      const config = VIDEO_QUALITY_CONFIGS[settings.value.quality]
+
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: currentFacingMode.value,
+          width: { ideal: config.width },
+          height: { ideal: config.height },
+          frameRate: { ideal: config.frameRate },
+        },
+        audio: settings.value.audioEnabled,
+      })
+
+      stream.value = newStream
+
+      if (videoElement.value) {
+        videoElement.value.srcObject = newStream
+      }
+
+      // 如果錄製中，需要重新啟動錄製器
+      if (mediaRecorder.value && (isRecording.value || isPaused.value)) {
+        const wasRecording = isRecording.value
+        mediaRecorder.value.stop()
+
+        // 等待一幀後重新開始
+        await new Promise((resolve) => requestAnimationFrame(resolve))
+        createMediaRecorder()
+        mediaRecorder.value?.start(1000)
+
+        if (!wasRecording) {
+          mediaRecorder.value?.pause()
+        }
+      }
+
+      return true
+    } catch (err) {
+      console.error('Switch camera failed:', err)
+      error.value = '切換攝像頭失敗'
+      return false
+    }
+  }
+
+  // ==================== Recording Methods ====================
+
+  /**
+   * 建立 MediaRecorder
+   */
+  function createMediaRecorder(): boolean {
     if (!stream.value) {
       error.value = '請先初始化攝像頭'
       return false
     }
 
+    // 檢查瀏覽器支援
+    if (!window.MediaRecorder) {
+      error.value = '您的瀏覽器不支持錄製功能'
+      return false
+    }
+
+    const config = VIDEO_QUALITY_CONFIGS[settings.value.quality]
+
+    // 設定 MIME type 和 bitrate
+    const options: MediaRecorderOptions = {
+      mimeType: 'video/webm;codecs=vp8,opus',
+      videoBitsPerSecond: config.bitrate,
+    }
+
+    // 檢查支援的格式
+    if (!MediaRecorder.isTypeSupported(options.mimeType!)) {
+      if (MediaRecorder.isTypeSupported('video/webm')) {
+        options.mimeType = 'video/webm'
+      } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+        options.mimeType = 'video/mp4'
+      } else {
+        delete options.mimeType
+      }
+    }
+
+    // 創建 MediaRecorder
+    const recorder = new MediaRecorder(stream.value, options)
+    mediaRecorder.value = recorder
+
+    // 事件處理
+    recorder.ondataavailable = (event: BlobEvent) => {
+      if (event.data && event.data.size > 0) {
+        recordedChunks.value.push(event.data)
+      }
+    }
+
+    recorder.onerror = (event: Event) => {
+      console.error('錄製錯誤:', event)
+      error.value = '錄製過程中發生錯誤'
+      stopRecording()
+    }
+
+    return true
+  }
+
+  /**
+   * 開始錄製
+   */
+  function startRecording(): boolean {
     try {
       error.value = null
-
-      // 檢查瀏覽器支援
-      if (!window.MediaRecorder) {
-        error.value = '您的瀏覽器不支持錄製功能'
-        return false
-      }
-
-      const config = VIDEO_QUALITY_CONFIGS[settings.value.quality]
-
-      // 設定 MIME type 和 bitrate
-      const options: MediaRecorderOptions = {
-        mimeType: 'video/webm;codecs=vp8,opus',
-        videoBitsPerSecond: config.bitrate,
-      }
-
-      // 檢查支援的格式
-      if (!MediaRecorder.isTypeSupported(options.mimeType!)) {
-        if (MediaRecorder.isTypeSupported('video/webm')) {
-          options.mimeType = 'video/webm'
-        } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-          options.mimeType = 'video/mp4'
-        } else {
-          delete options.mimeType
-        }
-      }
-
-      // 創建 MediaRecorder
-      const recorder = new MediaRecorder(stream.value, options)
-      mediaRecorder.value = recorder
 
       // 清空之前的資料
       recordedChunks.value = []
       recordedBlob.value = null
+      elapsedTime.value = 0
 
-      // 事件處理
-      recorder.ondataavailable = (event: BlobEvent) => {
-        if (event.data && event.data.size > 0) {
-          recordedChunks.value.push(event.data)
-        }
+      if (!createMediaRecorder()) {
+        return false
       }
 
-      recorder.onstop = () => {
+      // 設定停止時的處理
+      mediaRecorder.value!.onstop = () => {
         const blob = new Blob(recordedChunks.value, {
           type: mediaRecorder.value?.mimeType || 'video/webm',
         })
@@ -171,19 +335,12 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
         console.log('錄製完成，文件大小:', blob.size, 'bytes')
       }
 
-      recorder.onerror = (event: Event) => {
-        console.error('錄製錯誤:', event)
-        error.value = '錄製過程中發生錯誤'
-        stopRecording()
-      }
-
       // 開始錄製
-      recorder.start(1000) // 每秒收集一次資料
+      mediaRecorder.value!.start(1000) // 每秒收集一次資料
       isRecording.value = true
       isPaused.value = false
 
       // 開始計時器
-      elapsedTime.value = 0
       startTimer()
 
       return true
@@ -197,13 +354,18 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
   /**
    * 停止錄製
    */
-  function stopRecording() {
-    if (mediaRecorder.value && isRecording.value) {
+  function stopRecording(): RecordedResult | null {
+    if (mediaRecorder.value && (isRecording.value || isPaused.value)) {
       mediaRecorder.value.stop()
       isRecording.value = false
       isPaused.value = false
       stopTimer()
+
+      // 因為 onstop 是異步的，這裡先返回 null
+      // 實際結果會在 recordedBlob 更新後取得
+      return null
     }
+    return null
   }
 
   /**
@@ -240,6 +402,19 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
   }
 
   /**
+   * 切換暫停狀態
+   */
+  function togglePause() {
+    if (isRecording.value) {
+      if (isPaused.value) {
+        resumeRecording()
+      } else {
+        pauseRecording()
+      }
+    }
+  }
+
+  /**
    * 清除錄製
    */
   function clearRecording() {
@@ -249,19 +424,7 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
     error.value = null
   }
 
-  /**
-   * 切換攝像頭
-   */
-  async function switchCamera() {
-    const newMode = settings.value.facingMode === 'user' ? 'environment' : 'user'
-    settings.value.facingMode = newMode
-
-    // 停止當前流
-    cleanup()
-
-    // 重新初始化
-    return await initCamera(videoElement.value || undefined)
-  }
+  // ==================== Settings Methods ====================
 
   /**
    * 設定錄製品質
@@ -283,6 +446,20 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
   }
 
   /**
+   * 設定是否啟用音訊
+   */
+  function setAudioEnabled(enabled: boolean) {
+    if (isRecording.value) {
+      error.value = '無法在錄製中變更音訊設定'
+      return false
+    }
+    settings.value.audioEnabled = enabled
+    return true
+  }
+
+  // ==================== Timer Methods ====================
+
+  /**
    * 啟動計時器
    */
   function startTimer() {
@@ -291,9 +468,11 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
       elapsedTime.value++
 
       // 檢查是否達到最大時間
-      if (settings.value.maxDuration &&
-          settings.value.maxDuration > 0 &&
-          elapsedTime.value >= settings.value.maxDuration) {
+      if (
+        settings.value.maxDuration &&
+        settings.value.maxDuration > 0 &&
+        elapsedTime.value >= settings.value.maxDuration
+      ) {
         stopRecording()
       }
     }, 1000)
@@ -309,6 +488,8 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
     }
   }
 
+  // ==================== Cleanup ====================
+
   /**
    * 清理資源
    */
@@ -316,15 +497,24 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
     stopTimer()
 
     if (stream.value) {
-      stream.value.getTracks().forEach(track => track.stop())
+      stream.value.getTracks().forEach((track) => track.stop())
       stream.value = null
     }
 
     if (mediaRecorder.value) {
+      if (isRecording.value || isPaused.value) {
+        try {
+          mediaRecorder.value.stop()
+        } catch {
+          // ignore
+        }
+      }
       mediaRecorder.value = null
     }
 
     isInitialized.value = false
+    isRecording.value = false
+    isPaused.value = false
   }
 
   // 組件卸載時清理
@@ -343,27 +533,46 @@ export function useVideoRecorder(initialSettings?: Partial<RecordingSettings>) {
     isInitialized,
     elapsedTime,
     recordedBlob,
+    recordedChunks,
     error,
     settings,
     stream,
+    currentFacingMode,
+    availableCameras,
 
     // Computed
     formattedTime,
     formattedFileSize,
     estimatedFileSize,
     remainingTime,
+    hasMultipleCameras,
+    currentMimeType,
 
-    // Methods
+    // Camera Methods
     initCamera,
+    switchCamera,
+    enumerateCameras,
+
+    // Recording Methods
     startRecording,
     stopRecording,
     pauseRecording,
     resumeRecording,
     toggleRecording,
+    togglePause,
     clearRecording,
-    switchCamera,
+
+    // Orientation Methods
+    getCurrentOrientation,
+    isOrientationCorrect,
+    setRequiredOrientation,
+
+    // Settings Methods
     setQuality,
     setMaxDuration,
+    setAudioEnabled,
+
+    // Cleanup
     cleanup,
   }
 }

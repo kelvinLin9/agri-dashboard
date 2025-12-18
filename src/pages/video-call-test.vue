@@ -145,11 +145,6 @@ import IncomingCallModal from '@/components/video/IncomingCallModal.vue'
 import { useToast } from '@/composables/useToast'
 
 // 頁面設定
-definePageMeta({
-  layout: 'customer',
-  middleware: ['auth'],
-})
-
 // Composables
 const toast = useToast()
 const {
@@ -185,8 +180,12 @@ const myUserId = computed(() => {
   try {
     const token = localStorage.getItem('access_token')
     if (token) {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      return payload.sub || '未知'
+      const parts = token.split('.')
+      const payloadPart = parts[1]
+      if (payloadPart) {
+        const payload = JSON.parse(atob(payloadPart))
+        return payload.sub || '未知'
+      }
     }
   } catch {
     // ignore

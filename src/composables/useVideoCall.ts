@@ -34,6 +34,18 @@ export interface CallOptions {
   onEnded?: (reason: string) => void
 }
 
+/** 基礎回應介面 */
+interface BaseResponse {
+  success: boolean
+  error?: string
+  message?: string
+}
+
+/** 發起通話回應介面 */
+interface InitiateCallResponse extends BaseResponse {
+  callId: string
+}
+
 /** ICE 伺服器設定 */
 const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
@@ -189,7 +201,7 @@ export const useVideoCall = () => {
       await getLocalMedia()
 
       // 發送通話請求
-      const response = await emitWithAck('call:initiate', {
+      const response = await emitWithAck<InitiateCallResponse>('call:initiate', {
         targetUserId: userId,
         type: callType.value,
       })

@@ -236,6 +236,12 @@ const router = createRouter({
       component: () => import('../pages/refund-policy.vue'),
       meta: { requiresAuth: false, layout: 'customer' },
     },
+    {
+      path: '/test-recorder',
+      name: 'test-recorder',
+      component: () => import('../pages/video-recorder.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, layout: 'blank' },
+    },
   ],
 })
 

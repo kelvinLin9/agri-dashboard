@@ -32,6 +32,24 @@ export interface VideoRecorderOptions {
   requiredOrientation?: Orientation
 }
 
+// =====================================================================
+// 工具函數
+// =====================================================================
+
+/**
+ * 偵測是否為行動裝置
+ * 用於決定錄製策略（編碼格式、幀率等）
+ */
+function isMobileDevice(): boolean {
+  // 優先使用 User-Agent Client Hints API（較新的標準）
+  if ('userAgentData' in navigator && (navigator as Navigator & { userAgentData?: { mobile: boolean } }).userAgentData) {
+    return (navigator as Navigator & { userAgentData: { mobile: boolean } }).userAgentData.mobile
+  }
+  // 回退到傳統 UA 字串偵測
+  const userAgent = navigator.userAgent.toLowerCase()
+  return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
+}
+
 /**
  * 影片錄製 Composable
  *
@@ -165,12 +183,15 @@ export function useVideoRecorder(options?: VideoRecorderOptions) {
       const config = VIDEO_QUALITY_CONFIGS[settings.value.quality]
 
       // 請求媒體權限
+      // 針對 1080p 使用 exact 約束確保解析度鎖定
+      // 幀率加上 max 約束避免手機端過載
+      const isHighQuality = settings.value.quality === VideoQuality.HIGH
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: currentFacingMode.value,
-          width: { ideal: config.width },
-          height: { ideal: config.height },
-          frameRate: { ideal: config.frameRate },
+          width: isHighQuality ? { exact: config.width } : { ideal: config.width },
+          height: isHighQuality ? { exact: config.height } : { ideal: config.height },
+          frameRate: { ideal: config.frameRate, max: config.frameRate },
         },
         audio: settings.value.audioEnabled,
       })
@@ -215,12 +236,13 @@ export function useVideoRecorder(options?: VideoRecorderOptions) {
 
       const config = VIDEO_QUALITY_CONFIGS[settings.value.quality]
 
+      const isHighQuality = settings.value.quality === VideoQuality.HIGH
       const newStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: currentFacingMode.value,
-          width: { ideal: config.width },
-          height: { ideal: config.height },
-          frameRate: { ideal: config.frameRate },
+          width: isHighQuality ? { exact: config.width } : { ideal: config.width },
+          height: isHighQuality ? { exact: config.height } : { ideal: config.height },
+          frameRate: { ideal: config.frameRate, max: config.frameRate },
         },
         audio: settings.value.audioEnabled,
       })
@@ -272,23 +294,40 @@ export function useVideoRecorder(options?: VideoRecorderOptions) {
     }
 
     const config = VIDEO_QUALITY_CONFIGS[settings.value.quality]
+    const isMobile = isMobileDevice()
 
     // 設定 MIME type 和 bitrate
+    // 手機端優先使用 H.264（硬體加速），電腦端使用 VP8/VP9（較高品質）
+    let preferredMimeType: string
+    if (isMobile) {
+      // 行動裝置：H.264 有較好的硬體加速支援
+      preferredMimeType = 'video/webm;codecs=h264'
+    } else {
+      // 桌面裝置：VP8 提供較好的品質
+      preferredMimeType = 'video/webm;codecs=vp8,opus'
+    }
+
     const options: MediaRecorderOptions = {
-      mimeType: 'video/webm;codecs=vp8,opus',
+      mimeType: preferredMimeType,
       videoBitsPerSecond: config.bitrate,
     }
 
-    // 檢查支援的格式
+    // 檢查支援的格式，依序降級
     if (!MediaRecorder.isTypeSupported(options.mimeType!)) {
-      if (MediaRecorder.isTypeSupported('video/webm')) {
-        options.mimeType = 'video/webm'
-      } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-        options.mimeType = 'video/mp4'
+      // 降級順序：H.264 → VP8 → WebM → MP4
+      const fallbackTypes = isMobile
+        ? ['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']
+        : ['video/webm;codecs=h264', 'video/webm', 'video/mp4']
+
+      const supportedType = fallbackTypes.find((type) => MediaRecorder.isTypeSupported(type))
+      if (supportedType) {
+        options.mimeType = supportedType
       } else {
         delete options.mimeType
       }
     }
+
+    console.log(`[VideoRecorder] 使用編碼: ${options.mimeType}, 行動裝置: ${isMobile}`)
 
     // 創建 MediaRecorder
     const recorder = new MediaRecorder(stream.value, options)

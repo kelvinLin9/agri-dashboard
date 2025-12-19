@@ -154,9 +154,27 @@
             <h3 class="text-sm font-semibold text-yellow-900 mb-2">🌐 瀏覽器支援</h3>
             <ul class="pl-5 list-disc text-sm text-gray-700 space-y-1">
               <li>
+                <strong>行動裝置偵測：</strong>
+                <span :class="deviceInfo.isMobile ? 'text-blue-600' : 'text-gray-600'">
+                  {{ deviceInfo.isMobile ? '📱 是（將使用 H.264）' : '💻 否（將使用 VP8）' }}
+                </span>
+              </li>
+              <li>
                 <strong>MediaRecorder：</strong>
                 <span :class="deviceInfo.support.mediaRecorder ? 'text-green-600' : 'text-red-600'">
                   {{ deviceInfo.support.mediaRecorder ? '✅ 支援' : '❌ 不支援' }}
+                </span>
+              </li>
+              <li>
+                <strong>H.264 硬體加速：</strong>
+                <span :class="deviceInfo.support.h264 ? 'text-green-600' : 'text-yellow-600'">
+                  {{ deviceInfo.support.h264 ? '✅ 支援' : '⚠️ 不支援' }}
+                </span>
+              </li>
+              <li>
+                <strong>VP8/VP9：</strong>
+                <span :class="deviceInfo.support.vp8 ? 'text-green-600' : 'text-yellow-600'">
+                  {{ deviceInfo.support.vp8 ? '✅ 支援' : '⚠️ 不支援' }}
                 </span>
               </li>
               <li>
@@ -171,7 +189,7 @@
                   {{ deviceInfo.support.fullscreen ? '✅ 支援' : '❌ 不支援' }}
                 </span>
               </li>
-              <li><strong>建議編碼：</strong>{{ deviceInfo.support.preferredMimeType || '無' }}</li>
+              <li><strong>實際使用編碼：</strong><code class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">{{ deviceInfo.support.actualCodec }}</code></li>
             </ul>
           </div>
 
@@ -251,6 +269,7 @@ interface CameraInfo {
 const deviceInfo = reactive({
   loading: false,
   error: '',
+  isMobile: false,
   cameras: [] as CameraInfo[],
   screen: { width: 0, height: 0 },
   window: { width: 0, height: 0 },
@@ -261,7 +280,9 @@ const deviceInfo = reactive({
     mediaRecorder: false,
     getUserMedia: false,
     fullscreen: false,
-    preferredMimeType: '',
+    h264: false,
+    vp8: false,
+    actualCodec: '',
   },
 })
 
@@ -342,6 +363,14 @@ async function loadDeviceInfo() {
   deviceInfo.error = ''
 
   try {
+    // 行動裝置偵測
+    if ('userAgentData' in navigator && (navigator as Navigator & { userAgentData?: { mobile: boolean } }).userAgentData) {
+      deviceInfo.isMobile = (navigator as Navigator & { userAgentData: { mobile: boolean } }).userAgentData.mobile
+    } else {
+      const userAgent = navigator.userAgent.toLowerCase()
+      deviceInfo.isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent)
+    }
+
     // 螢幕/視窗資訊
     deviceInfo.screen = { width: screen.width, height: screen.height }
     deviceInfo.window = { width: window.innerWidth, height: window.innerHeight }
@@ -355,10 +384,30 @@ async function loadDeviceInfo() {
     deviceInfo.support.getUserMedia = !!navigator.mediaDevices?.getUserMedia
     deviceInfo.support.fullscreen = !!document.documentElement.requestFullscreen
 
-    // 建議 MIME type
-    const mimeTypes = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4']
-    deviceInfo.support.preferredMimeType =
-      mimeTypes.find((type) => MediaRecorder.isTypeSupported(type)) || ''
+    // 編碼格式支援檢測
+    deviceInfo.support.h264 = MediaRecorder.isTypeSupported('video/webm;codecs=h264')
+    deviceInfo.support.vp8 = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+
+    // 計算實際會使用的編碼
+    if (deviceInfo.isMobile) {
+      // 手機優先 H.264
+      if (deviceInfo.support.h264) {
+        deviceInfo.support.actualCodec = 'video/webm;codecs=h264 (硬體加速)'
+      } else if (deviceInfo.support.vp8) {
+        deviceInfo.support.actualCodec = 'video/webm;codecs=vp8 (降級)'
+      } else {
+        deviceInfo.support.actualCodec = 'video/webm (通用)'
+      }
+    } else {
+      // 電腦優先 VP8
+      if (deviceInfo.support.vp8) {
+        deviceInfo.support.actualCodec = 'video/webm;codecs=vp8,opus'
+      } else if (deviceInfo.support.h264) {
+        deviceInfo.support.actualCodec = 'video/webm;codecs=h264'
+      } else {
+        deviceInfo.support.actualCodec = 'video/webm (通用)'
+      }
+    }
 
     // 列舉攝影機
     const devices = await navigator.mediaDevices.enumerateDevices()

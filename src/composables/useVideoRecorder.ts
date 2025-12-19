@@ -30,6 +30,8 @@ export interface VideoRecorderOptions {
   maxDuration?: number
   /** 要求的裝置方向（可選） */
   requiredOrientation?: Orientation
+  /** 編碼模式 */
+  codecMode?: 'auto' | 'h264' | 'vp8' | 'vp9' | 'hevc' | 'av1'
 }
 
 // =====================================================================
@@ -92,6 +94,9 @@ export function useVideoRecorder(options?: VideoRecorderOptions) {
 
   // Orientation
   const requiredOrientation = ref<Orientation | undefined>(options?.requiredOrientation)
+
+  // Codec Mode
+  const codecMode = ref<'auto' | 'h264' | 'vp8' | 'vp9' | 'hevc' | 'av1'>(options?.codecMode || 'auto')
 
   // ==================== Computed ====================
   const formattedTime = computed(() => {
@@ -296,38 +301,55 @@ export function useVideoRecorder(options?: VideoRecorderOptions) {
     const config = VIDEO_QUALITY_CONFIGS[settings.value.quality]
     const isMobile = isMobileDevice()
 
+    // 根據編碼模式取得支援的 MIME type
+    function getMimeTypeForCodec(codec: string): string | null {
+      const formats: Record<string, string[]> = {
+        h264: ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=h264'],
+        vp8: ['video/webm;codecs=vp8,opus'],
+        vp9: ['video/webm;codecs=vp9,opus'],
+        hevc: ['video/mp4;codecs=hvc1', 'video/mp4;codecs=hevc', 'video/mp4;codecs=hev1'],
+        av1: ['video/mp4;codecs=av01', 'video/webm;codecs=av1,opus'],
+      }
+
+      const candidates = formats[codec] || []
+      for (const mimeType of candidates) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          return mimeType
+        }
+      }
+      return null
+    }
+
     // 設定 MIME type 和 bitrate
-    // 手機端優先使用 H.264（硬體加速），電腦端使用 VP8/VP9（較高品質）
-    let preferredMimeType: string
-    if (isMobile) {
-      // 行動裝置：H.264 有較好的硬體加速支援
-      preferredMimeType = 'video/webm;codecs=h264'
-    } else {
-      // 桌面裝置：VP8 提供較好的品質
-      preferredMimeType = 'video/webm;codecs=vp8,opus'
+    let preferredMimeType: string | null = null
+
+    if (codecMode.value !== 'auto') {
+      // 使用用戶指定的編碼
+      preferredMimeType = getMimeTypeForCodec(codecMode.value)
+    }
+
+    // 2. 如果指定的編碼不支援或是自動模式，嘗試最通用的 H.264/MP4
+    if (!preferredMimeType) {
+      preferredMimeType = getMimeTypeForCodec('h264')
+    }
+
+    // 3. 如果 H.264 也不支援，嘗試較高品質的 VP8 或 VP9
+    if (!preferredMimeType) {
+      preferredMimeType = getMimeTypeForCodec('vp8') || getMimeTypeForCodec('vp9')
+    }
+
+    // 4. 最後的最後：如果都沒匹配到，嘗試最基礎的格式
+    if (!preferredMimeType) {
+      const basicFormats = ['video/webm', 'video/mp4']
+      preferredMimeType = basicFormats.find(f => MediaRecorder.isTypeSupported(f)) || null
     }
 
     const options: MediaRecorderOptions = {
-      mimeType: preferredMimeType,
+      mimeType: preferredMimeType || undefined,
       videoBitsPerSecond: config.bitrate,
     }
 
-    // 檢查支援的格式，依序降級
-    if (!MediaRecorder.isTypeSupported(options.mimeType!)) {
-      // 降級順序：H.264 → VP8 → WebM → MP4
-      const fallbackTypes = isMobile
-        ? ['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']
-        : ['video/webm;codecs=h264', 'video/webm', 'video/mp4']
-
-      const supportedType = fallbackTypes.find((type) => MediaRecorder.isTypeSupported(type))
-      if (supportedType) {
-        options.mimeType = supportedType
-      } else {
-        delete options.mimeType
-      }
-    }
-
-    console.log(`[VideoRecorder] 使用編碼: ${options.mimeType}, 行動裝置: ${isMobile}`)
+    console.log(`[VideoRecorder] 使用編碼: ${options.mimeType || '預設'}, 行動裝置: ${isMobile}, 模式: ${codecMode.value}`)
 
     // 創建 MediaRecorder
     const recorder = new MediaRecorder(stream.value, options)

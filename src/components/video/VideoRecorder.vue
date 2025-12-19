@@ -4,11 +4,7 @@
     <div
       v-if="isActive"
       ref="containerRef"
-      class="video-recorder"
-      :class="[
-        `video-recorder--${props.orientation}`,
-        { 'video-recorder--fullscreen': isFullscreen },
-      ]"
+      class="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-black"
     >
       <!-- 影片預覽層 -->
       <video
@@ -16,19 +12,19 @@
         autoplay
         playsinline
         muted
-        class="video-recorder__video"
+        class="h-full w-full object-cover"
         :class="{
-          'video-recorder__video--mirror': recorder.currentFacingMode.value === 'user',
-          'video-recorder__video--blurred': state === 'wrong_orientation',
+          '-scale-x-100': recorder.currentFacingMode.value === 'user',
+          'blur-[20px]': state === 'wrong_orientation',
         }"
       />
 
       <!-- 九宮格輔助線（永遠顯示） -->
-      <div v-if="state !== 'wrong_orientation'" class="video-recorder__grid">
-        <div class="video-recorder__grid-line video-recorder__grid-line--v1" />
-        <div class="video-recorder__grid-line video-recorder__grid-line--v2" />
-        <div class="video-recorder__grid-line video-recorder__grid-line--h1" />
-        <div class="video-recorder__grid-line video-recorder__grid-line--h2" />
+      <div v-if="state !== 'wrong_orientation'" class="pointer-events-none absolute inset-0">
+        <div class="absolute top-0 bottom-0 left-1/3 w-px border-l border-dashed border-white/50" />
+        <div class="absolute top-0 bottom-0 left-2/3 w-px border-l border-dashed border-white/50" />
+        <div class="absolute top-1/3 right-0 left-0 h-px border-t border-dashed border-white/50" />
+        <div class="absolute top-2/3 right-0 left-0 h-px border-t border-dashed border-white/50" />
       </div>
 
       <!-- 引導遮罩插槽（用於臉部引導、箭頭等） -->
@@ -37,21 +33,26 @@
           (state === 'ready' || state === 'recording' || state === 'paused') &&
           $slots['guide-overlay']
         "
-        class="video-recorder__guide-overlay"
+        class="pointer-events-none absolute inset-0 z-5"
       >
         <slot name="guide-overlay" />
       </div>
 
       <!-- 方向錯誤提示遮罩 -->
       <Transition name="fade">
-        <div v-if="state === 'wrong_orientation'" class="video-recorder__orientation-overlay">
-          <div class="video-recorder__orientation-card">
-            <div class="video-recorder__orientation-icon">
+        <div
+          v-if="state === 'wrong_orientation'"
+          class="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[10px]"
+        >
+          <div
+            class="rounded-2xl bg-white px-12 py-8 text-center shadow-[0_20px_60px_rgba(0,0,0,0.3)]"
+          >
+            <div class="text-secondary-400 mx-auto mb-4 size-20">
               <svg
                 v-if="props.orientation === 'landscape'"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 64 64"
-                class="video-recorder__rotate-icon"
+                class="h-full w-full"
               >
                 <rect
                   x="8"
@@ -86,7 +87,7 @@
                 v-else
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 64 64"
-                class="video-recorder__rotate-icon"
+                class="h-full w-full"
               >
                 <rect
                   x="24"
@@ -118,25 +119,28 @@
                 <polygon points="20,54 24,60 28,54" fill="currentColor" />
               </svg>
             </div>
-            <p class="video-recorder__orientation-text">
+            <p class="m-0 text-base font-medium text-gray-500">
               {{ props.orientation === 'landscape' ? '請將裝置轉成橫式' : '請將裝置轉成直式' }}
             </p>
           </div>
         </div>
       </Transition>
 
-      <!-- 頂部列：取消按鈕 -->
-      <div class="video-recorder__top-bar">
+      <!-- 頂部列：取消按鈕（錄製中隱藏） -->
+      <div
+        v-if="state !== 'recording' && state !== 'paused'"
+        class="video-recorder__top-bar absolute top-0 right-0 left-0 z-10 flex justify-end p-4"
+      >
         <button
           type="button"
-          class="video-recorder__btn video-recorder__btn--cancel"
+          class="flex size-10 cursor-pointer items-center justify-center rounded-full border-none bg-black/50 text-white backdrop-blur-[10px] transition-all duration-200 hover:bg-black/70"
           @click="handleCancel"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             fill="currentColor"
-            class="video-recorder__icon"
+            class="size-6"
           >
             <path
               fill-rule="evenodd"
@@ -149,17 +153,22 @@
 
       <!-- 準備狀態：說明文字 + 開始按鈕 -->
       <Transition name="fade">
-        <div v-if="state === 'ready'" class="video-recorder__instruction-bar">
-          <div class="video-recorder__instruction-content">
+        <div
+          v-if="state === 'ready'"
+          class="absolute top-4 right-16 left-4 z-10 flex justify-center"
+        >
+          <div
+            class="flex items-center gap-3 rounded-[32px] bg-white/95 px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
+          >
             <!-- 說明插槽（可自訂內容，否則顯示 prop） -->
             <slot name="instruction">
-              <span v-if="props.instruction" class="video-recorder__instruction-text">
+              <span v-if="props.instruction" class="leading-relaxed font-medium">
                 {{ props.instruction }}
               </span>
             </slot>
             <button
               type="button"
-              class="video-recorder__btn video-recorder__btn--start"
+              class="bg-secondary-600 hover:bg-secondary-400 shrink-0 cursor-pointer rounded-3xl border-none px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200"
               @click="handleStartRecording"
             >
               開始錄製 →
@@ -170,29 +179,44 @@
 
       <!-- 倒數動畫遮罩 -->
       <Transition name="scale">
-        <div v-if="state === 'countdown'" class="video-recorder__countdown">
-          <span class="video-recorder__countdown-number">{{ countdownValue }}</span>
+        <div
+          v-if="state === 'countdown'"
+          class="absolute inset-0 flex items-center justify-center bg-black/50"
+        >
+          <span
+            class="text-[120px] font-bold text-white [text-shadow:0_4px_20px_rgba(0,0,0,0.5)]"
+            >{{ countdownValue }}</span
+          >
         </div>
       </Transition>
 
       <!-- 錄製中：控制按鈕 -->
       <Transition name="slide-up">
-        <div v-if="state === 'recording' || state === 'paused'" class="video-recorder__controls">
+        <div
+          v-if="state === 'recording' || state === 'paused'"
+          class="video-recorder__controls absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-4"
+        >
           <!-- 計時器 -->
-          <div class="video-recorder__timer">
+          <div
+            class="flex items-center gap-2 rounded-3xl bg-black/60 px-4 py-2 backdrop-blur-[10px]"
+          >
             <div
-              class="video-recorder__timer-dot"
-              :class="{ 'video-recorder__timer-dot--paused': state === 'paused' }"
+              class="size-2 rounded-full"
+              :class="state === 'paused' ? 'bg-warning' : 'bg-error animate-pulse'"
             />
-            <span class="video-recorder__timer-text">{{ recorder.formattedTime.value }}</span>
+            <span class="font-mono text-sm font-semibold text-white">{{
+              recorder.formattedTime.value
+            }}</span>
           </div>
 
           <!-- 控制按鈕列 -->
-          <div class="video-recorder__control-buttons">
+          <div
+            class="flex items-center gap-4 rounded-[40px] bg-black/50 px-4 py-2 backdrop-blur-[10px]"
+          >
             <!-- 暫停/繼續 -->
             <button
               type="button"
-              class="video-recorder__btn video-recorder__btn--control"
+              class="flex size-12 cursor-pointer items-center justify-center rounded-full border-none bg-white/20 text-white backdrop-blur-[10px] transition-all duration-200 hover:bg-white/30"
               @click="handleTogglePause"
             >
               <svg
@@ -200,7 +224,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                class="video-recorder__icon"
+                class="size-6"
               >
                 <path
                   fill-rule="evenodd"
@@ -213,7 +237,7 @@
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                class="video-recorder__icon"
+                class="size-6"
               >
                 <path
                   fill-rule="evenodd"
@@ -226,31 +250,33 @@
             <!-- 停止錄製 -->
             <button
               type="button"
-              class="video-recorder__btn video-recorder__btn--stop"
+              class="bg-error hover:bg-notification-red flex size-14 cursor-pointer items-center justify-center rounded-full border-none transition-all duration-200"
               @click="handleStopRecording"
             >
-              <div class="video-recorder__stop-icon" />
+              <div class="size-5 rounded bg-white" />
             </button>
 
             <!-- 切換鏡頭（只有多個鏡頭時顯示） -->
             <button
               v-if="recorder.hasMultipleCameras.value"
               type="button"
-              class="video-recorder__btn video-recorder__btn--control"
+              class="flex size-12 cursor-pointer items-center justify-center rounded-full border-none bg-white/20 text-white backdrop-blur-[10px] transition-all duration-200 hover:bg-white/30"
               @click="handleSwitchCamera"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
-                fill="currentColor"
-                class="video-recorder__icon"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="size-6"
               >
-                <path d="M12 9a3.75 3.75 0 100 7.5A3.75 3.75 0 0012 9z" />
-                <path
-                  fill-rule="evenodd"
-                  d="M9.344 3.071a49.52 49.52 0 015.312 0c.967.052 1.83.585 2.332 1.39l.821 1.317c.24.383.645.643 1.11.71.386.054.77.113 1.152.177 1.432.239 2.429 1.493 2.429 2.909V18a3 3 0 01-3 3H4.5a3 3 0 01-3-3V9.574c0-1.416.997-2.67 2.429-2.909.382-.064.766-.123 1.152-.177a1.56 1.56 0 001.11-.71l.821-1.317a2.603 2.603 0 012.332-1.39zM12 17.25a5.25 5.25 0 100-10.5 5.25 5.25 0 000 10.5z"
-                  clip-rule="evenodd"
-                />
+                <path d="M17 1l4 4-4 4" />
+                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                <path d="M7 23l-4-4 4-4" />
+                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
               </svg>
             </button>
           </div>
@@ -263,8 +289,7 @@
   <div
     v-if="props.embedded && isActive"
     ref="containerRef"
-    class="video-recorder video-recorder--embedded"
-    :class="[`video-recorder--${props.orientation}`]"
+    class="relative z-auto h-full w-full overflow-hidden bg-black"
   >
     <!-- 影片預覽層 -->
     <video
@@ -272,19 +297,19 @@
       autoplay
       playsinline
       muted
-      class="video-recorder__video"
+      class="h-full w-full object-cover"
       :class="{
-        'video-recorder__video--mirror': recorder.currentFacingMode.value === 'user',
-        'video-recorder__video--blurred': state === 'wrong_orientation',
+        '-scale-x-100': recorder.currentFacingMode.value === 'user',
+        'blur-[20px]': state === 'wrong_orientation',
       }"
     />
 
     <!-- 九宮格輔助線 -->
-    <div v-if="state !== 'wrong_orientation'" class="video-recorder__grid">
-      <div class="video-recorder__grid-line video-recorder__grid-line--v1" />
-      <div class="video-recorder__grid-line video-recorder__grid-line--v2" />
-      <div class="video-recorder__grid-line video-recorder__grid-line--h1" />
-      <div class="video-recorder__grid-line video-recorder__grid-line--h2" />
+    <div v-if="state !== 'wrong_orientation'" class="pointer-events-none absolute inset-0">
+      <div class="absolute top-0 bottom-0 left-1/3 w-px border-l border-dashed border-white/50" />
+      <div class="absolute top-0 bottom-0 left-2/3 w-px border-l border-dashed border-white/50" />
+      <div class="absolute top-1/3 right-0 left-0 h-px border-t border-dashed border-white/50" />
+      <div class="absolute top-2/3 right-0 left-0 h-px border-t border-dashed border-white/50" />
     </div>
 
     <!-- 引導遮罩插槽 -->
@@ -293,23 +318,26 @@
         (state === 'ready' || state === 'recording' || state === 'paused') &&
         $slots['guide-overlay']
       "
-      class="video-recorder__guide-overlay"
+      class="pointer-events-none absolute inset-0 z-5"
     >
       <slot name="guide-overlay" />
     </div>
 
-    <!-- 頂部列：取消按鈕 -->
-    <div class="video-recorder__top-bar">
+    <!-- 頂部列：取消按鈕（錄製中隱藏） -->
+    <div
+      v-if="state !== 'recording' && state !== 'paused'"
+      class="video-recorder__top-bar absolute top-0 right-0 left-0 z-10 flex justify-end p-4"
+    >
       <button
         type="button"
-        class="video-recorder__btn video-recorder__btn--cancel"
+        class="flex size-10 cursor-pointer items-center justify-center rounded-full border-none bg-black/50 text-white backdrop-blur-[10px] transition-all duration-200 hover:bg-black/70"
         @click="handleCancel"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           fill="currentColor"
-          class="video-recorder__icon"
+          class="size-6"
         >
           <path
             fill-rule="evenodd"
@@ -322,16 +350,21 @@
 
     <!-- 準備狀態 -->
     <Transition name="fade">
-      <div v-if="state === 'ready'" class="video-recorder__instruction-bar">
-        <div class="video-recorder__instruction-content">
+      <div v-if="state === 'ready'" class="absolute top-4 right-16 left-4 z-10 flex justify-center">
+        <div
+          class="flex max-w-[90%] items-center gap-3 rounded-[32px] bg-white/95 px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
+        >
           <slot name="instruction">
-            <span v-if="props.instruction" class="video-recorder__instruction-text">
+            <span
+              v-if="props.instruction"
+              class="text-secondary-400 text-sm leading-relaxed font-medium"
+            >
               {{ props.instruction }}
             </span>
           </slot>
           <button
             type="button"
-            class="video-recorder__btn video-recorder__btn--start"
+            class="bg-primary hover:bg-primary-600 shrink-0 cursor-pointer rounded-3xl border-none px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200"
             @click="handleStartRecording"
           >
             開始錄製 →
@@ -342,26 +375,38 @@
 
     <!-- 倒數動畫遮罩 -->
     <Transition name="scale">
-      <div v-if="state === 'countdown'" class="video-recorder__countdown">
-        <span class="video-recorder__countdown-number">{{ countdownValue }}</span>
+      <div
+        v-if="state === 'countdown'"
+        class="absolute inset-0 flex items-center justify-center bg-black/50"
+      >
+        <span class="text-[120px] font-bold text-white [text-shadow:0_4px_20px_rgba(0,0,0,0.5)]">{{
+          countdownValue
+        }}</span>
       </div>
     </Transition>
 
     <!-- 錄製中：控制按鈕 -->
     <Transition name="slide-up">
-      <div v-if="state === 'recording' || state === 'paused'" class="video-recorder__controls">
-        <div class="video-recorder__timer">
+      <div
+        v-if="state === 'recording' || state === 'paused'"
+        class="video-recorder__controls absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-4"
+      >
+        <div class="flex items-center gap-2 rounded-3xl bg-black/60 px-4 py-2 backdrop-blur-[10px]">
           <div
-            class="video-recorder__timer-dot"
-            :class="{ 'video-recorder__timer-dot--paused': state === 'paused' }"
+            class="size-2 rounded-full"
+            :class="state === 'paused' ? 'bg-warning' : 'bg-error animate-pulse'"
           />
-          <span class="video-recorder__timer-text">{{ recorder.formattedTime.value }}</span>
+          <span class="font-mono text-sm font-semibold text-white">{{
+            recorder.formattedTime.value
+          }}</span>
         </div>
 
-        <div class="video-recorder__control-buttons">
+        <div
+          class="flex items-center gap-4 rounded-[40px] bg-black/50 px-4 py-2 backdrop-blur-[10px]"
+        >
           <button
             type="button"
-            class="video-recorder__btn video-recorder__btn--control"
+            class="flex size-12 cursor-pointer items-center justify-center rounded-full border-none bg-white/20 text-white backdrop-blur-[10px] transition-all duration-200 hover:bg-white/30"
             @click="handleTogglePause"
           >
             <svg
@@ -369,7 +414,7 @@
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              class="video-recorder__icon"
+              class="size-6"
             >
               <path
                 fill-rule="evenodd"
@@ -382,7 +427,7 @@
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              class="video-recorder__icon"
+              class="size-6"
             >
               <path
                 fill-rule="evenodd"
@@ -394,23 +439,23 @@
 
           <button
             type="button"
-            class="video-recorder__btn video-recorder__btn--stop"
+            class="bg-error hover:bg-notification-red flex size-14 cursor-pointer items-center justify-center rounded-full border-none transition-all duration-200"
             @click="handleStopRecording"
           >
-            <div class="video-recorder__stop-icon" />
+            <div class="size-5 rounded bg-white" />
           </button>
 
           <button
             v-if="recorder.hasMultipleCameras.value"
             type="button"
-            class="video-recorder__btn video-recorder__btn--control"
+            class="flex size-12 cursor-pointer items-center justify-center rounded-full border-none bg-white/20 text-white backdrop-blur-[10px] transition-all duration-200 hover:bg-white/30"
             @click="handleSwitchCamera"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              class="video-recorder__icon"
+              class="size-6"
             >
               <path d="M12 9a3.75 3.75 0 100 7.5A3.75 3.75 0 0012 9z" />
               <path
@@ -488,6 +533,8 @@ interface Props {
   fullscreen?: boolean
   /** 是否嵌入模式（不使用 Teleport） */
   embedded?: boolean
+  /** 編碼模式 */
+  codecMode?: 'auto' | 'h264' | 'vp8' | 'vp9' | 'hevc' | 'av1'
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -500,6 +547,7 @@ const props = withDefaults(defineProps<Props>(), {
   facingMode: 'environment',
   fullscreen: true,
   embedded: false,
+  codecMode: 'auto',
 })
 
 const emit = defineEmits<{
@@ -531,6 +579,7 @@ const recorder = useVideoRecorder({
   audioEnabled: true,
   maxDuration: props.maxDuration,
   requiredOrientation: props.orientation,
+  codecMode: props.codecMode,
 })
 
 // =====================================================================
@@ -732,7 +781,12 @@ function cleanup() {
 
   recorder.cleanup()
 
+  // 恢復頁面滾動（僅非嵌入模式）
   if (!props.embedded) {
+    document.body.style.overflow = ''
+    document.body.style.position = ''
+    document.body.style.width = ''
+    document.body.style.height = ''
     exitFullscreen()
   }
 }
@@ -747,6 +801,14 @@ async function start() {
   showGridOverlay.value = props.showGrid
 
   await nextTick()
+
+  // 禁止頁面滾動（僅非嵌入模式）
+  if (!props.embedded) {
+    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.width = '100%'
+    document.body.style.height = '100%'
+  }
 
   // 根據 prop 決定是否進入全螢幕（僅非嵌入模式）
   if (props.fullscreen && !props.embedded) {
@@ -831,336 +893,19 @@ onUnmounted(() => {
   screen.orientation?.removeEventListener('change', handleOrientationChange)
   window.removeEventListener('orientationchange', handleOrientationChange)
   window.removeEventListener('resize', handleOrientationChange)
+
+  // 確保恢復頁面滾動
+  document.body.style.overflow = ''
+  document.body.style.position = ''
+  document.body.style.width = ''
+  document.body.style.height = ''
+
   cleanup()
 })
 </script>
 
 <style scoped>
-/* ==================== Base ====================  */
-.video-recorder {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-/* 嵌入模式 */
-.video-recorder--embedded {
-  position: relative;
-  inset: auto;
-  width: 100%;
-  height: 100%;
-  z-index: auto;
-}
-
-/* ==================== Video ====================  */
-.video-recorder__video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.video-recorder__video--mirror {
-  transform: scaleX(-1);
-}
-
-.video-recorder__video--blurred {
-  filter: blur(20px);
-}
-
-/* ==================== Grid Overlay ====================  */
-.video-recorder__grid {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.video-recorder__grid-line {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.video-recorder__grid-line--v1 {
-  left: 33.33%;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  border-left: 1px dashed rgba(255, 255, 255, 0.5);
-  background: transparent;
-}
-
-.video-recorder__grid-line--v2 {
-  left: 66.66%;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  border-left: 1px dashed rgba(255, 255, 255, 0.5);
-  background: transparent;
-}
-
-.video-recorder__grid-line--h1 {
-  top: 33.33%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.5);
-  background: transparent;
-}
-
-.video-recorder__grid-line--h2 {
-  top: 66.66%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.5);
-  background: transparent;
-}
-
-/* ==================== Guide Overlay (Slot) ====================  */
-.video-recorder__guide-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 5;
-}
-
-/* ==================== Orientation Overlay ====================  */
-.video-recorder__orientation-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
-}
-
-.video-recorder__orientation-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 32px 48px;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.video-recorder__orientation-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 16px;
-  color: #3b82f6;
-}
-
-.video-recorder__rotate-icon {
-  width: 100%;
-  height: 100%;
-}
-
-.video-recorder__orientation-text {
-  font-size: 16px;
-  font-weight: 500;
-  color: #374151;
-  margin: 0;
-}
-
-/* ==================== Top Bar ====================  */
-.video-recorder__top-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: 16px;
-  display: flex;
-  justify-content: flex-end;
-  z-index: 10;
-}
-
-/* ==================== Buttons ====================  */
-.video-recorder__btn {
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.video-recorder__btn--cancel {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.5);
-  color: #fff;
-  backdrop-filter: blur(10px);
-}
-
-.video-recorder__btn--cancel:hover {
-  background: rgba(0, 0, 0, 0.7);
-}
-
-.video-recorder__btn--start {
-  background: #f97316;
-  color: #fff;
-  padding: 12px 24px;
-  border-radius: 24px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.video-recorder__btn--start:hover {
-  background: #ea580c;
-}
-
-.video-recorder__btn--control {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  backdrop-filter: blur(10px);
-}
-
-.video-recorder__btn--control:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-.video-recorder__btn--active {
-  background: #3b82f6;
-}
-
-.video-recorder__btn--stop {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #ef4444;
-}
-
-.video-recorder__btn--stop:hover {
-  background: #dc2626;
-}
-
-.video-recorder__stop-icon {
-  width: 20px;
-  height: 20px;
-  background: #fff;
-  border-radius: 4px;
-}
-
-.video-recorder__icon {
-  width: 24px;
-  height: 24px;
-}
-
-/* ==================== Instruction Bar ====================  */
-.video-recorder__instruction-bar {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-}
-
-.video-recorder__instruction-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 12px 16px;
-  border-radius: 32px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.video-recorder__instruction-text {
-  font-size: 14px;
-  color: #374151;
-  font-weight: 500;
-}
-
-/* ==================== Countdown ====================  */
-.video-recorder__countdown {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-}
-
-.video-recorder__countdown-number {
-  font-size: 120px;
-  font-weight: bold;
-  color: #fff;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-/* ==================== Controls ====================  */
-.video-recorder__controls {
-  position: absolute;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  z-index: 10;
-}
-
-.video-recorder__timer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 8px 16px;
-  border-radius: 24px;
-  backdrop-filter: blur(10px);
-}
-
-.video-recorder__timer-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ef4444;
-  animation: pulse 1s infinite;
-}
-
-.video-recorder__timer-dot--paused {
-  background: #fbbf24;
-  animation: none;
-}
-
-.video-recorder__timer-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  font-family: ui-monospace, monospace;
-}
-
-.video-recorder__control-buttons {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 8px 16px;
-  border-radius: 40px;
-  backdrop-filter: blur(10px);
-}
-
-/* ==================== Animations ====================  */
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-/* Transitions */
+/* ==================== Vue Transitions ====================  */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;

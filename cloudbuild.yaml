@@ -41,7 +41,7 @@ images:
 
 # Substitutions - 這些會從 Cloud Build trigger 設定中讀取
 substitutions:
-  _VITE_API_URL: 'https://hirimu.cc/api'
+  _VITE_API_URL: 'https://agri-backend-660672910950.asia-east1.run.app/api'
   _VITE_GOOGLE_CLIENT_ID: ''
 
 options:
